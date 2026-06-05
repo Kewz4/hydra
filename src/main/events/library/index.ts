@@ -50,6 +50,13 @@ import "./check-steam-shortcut";
 
 import "./get-steam-player-summary";
 import "./sync-steam-library";
+import "./get-legendary-status";
+import "./sync-epic-library";
+import "./open-gog-auth-window";
+import "./sync-gog-library";
+import "./get-gog-user-info";
+import "./get-battlenet-games";
+import "./add-battlenet-games-to-library";
 
 //UPDATEDD
 

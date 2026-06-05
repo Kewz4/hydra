@@ -160,6 +160,22 @@ declare global {
       steamId: string,
       apiKey: string
     ) => Promise<{ total: number; added: number }>;
+    getLegendaryStatus: () => Promise<{
+      binaryFound: boolean;
+      binaryPath: string | null;
+      account: string | null;
+      authenticated: boolean;
+    }>;
+    syncEpicLibrary: () => Promise<{ total: number; added: number }>;
+    openGogAuthWindow: () => Promise<{ refresh_token: string; username: string } | null>;
+    syncGogLibrary: () => Promise<{ total: number; added: number }>;
+    getGogUserInfo: () => Promise<{ userId: string; username: string } | null>;
+    getBattleNetGames: () => Promise<{
+      installed: boolean;
+      detected: Array<{ productCode: string; title: string; iconUrl: string; launchUri: string }>;
+      all: Array<{ productCode: string; title: string; iconUrl: string; launchUri: string }>;
+    }>;
+    addBattleNetGamesToLibrary: (productCodes: string[]) => Promise<{ added: number }>;
     addCustomGameToLibrary: (
       title: string,
       executablePath: string,

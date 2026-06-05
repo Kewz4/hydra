@@ -215,6 +215,14 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("getSteamPlayerSummary", steamId, apiKey),
   syncSteamLibrary: (steamId: string, apiKey: string) =>
     ipcRenderer.invoke("syncSteamLibrary", steamId, apiKey),
+  getLegendaryStatus: () => ipcRenderer.invoke("getLegendaryStatus"),
+  syncEpicLibrary: () => ipcRenderer.invoke("syncEpicLibrary"),
+  openGogAuthWindow: () => ipcRenderer.invoke("openGogAuthWindow"),
+  syncGogLibrary: () => ipcRenderer.invoke("syncGogLibrary"),
+  getGogUserInfo: () => ipcRenderer.invoke("getGogUserInfo"),
+  getBattleNetGames: () => ipcRenderer.invoke("getBattleNetGames"),
+  addBattleNetGamesToLibrary: (productCodes: string[]) =>
+    ipcRenderer.invoke("addBattleNetGamesToLibrary", productCodes),
   addCustomGameToLibrary: (
     title: string,
     executablePath: string,

@@ -165,6 +165,8 @@ export interface UserPreferences {
   autoRunGamemode?: boolean;
   steamId?: string | null;
   steamApiKey?: string | null;
+  legendaryBinaryPath?: string | null;
+  gogRefreshToken?: string | null;
 }
 
 export interface ScreenState {
