@@ -163,6 +163,8 @@ export interface UserPreferences {
   defaultProtonPath?: string | null;
   autoRunMangohud?: boolean;
   autoRunGamemode?: boolean;
+  steamId?: string | null;
+  steamApiKey?: string | null;
 }
 
 export interface ScreenState {

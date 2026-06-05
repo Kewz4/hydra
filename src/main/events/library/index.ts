@@ -48,6 +48,9 @@ import "./verify-executable-path";
 import "./delete-steam-shortcut";
 import "./check-steam-shortcut";
 
+import "./get-steam-player-summary";
+import "./sync-steam-library";
+
 //UPDATEDD
 
 import "./transfer-game-files";

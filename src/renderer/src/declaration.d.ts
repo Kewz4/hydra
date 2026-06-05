@@ -152,6 +152,14 @@ declare global {
       objectId: string,
       title: string
     ) => Promise<void>;
+    getSteamPlayerSummary: (
+      steamId: string,
+      apiKey: string
+    ) => Promise<{ steamid: string; personaname: string; avatarfull: string } | null>;
+    syncSteamLibrary: (
+      steamId: string,
+      apiKey: string
+    ) => Promise<{ total: number; added: number }>;
     addCustomGameToLibrary: (
       title: string,
       executablePath: string,
