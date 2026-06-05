@@ -166,7 +166,12 @@ declare global {
       account: string | null;
       authenticated: boolean;
     }>;
+    installLegendary: () => Promise<{ path: string }>;
+    openLegendaryAuthWindow: () => Promise<{ success: boolean; account?: string }>;
     syncEpicLibrary: () => Promise<{ total: number; added: number }>;
+    installBattleNet: () => Promise<{ path: string }>;
+    onLegendaryInstallProgress: (cb: (pct: number) => void) => () => void;
+    onBattleNetInstallProgress: (cb: (pct: number) => void) => () => void;
     openGogAuthWindow: () => Promise<{ refresh_token: string; username: string } | null>;
     syncGogLibrary: () => Promise<{ total: number; added: number }>;
     getGogUserInfo: () => Promise<{ userId: string; username: string } | null>;

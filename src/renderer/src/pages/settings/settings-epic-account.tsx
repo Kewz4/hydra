@@ -1,10 +1,17 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
-import { useContext } from "react";
 import { settingsContext } from "@renderer/context";
-import { CheckCircleFillIcon, SyncIcon, AlertIcon } from "@primer/octicons-react";
+import {
+  AlertIcon,
+  CheckCircleFillIcon,
+  DownloadIcon,
+  PersonIcon,
+  SyncIcon,
+} from "@primer/octicons-react";
+
+type Step = "idle" | "installing" | "signing_in" | "syncing";
 
 export function SettingsEpicAccount() {
   const { t } = useTranslation("settings");
@@ -15,30 +22,86 @@ export function SettingsEpicAccount() {
   const [legendaryPath, setLegendaryPath] = useState("");
   const [status, setStatus] = useState<{
     binaryFound: boolean;
+    binaryPath: string | null;
     account: string | null;
     authenticated: boolean;
   } | null>(null);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [step, setStep] = useState<Step>("idle");
+  const [installProgress, setInstallProgress] = useState(0);
   const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
+  const unsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     setLegendaryPath(userPreferences?.legendaryBinaryPath ?? "");
   }, [userPreferences?.legendaryBinaryPath]);
 
+  const refreshStatus = async (path?: string | null) => {
+    const s = await window.electron.getLegendaryStatus().catch(() => null);
+    if (s) setStatus(s);
+    return s;
+  };
+
   useEffect(() => {
-    window.electron.getLegendaryStatus().then(setStatus).catch(() => {});
+    refreshStatus(userPreferences?.legendaryBinaryPath);
   }, [userPreferences?.legendaryBinaryPath]);
+
+  // Subscribe to download progress
+  useEffect(() => {
+    const unsub = window.electron.onLegendaryInstallProgress(setInstallProgress);
+    unsubRef.current = unsub;
+    return () => unsub();
+  }, []);
 
   const handleSavePath = async (e: React.FormEvent) => {
     e.preventDefault();
     await updateUserPreferences({ legendaryBinaryPath: legendaryPath || null });
-    const newStatus = await window.electron.getLegendaryStatus().catch(() => null);
-    if (newStatus) setStatus(newStatus);
     showSuccessToast(t("changes_saved"));
   };
 
+  const handleInstall = async () => {
+    setStep("installing");
+    setInstallProgress(0);
+    try {
+      const { path: installedPath } = await window.electron.installLegendary();
+      await updateUserPreferences({ legendaryBinaryPath: installedPath });
+      showSuccessToast(t("legendary_installed"));
+      await refreshStatus(installedPath);
+    } catch (err: any) {
+      showErrorToast(err?.message ?? t("legendary_install_failed"));
+    } finally {
+      setStep("idle");
+      setInstallProgress(0);
+    }
+  };
+
+  const handleSignIn = async () => {
+    setStep("signing_in");
+    try {
+      const result = await window.electron.openLegendaryAuthWindow();
+      if (result.success) {
+        showSuccessToast(
+          t("epic_logged_in_as", { username: result.account ?? "Epic" })
+        );
+        await refreshStatus(userPreferences?.legendaryBinaryPath);
+      } else {
+        showErrorToast(t("epic_auth_failed"));
+      }
+    } catch {
+      showErrorToast(t("epic_auth_failed"));
+    } finally {
+      setStep("idle");
+    }
+  };
+
+  const handleSignOut = async () => {
+    // legendary doesn't have a sign-out command; we just clear the preference
+    await updateUserPreferences({ legendaryBinaryPath: null });
+    setStatus(null);
+    showSuccessToast(t("epic_signed_out"));
+  };
+
   const handleSync = async () => {
-    setIsSyncing(true);
+    setStep("syncing");
     setSyncResult(null);
     try {
       const result = await window.electron.syncEpicLibrary();
@@ -49,36 +112,26 @@ export function SettingsEpicAccount() {
     } catch (err: any) {
       showErrorToast(err?.message ?? t("epic_sync_failed"));
     } finally {
-      setIsSyncing(false);
+      setStep("idle");
     }
   };
 
-  const isAuthenticated = status?.authenticated;
+  const isBusy = step !== "idle";
+  const binaryFound = status?.binaryFound ?? false;
+  const isAuthenticated = status?.authenticated ?? false;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <p style={{ margin: 0, opacity: 0.8 }}>{t("epic_account_description")}</p>
 
-      <form onSubmit={handleSavePath} style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <TextField
-          label={t("legendary_binary_path")}
-          value={legendaryPath}
-          onChange={(e) => setLegendaryPath(e.target.value)}
-          placeholder={t("legendary_binary_placeholder")}
-          hint={t("legendary_binary_hint")}
-          rightContent={
-            <Button type="submit">{t("save_changes")}</Button>
-          }
-        />
-      </form>
-
+      {/* Status chip */}
       {status && (
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            padding: "10px 12px",
+            padding: "10px 14px",
             borderRadius: "8px",
             background: "var(--color-background-2, rgba(255,255,255,0.05))",
           }}
@@ -86,11 +139,14 @@ export function SettingsEpicAccount() {
           {isAuthenticated ? (
             <>
               <CheckCircleFillIcon size={16} />
-              <span>
+              <span style={{ flex: 1 }}>
                 {t("epic_logged_in_as", { username: status.account })}
               </span>
+              <Button type="button" theme="outline" onClick={handleSignOut} disabled={isBusy}>
+                {t("sign_out")}
+              </Button>
             </>
-          ) : status.binaryFound ? (
+          ) : binaryFound ? (
             <>
               <AlertIcon size={16} />
               <span>{t("legendary_not_authenticated")}</span>
@@ -104,16 +160,68 @@ export function SettingsEpicAccount() {
         </div>
       )}
 
+      {/* Install legendary */}
+      {!binaryFound && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <Button
+            type="button"
+            onClick={handleInstall}
+            disabled={isBusy}
+            style={{ display: "flex", alignItems: "center", gap: "6px", width: "fit-content" }}
+          >
+            <DownloadIcon size={14} />
+            {step === "installing"
+              ? installProgress > 0
+                ? t("downloading_pct", { pct: installProgress })
+                : t("downloading")
+              : t("install_legendary")}
+          </Button>
+
+          {/* Manual path override */}
+          <form
+            onSubmit={handleSavePath}
+            style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+          >
+            <TextField
+              label={t("legendary_binary_path")}
+              value={legendaryPath}
+              onChange={(e) => setLegendaryPath(e.target.value)}
+              placeholder={t("legendary_binary_placeholder")}
+              hint={t("legendary_binary_hint")}
+              rightContent={
+                <Button type="submit" disabled={isBusy}>
+                  {t("save_changes")}
+                </Button>
+              }
+            />
+          </form>
+        </div>
+      )}
+
+      {/* Sign in */}
+      {binaryFound && !isAuthenticated && (
+        <Button
+          type="button"
+          onClick={handleSignIn}
+          disabled={isBusy}
+          style={{ display: "flex", alignItems: "center", gap: "6px", width: "fit-content" }}
+        >
+          <PersonIcon size={14} />
+          {step === "signing_in" ? t("signing_in") : t("sign_in_epic")}
+        </Button>
+      )}
+
+      {/* Sync library */}
       {isAuthenticated && (
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Button
             type="button"
             onClick={handleSync}
-            disabled={isSyncing}
+            disabled={isBusy}
             style={{ display: "flex", alignItems: "center", gap: "6px" }}
           >
             <SyncIcon size={14} />
-            {isSyncing ? t("syncing") : t("sync_epic_library")}
+            {step === "syncing" ? t("syncing") : t("sync_epic_library")}
           </Button>
           {syncResult && (
             <small style={{ opacity: 0.7 }}>
@@ -121,12 +229,6 @@ export function SettingsEpicAccount() {
             </small>
           )}
         </div>
-      )}
-
-      {!isAuthenticated && status?.binaryFound && (
-        <p style={{ opacity: 0.6, fontSize: "0.85em", margin: 0 }}>
-          {t("legendary_auth_instructions")}
-        </p>
       )}
     </div>
   );

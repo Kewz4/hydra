@@ -1,7 +1,8 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import fs from "node:fs";
+import axios from "axios";
 import { SystemPath } from "./system-path";
 import { logger } from "./logger";
 
@@ -20,57 +21,70 @@ export interface LegendaryStatus {
   authenticated: boolean;
 }
 
-const LEGENDARY_SEARCH_PATHS: string[] = [
-  "legendary",
-  "legendary.exe",
-];
-
 const getPlatformSearchPaths = (): string[] => {
+  const userData = SystemPath.getPath("userData");
+  const binDir = path.join(userData, "bin");
+
   if (process.platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA ?? "";
     return [
+      path.join(binDir, "legendary.exe"),
       path.join(localAppData, "Programs", "legendary", "legendary.exe"),
       path.join(localAppData, "legendary", "legendary.exe"),
-      "legendary.exe",
     ];
   }
   if (process.platform === "darwin") {
     return [
+      path.join(binDir, "legendary"),
       "/usr/local/bin/legendary",
       "/opt/homebrew/bin/legendary",
       path.join(SystemPath.getPath("home"), ".local", "bin", "legendary"),
-      "legendary",
     ];
   }
   return [
+    path.join(binDir, "legendary"),
     path.join(SystemPath.getPath("home"), ".local", "bin", "legendary"),
     "/usr/bin/legendary",
     "/usr/local/bin/legendary",
-    "legendary",
   ];
 };
 
-export const findLegendaryBinary = (): string | null => {
-  for (const candidate of [...getPlatformSearchPaths(), ...LEGENDARY_SEARCH_PATHS]) {
+export const getLegendaryInstallPath = (): string => {
+  const binDir = path.join(SystemPath.getPath("userData"), "bin");
+  fs.mkdirSync(binDir, { recursive: true });
+  const ext = process.platform === "win32" ? ".exe" : "";
+  return path.join(binDir, `legendary${ext}`);
+};
+
+export const findLegendaryBinary = (customPath?: string | null): string | null => {
+  if (customPath && fs.existsSync(customPath)) return customPath;
+
+  for (const candidate of getPlatformSearchPaths()) {
     try {
       if (fs.existsSync(candidate)) return candidate;
     } catch {}
   }
+
+  // Try PATH via which/where
+  try {
+    const whichCmd = process.platform === "win32" ? "where" : "which";
+    const { stdout } = require("node:child_process").execSync(`${whichCmd} legendary`, { encoding: "utf8", timeout: 3000 });
+    const bin = stdout.trim().split("\n")[0].trim();
+    if (bin && fs.existsSync(bin)) return bin;
+  } catch {}
+
   return null;
 };
 
-const runLegendary = async (
-  binary: string,
-  args: string[]
-): Promise<string> => {
-  const { stdout } = await execFileAsync(binary, args, { timeout: 30_000 });
+const runLegendary = async (binary: string, args: string[]): Promise<string> => {
+  const { stdout } = await execFileAsync(binary, args, { timeout: 60_000 });
   return stdout;
 };
 
 export const getLegendaryStatus = async (
   binaryPath?: string | null
 ): Promise<LegendaryStatus> => {
-  const binary = binaryPath || findLegendaryBinary();
+  const binary = findLegendaryBinary(binaryPath);
   if (!binary) return { account: null, authenticated: false };
 
   try {
@@ -89,30 +103,25 @@ export const getLegendaryStatus = async (
 export const getLegendaryGames = async (
   binaryPath?: string | null
 ): Promise<LegendaryGame[]> => {
-  const binary = binaryPath || findLegendaryBinary();
+  const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
   const output = await runLegendary(binary, ["list", "--json"]);
   const data = JSON.parse(output);
 
-  if (!Array.isArray(data)) {
-    throw new Error("Unexpected legendary output format");
-  }
+  if (!Array.isArray(data)) throw new Error("Unexpected legendary output format");
 
   return data as LegendaryGame[];
 };
 
-export const launchLegendaryGame = async (
-  appName: string,
+export const authenticateLegendary = async (
+  code: string,
   binaryPath?: string | null
 ): Promise<void> => {
-  const binary = binaryPath || findLegendaryBinary();
+  const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  execFile(binary, ["launch", appName, "--skip-version-check"], {
-    detached: true,
-    stdio: "ignore",
-  }).unref();
+  await execFileAsync(binary, ["auth", "--code", code.trim()], { timeout: 30_000 });
 };
 
 export const getLegendaryGameCoverUrl = (game: LegendaryGame): string | null => {
@@ -124,3 +133,50 @@ export const getLegendaryGameCoverUrl = (game: LegendaryGame): string | null => 
   }
   return game.key_images[0]?.url ?? null;
 };
+
+interface GitHubRelease {
+  assets: { name: string; browser_download_url: string }[];
+}
+
+export const downloadLegendary = async (
+  onProgress?: (pct: number) => void
+): Promise<string> => {
+  const response = await axios.get<GitHubRelease>(
+    "https://api.github.com/repos/legendary-gl/legendary/releases/latest",
+    { headers: { Accept: "application/vnd.github+json" } }
+  );
+
+  const assets = response.data.assets;
+  let assetName: string;
+
+  if (process.platform === "win32") {
+    assetName = "legendary.exe";
+  } else if (process.platform === "darwin") {
+    assetName = "legendary_macos";
+  } else {
+    assetName = "legendary_linux_x86_64";
+  }
+
+  const asset = assets.find((a) => a.name === assetName) ?? assets.find((a) => a.name.includes("legendary") && !a.name.endsWith(".tar.gz"));
+
+  if (!asset) throw new Error(`No legendary binary found for ${process.platform}`);
+
+  const destPath = getLegendaryInstallPath();
+
+  const downloadResponse = await axios.get<ArrayBuffer>(asset.browser_download_url, {
+    responseType: "arraybuffer",
+    onDownloadProgress: (evt) => {
+      if (evt.total && onProgress) onProgress(Math.round((evt.loaded / evt.total) * 100));
+    },
+  });
+
+  fs.writeFileSync(destPath, Buffer.from(downloadResponse.data));
+
+  if (process.platform !== "win32") {
+    fs.chmodSync(destPath, 0o755);
+  }
+
+  logger.log(`legendary downloaded to ${destPath}`);
+  return destPath;
+};
+

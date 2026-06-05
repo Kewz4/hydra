@@ -910,7 +910,20 @@
     "battlenet_games_added": "{{count}} Battle.net game(s) added to library",
     "battlenet_add_failed": "Failed to add Battle.net games.",
     "installed": "Installed",
-    "sync_result": "{{added}} new games added ({{total}} total)"
+    "sync_result": "{{added}} new games added ({{total}} total)",
+    "install_legendary": "Install Legendary",
+    "legendary_installed": "Legendary installed successfully",
+    "legendary_install_failed": "Failed to download Legendary. Check your internet connection.",
+    "sign_in_epic": "Sign in to Epic Games",
+    "signing_in": "Signing in...",
+    "epic_auth_failed": "Epic Games sign-in failed or was cancelled.",
+    "sign_out": "Sign out",
+    "epic_signed_out": "Signed out of Epic Games",
+    "downloading": "Downloading...",
+    "downloading_pct": "Downloading... {{pct}}%",
+    "install_battlenet": "Install Battle.net",
+    "battlenet_installer_launched": "Battle.net installer launched — complete the setup, then come back here.",
+    "battlenet_install_failed": "Failed to download the Battle.net installer."
   },
   "notifications": {
     "download_complete": "Download complete",

@@ -216,7 +216,10 @@ contextBridge.exposeInMainWorld("electron", {
   syncSteamLibrary: (steamId: string, apiKey: string) =>
     ipcRenderer.invoke("syncSteamLibrary", steamId, apiKey),
   getLegendaryStatus: () => ipcRenderer.invoke("getLegendaryStatus"),
+  installLegendary: () => ipcRenderer.invoke("installLegendary"),
+  openLegendaryAuthWindow: () => ipcRenderer.invoke("openLegendaryAuthWindow"),
   syncEpicLibrary: () => ipcRenderer.invoke("syncEpicLibrary"),
+  installBattleNet: () => ipcRenderer.invoke("installBattleNet"),
   openGogAuthWindow: () => ipcRenderer.invoke("openGogAuthWindow"),
   syncGogLibrary: () => ipcRenderer.invoke("syncGogLibrary"),
   getGogUserInfo: () => ipcRenderer.invoke("getGogUserInfo"),
@@ -734,6 +737,16 @@ contextBridge.exposeInMainWorld("electron", {
     const listener = (_event: Electron.IpcRendererEvent) => cb();
     ipcRenderer.on("on-account-updated", listener);
     return () => ipcRenderer.removeListener("on-account-updated", listener);
+  },
+  onLegendaryInstallProgress: (cb: (pct: number) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, pct: number) => cb(pct);
+    ipcRenderer.on("on-legendary-install-progress", listener);
+    return () => ipcRenderer.removeListener("on-legendary-install-progress", listener);
+  },
+  onBattleNetInstallProgress: (cb: (pct: number) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, pct: number) => cb(pct);
+    ipcRenderer.on("on-battlenet-install-progress", listener);
+    return () => ipcRenderer.removeListener("on-battlenet-install-progress", listener);
   },
   onSignOut: (cb: () => void) => {
     const listener = (_event: Electron.IpcRendererEvent) => cb();

@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components";
 import { useToast } from "@renderer/hooks";
-import { AlertIcon, CheckCircleFillIcon, PlusIcon } from "@primer/octicons-react";
+import { AlertIcon, CheckCircleFillIcon, DownloadIcon, PlusIcon } from "@primer/octicons-react";
 
 interface BattleNetGameDef {
   productCode: string;
@@ -20,19 +20,44 @@ export function SettingsBattleNet() {
   const [detected, setDetected] = useState<BattleNetGameDef[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
+  const [isInstallingBnet, setIsInstallingBnet] = useState(false);
+  const [bnetInstallProgress, setBnetInstallProgress] = useState(0);
+  const unsubRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => {
+  const refreshInstalled = () => {
     window.electron
       .getBattleNetGames()
       .then(({ installed, detected: det, all }) => {
         setBnetInstalled(installed);
         setDetected(det);
         setAllGames(all);
-        // Pre-select auto-detected games
         setSelected(new Set(det.map((g) => g.productCode)));
       })
       .catch(() => setBnetInstalled(false));
+  };
+
+  useEffect(() => {
+    refreshInstalled();
+    const unsub = window.electron.onBattleNetInstallProgress(setBnetInstallProgress);
+    unsubRef.current = unsub;
+    return () => unsub();
   }, []);
+
+  const handleInstallBattleNet = async () => {
+    setIsInstallingBnet(true);
+    setBnetInstallProgress(0);
+    try {
+      await window.electron.installBattleNet();
+      showSuccessToast(t("battlenet_installer_launched"));
+      // Re-check after a short delay to pick up the install
+      setTimeout(refreshInstalled, 5000);
+    } catch (err: any) {
+      showErrorToast(err?.message ?? t("battlenet_install_failed"));
+    } finally {
+      setIsInstallingBnet(false);
+      setBnetInstallProgress(0);
+    }
+  };
 
   const toggleGame = (code: string) => {
     setSelected((prev) => {
@@ -64,16 +89,24 @@ export function SettingsBattleNet() {
       <p style={{ margin: 0, opacity: 0.8 }}>{t("battlenet_description")}</p>
 
       {!bnetInstalled && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            opacity: 0.7,
-          }}
-        >
-          <AlertIcon size={16} />
-          <span>{t("battlenet_not_installed")}</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", opacity: 0.7 }}>
+            <AlertIcon size={16} />
+            <span>{t("battlenet_not_installed")}</span>
+          </div>
+          <Button
+            type="button"
+            onClick={handleInstallBattleNet}
+            disabled={isInstallingBnet}
+            style={{ display: "flex", alignItems: "center", gap: "6px", width: "fit-content" }}
+          >
+            <DownloadIcon size={14} />
+            {isInstallingBnet
+              ? bnetInstallProgress > 0
+                ? t("downloading_pct", { pct: bnetInstallProgress })
+                : t("downloading")
+              : t("install_battlenet")}
+          </Button>
         </div>
       )}
 
