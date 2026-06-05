@@ -61,6 +61,8 @@ import "./get-battlenet-games";
 import "./add-battlenet-games-to-library";
 import "./install-battlenet";
 
+import "./sync-gamepass-library";
+
 //UPDATEDD
 
 import "./transfer-game-files";

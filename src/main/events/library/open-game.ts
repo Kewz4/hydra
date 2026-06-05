@@ -8,7 +8,7 @@ import { findLegendaryBinary } from "@main/services/legendary";
 import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 
-const EXTERNAL_URL_SCHEMES = ["steam://", "goggalaxy://", "battlenet://"];
+const EXTERNAL_URL_SCHEMES = ["steam://", "goggalaxy://", "battlenet://", "msxbox://"];
 
 const openGame = async (
   _event: Electron.IpcMainInvokeEvent,

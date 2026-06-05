@@ -181,6 +181,7 @@ declare global {
       all: Array<{ productCode: string; title: string; iconUrl: string; launchUri: string }>;
     }>;
     addBattleNetGamesToLibrary: (productCodes: string[]) => Promise<{ added: number }>;
+    syncGamePassLibrary: () => Promise<{ added: number; total: number }>;
     addCustomGameToLibrary: (
       title: string,
       executablePath: string,

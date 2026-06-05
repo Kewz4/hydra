@@ -923,7 +923,13 @@
     "downloading_pct": "Downloading... {{pct}}%",
     "install_battlenet": "Install Battle.net",
     "battlenet_installer_launched": "Battle.net installer launched — complete the setup, then come back here.",
-    "battlenet_install_failed": "Failed to download the Battle.net installer."
+    "battlenet_install_failed": "Failed to download the Battle.net installer.",
+    "xbox_game_pass": "Xbox Game Pass",
+    "xbox_description": "Browse and add Xbox Game Pass PC catalog games to your Hydra library. Games launch via the Xbox app.",
+    "sync_xbox_library": "Sync Game Pass Catalog",
+    "xbox_library_synced": "Synced {{total}} Game Pass titles ({{added}} new)",
+    "xbox_sync_failed": "Failed to sync Xbox Game Pass library.",
+    "xbox_launch_hint": "Games are launched using the Xbox app (msxbox:// protocol). The Xbox app must be installed."
   },
   "notifications": {
     "download_complete": "Download complete",
