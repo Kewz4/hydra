@@ -26,6 +26,7 @@ import {
   logger,
 } from "@main/services";
 import { migrateDownloadSources } from "./helpers/migrate-download-sources";
+import { seedDefaultSources } from "./helpers/seed-default-sources";
 import { getDirSize } from "./services/download/helpers";
 import { GofileApi } from "./services/hosters";
 
@@ -62,6 +63,8 @@ export const loadState = async () => {
   );
 
   await import("./events");
+
+  void seedDefaultSources();
 
   if (userPreferences?.realDebridApiToken) {
     RealDebridClient.authorize(userPreferences.realDebridApiToken);
