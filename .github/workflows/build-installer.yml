@@ -52,14 +52,13 @@ jobs:
         run: yarn build:win
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Leave API URLs blank so the app uses its built-in defaults
-          MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL || '' }}
-          MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL || '' }}
-          MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL || '' }}
-          MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL || '' }}
+          MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL || 'https://hydra-api-us-east-1.losbroxas.org' }}
+          MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL || 'https://auth.hydralauncher.gg' }}
+          MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL || 'https://checkout.hydralauncher.gg' }}
+          MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL || 'wss://ws.hydralauncher.gg' }}
           MAIN_VITE_NIMBUS_API_URL: ${{ vars.MAIN_VITE_NIMBUS_API_URL || '' }}
-          RENDERER_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || '' }}
-          MAIN_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || '' }}
+          RENDERER_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || 'https://assets.hydralauncher.gg' }}
+          MAIN_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || 'https://assets.hydralauncher.gg' }}
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
