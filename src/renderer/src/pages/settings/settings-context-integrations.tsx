@@ -5,9 +5,21 @@ import { SettingsEpicAccount } from "./settings-epic-account";
 import { SettingsGogAccount } from "./settings-gog-account";
 import { SettingsBattleNet } from "./settings-battlenet";
 import { SettingsXbox } from "./settings-xbox";
+import { useUserDetails } from "@renderer/hooks";
 
 export function SettingsContextIntegrations() {
   const { t } = useTranslation("settings");
+  const { userDetails } = useUserDetails();
+
+  if (!userDetails) {
+    return (
+      <div className="settings-context-panel">
+        <div className="settings-context-panel__group">
+          <p style={{ opacity: 0.7 }}>{t("integrations_sign_in_required")}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="settings-context-panel">

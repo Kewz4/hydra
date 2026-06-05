@@ -349,7 +349,7 @@ export function AccountPrivacySettingsSection({
       </SettingsSection> */}
 
       <SettingsSection
-        title="Hydra Cloud"
+        title="GameHub Cloud"
         description="Check your subscription status and manage your Hydra Cloud plan."
       >
         <div className="account-privacy-settings-section__section-content">

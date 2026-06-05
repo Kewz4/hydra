@@ -1,7 +1,7 @@
 {
   "name": "hydralauncher",
   "version": "3.9.9",
-  "description": "Hydra",
+  "description": "GameHub",
   "main": "./out/main/index.js",
   "author": "Los Broxas",
   "repository": {

@@ -259,7 +259,7 @@ export default function ComponentLab() {
       type: "error",
       title: "Unable to sync cloud save",
       message:
-        "Hydra couldn't reach the cloud right now. Try again in a few minutes.",
+        "GameHub couldn't reach the cloud right now. Try again in a few minutes.",
       imageUrl: toastImageUrl ?? undefined,
     });
   }, [presentToastDemo, toastImageUrl]);
@@ -327,7 +327,7 @@ export default function ComponentLab() {
           description="Label, hint, ícones, erro e disabled."
         >
           <div className="catalogue-page__input-row">
-            <Input label="Default" placeholder="Hydra" />
+            <Input label="Default" placeholder="GameHub" />
             <Input
               label="With icons"
               placeholder="Search"
@@ -669,7 +669,7 @@ export default function ComponentLab() {
               totalBytes={SAMPLE_TOTAL_BYTES}
             />
             <UserDiskItem
-              title="Hydra archive drive"
+              title="GameHub archive drive"
               path="D:\\Hydra\\Library"
               freeBytes={Math.round(82.6 * 1024 ** 3)}
               totalBytes={2 * 1024 ** 4}

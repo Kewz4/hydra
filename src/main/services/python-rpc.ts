@@ -324,7 +324,7 @@ export class PythonRPC {
       if (!fs.existsSync(binaryPath)) {
         dialog.showErrorBox(
           "Fatal",
-          "Hydra Python Instance binary not found. Please check if it has been removed by Windows Defender."
+          "GameHub Python Instance binary not found. Please check if it has been removed by Windows Defender."
         );
 
         app.quit();

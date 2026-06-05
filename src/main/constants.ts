@@ -62,5 +62,5 @@ export const DECKY_PLUGINS_LOCATION = path.join(
 
 export const HYDRA_DECKY_PLUGIN_LOCATION = path.join(
   DECKY_PLUGINS_LOCATION,
-  "Hydra"
+  "GameHub"
 );

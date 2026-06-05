@@ -46,11 +46,11 @@ export class DeckyPlugin {
   }
 
   private static async downloadPlugin(): Promise<string> {
-    logger.log("Downloading Hydra Decky plugin...");
+    logger.log("Downloading GameHub Decky plugin...");
 
     const releaseInfo = await this.getDeckyReleaseInfo();
     const tempDir = SystemPath.getPath("temp");
-    const zipPath = path.join(tempDir, "Hydra.zip");
+    const zipPath = path.join(tempDir, "GameHub.zip");
 
     const response = await axios.get(releaseInfo.downloadUrl, {
       responseType: "arraybuffer",
@@ -63,7 +63,7 @@ export class DeckyPlugin {
   }
 
   private static async extractPlugin(zipPath: string): Promise<string> {
-    logger.log("Extracting Hydra Decky plugin...");
+    logger.log("Extracting GameHub Decky plugin...");
 
     const tempDir = SystemPath.getPath("temp");
     const extractPath = path.join(tempDir, "hydra-decky-plugin");
@@ -119,7 +119,7 @@ export class DeckyPlugin {
     logger.log("Installing plugin with sudo...");
 
     const username = os.userInfo().username;
-    const sourcePath = path.join(extractPath, "Hydra");
+    const sourcePath = path.join(extractPath, "GameHub");
 
     return new Promise((resolve, reject) => {
       const command = `mkdir -p "${DECKY_PLUGINS_LOCATION}" && rm -rf "${HYDRA_DECKY_PLUGIN_LOCATION}" && cp -r "${sourcePath}" "${HYDRA_DECKY_PLUGIN_LOCATION}" && chown -R ${username}: "${DECKY_PLUGINS_LOCATION}"`;
@@ -148,7 +148,7 @@ export class DeckyPlugin {
   ): Promise<void> {
     logger.log("Installing plugin without sudo...");
 
-    const sourcePath = path.join(extractPath, "Hydra");
+    const sourcePath = path.join(extractPath, "GameHub");
 
     if (!fs.existsSync(DECKY_PLUGINS_LOCATION)) {
       await fs.promises.mkdir(DECKY_PLUGINS_LOCATION, { recursive: true });
@@ -215,7 +215,7 @@ export class DeckyPlugin {
 
   public static async checkAndUpdateIfOutdated(): Promise<void> {
     if (!fs.existsSync(HYDRA_DECKY_PLUGIN_LOCATION)) {
-      logger.log("Hydra Decky plugin not installed, skipping update check");
+      logger.log("GameHub Decky plugin not installed, skipping update check");
       return;
     }
 
@@ -224,7 +224,7 @@ export class DeckyPlugin {
     try {
       if (!fs.existsSync(packageJsonPath)) {
         logger.log(
-          "Hydra Decky plugin package.json not found, skipping update"
+          "GameHub Decky plugin package.json not found, skipping update"
         );
         return;
       }
@@ -237,16 +237,16 @@ export class DeckyPlugin {
 
       if (isOutdated) {
         logger.log(
-          `Hydra Decky plugin is outdated. Current: ${currentVersion}, Expected: ${releaseInfo.version}. Updating...`
+          `GameHub Decky plugin is outdated. Current: ${currentVersion}, Expected: ${releaseInfo.version}. Updating...`
         );
 
         await this.updatePlugin();
-        logger.log("Hydra Decky plugin updated successfully");
+        logger.log("GameHub Decky plugin updated successfully");
       } else {
-        logger.log(`Hydra Decky plugin is up to date (${currentVersion})`);
+        logger.log(`GameHub Decky plugin is up to date (${currentVersion})`);
       }
     } catch (error) {
-      logger.error(`Error checking/updating Hydra Decky plugin: ${error}`);
+      logger.error(`Error checking/updating GameHub Decky plugin: ${error}`);
     }
   }
 
@@ -260,7 +260,7 @@ export class DeckyPlugin {
       const releaseInfo = await this.getDeckyReleaseInfo();
 
       if (!fs.existsSync(HYDRA_DECKY_PLUGIN_LOCATION)) {
-        logger.log("Hydra Decky plugin folder not found, installing...");
+        logger.log("GameHub Decky plugin folder not found, installing...");
 
         try {
           await this.updatePlugin();
@@ -303,7 +303,7 @@ export class DeckyPlugin {
       try {
         if (!fs.existsSync(packageJsonPath)) {
           logger.log(
-            "Hydra Decky plugin package.json not found, installing..."
+            "GameHub Decky plugin package.json not found, installing..."
           );
 
           await this.updatePlugin();
@@ -338,7 +338,7 @@ export class DeckyPlugin {
 
         if (isOutdated) {
           logger.log(
-            `Hydra Decky plugin is outdated. Current: ${currentVersion}, Expected: ${releaseInfo.version}`
+            `GameHub Decky plugin is outdated. Current: ${currentVersion}, Expected: ${releaseInfo.version}`
           );
 
           await this.updatePlugin();
@@ -364,7 +364,7 @@ export class DeckyPlugin {
             expectedVersion: releaseInfo.version,
           };
         } else {
-          logger.log(`Hydra Decky plugin is up to date (${currentVersion})`);
+          logger.log(`GameHub Decky plugin is up to date (${currentVersion})`);
         }
 
         return {
@@ -374,7 +374,7 @@ export class DeckyPlugin {
           expectedVersion: releaseInfo.version,
         };
       } catch (error) {
-        logger.error(`Error checking Hydra Decky plugin version: ${error}`);
+        logger.error(`Error checking GameHub Decky plugin version: ${error}`);
         return {
           exists: false,
           outdated: true,
