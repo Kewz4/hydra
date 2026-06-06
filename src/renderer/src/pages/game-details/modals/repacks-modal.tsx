@@ -431,11 +431,14 @@ export function RepacksModal({
             steam: "Steam",
             battlenet: "Battle.net",
           };
+          const hasSteamConnected = Boolean(userPreferences?.steamId);
           const shopPlatformOption: Record<string, { url: string; label: string }> = {
-            steam: {
-              url: `steam://install/${game.objectId}`,
-              label: "Download via Steam",
-            },
+            ...(hasSteamConnected ? {
+              steam: {
+                url: `steam://install/${game.objectId}`,
+                label: "Download via Steam",
+              },
+            } : {}),
             xbox: {
               url: `msxbox://game/?productId=${game.objectId}`,
               label: "Download via Xbox",

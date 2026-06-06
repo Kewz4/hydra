@@ -570,17 +570,27 @@ export function Sidebar() {
                   >
                     <button
                       type="button"
-                      className="sidebar__menu-item-button"
+                      className={cn("sidebar__menu-item-button", {
+                        "sidebar__menu-item-button--downloading": isDownloading,
+                      })}
                       onClick={() => handleSidebarItemClick(path)}
                     >
                       {render()}
                       <span>{t(nameKey)}</span>
                       {isDownloading && (
-                        <span className="sidebar__download-pill">
+                        <span className="sidebar__download-eta">
                           {progress}%{eta ? ` · ${eta}` : ""}
                         </span>
                       )}
                     </button>
+                    {isDownloading && (
+                      <div className="sidebar__download-bar">
+                        <div
+                          className="sidebar__download-bar__fill"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    )}
                   </li>
                 );
               })}
