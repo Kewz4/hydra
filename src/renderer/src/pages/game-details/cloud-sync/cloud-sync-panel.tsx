@@ -50,7 +50,6 @@ export function CloudSyncPanel({
   );
 
   const { t } = useTranslation("game_details");
-  const { t: tHydraCloud } = useTranslation("hydra_cloud");
   const { formatDate, formatDateTime } = useDate();
   const { formatNumber } = useFormat();
   const { hasActiveSubscription } = useUserDetails();
@@ -107,8 +106,6 @@ export function CloudSyncPanel({
   }, [objectId, shop]);
 
   useEffect(() => {
-    if (!hasActiveSubscription) return;
-
     getGameBackupPreview();
     getGameArtifacts();
   }, [getGameArtifacts, getGameBackupPreview, hasActiveSubscription]);
@@ -189,16 +186,7 @@ export function CloudSyncPanel({
   const disableActions =
     uploadingBackup || restoringBackup || deletingArtifact || freezingArtifact;
 
-  if (!hasActiveSubscription) {
-    return (
-      <div className="cloud-sync-panel__upgrade">
-        <p>{tHydraCloud("hydra_cloud_feature_found")}</p>
-        <Button onClick={() => window.electron.openCheckout()}>
-          {tHydraCloud("learn_more")}
-        </Button>
-      </div>
-    );
-  }
+
 
   return (
     <>
@@ -224,7 +212,7 @@ export function CloudSyncPanel({
             </div>
           }
           checked={automaticCloudSync}
-          disabled={!hasActiveSubscription || !game?.executablePath}
+          disabled={!game?.executablePath}
           onChange={onToggleAutomaticCloudSync}
         />
       </div>

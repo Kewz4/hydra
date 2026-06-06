@@ -5,27 +5,28 @@ import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import { logger } from "@main/services";
 
-// Epic redirects back to legendary.gl/epiclogin after OAuth, the page body is JSON
-// containing { authorizationCode: "xxxx" }. We also check the URL for ?code= param.
-const EPIC_AUTH_URL =
+// The redirect API endpoint — Epic shows this page with the code JSON after login
+const REDIRECT_API =
   "https://www.epicgames.com/id/api/redirect" +
   "?clientId=34a02cf8f4414e29b15921876da36f9a&responseType=code";
 
-const extractCode = (url: string, bodyText: string): string | null => {
-  // From URL: ?code=xxxx
-  try {
-    const u = new URL(url);
-    const code = u.searchParams.get("code") ?? u.searchParams.get("authorizationCode");
-    if (code) return code;
-  } catch {}
+// Open the login page with the redirect encoded so Epic sends the user there after auth
+const EPIC_LOGIN_URL =
+  "https://www.epicgames.com/id/login" +
+  "?redirectUrl=" +
+  encodeURIComponent(REDIRECT_API) +
+  "&noRedirect=true";
 
-  // From page body JSON: { "authorizationCode": "xxxx" }
+const extractCode = (bodyText: string): string | null => {
   try {
     const json = JSON.parse(bodyText.trim());
-    if (json?.authorizationCode) return json.authorizationCode;
-    if (json?.code) return json.code;
+    const code =
+      json?.authorizationCode ||
+      json?.exchangeCode ||
+      json?.code ||
+      null;
+    if (code && typeof code === "string" && code.length > 8) return code;
   } catch {}
-
   return null;
 };
 
@@ -40,23 +41,39 @@ const openLegendaryAuthWindow = async (
 
   return new Promise((resolve) => {
     const win = new BrowserWindow({
-      width: 600,
-      height: 700,
+      width: 640,
+      height: 800,
       title: "Sign in to Epic Games",
-      webPreferences: { nodeIntegration: false, contextIsolation: true },
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        // Allow the Epic login to work correctly
+        webSecurity: true,
+      },
     });
 
-    win.loadURL(EPIC_AUTH_URL);
+    win.loadURL(EPIC_LOGIN_URL);
+
+    let handled = false;
 
     const tryExtract = async (url: string) => {
+      if (handled) return;
+      // Only look at the redirect API page — not the login or 2FA pages
+      if (!url.includes("/id/api/redirect")) return;
+
       let bodyText = "";
       try {
-        bodyText = await win.webContents.executeJavaScript("document.body.innerText");
-      } catch {}
+        bodyText = await win.webContents.executeJavaScript(
+          "document.body.innerText"
+        );
+      } catch {
+        return;
+      }
 
-      const code = extractCode(url, bodyText);
+      const code = extractCode(bodyText);
       if (!code) return;
 
+      handled = true;
       win.close();
 
       try {
@@ -72,16 +89,13 @@ const openLegendaryAuthWindow = async (
 
     win.webContents.on("did-navigate", (_e, url) => tryExtract(url));
     win.webContents.on("did-navigate-in-page", (_e, url) => tryExtract(url));
-
-    // Fallback: poll the page content after dom-ready for JSON body
     win.webContents.on("dom-ready", () => {
-      const url = win.webContents.getURL();
-      if (url.includes("epicgames.com") || url.includes("legendary.gl")) {
-        tryExtract(url);
-      }
+      tryExtract(win.webContents.getURL());
     });
 
-    win.on("closed", () => resolve({ success: false }));
+    win.on("closed", () => {
+      if (!handled) resolve({ success: false });
+    });
   });
 };
 

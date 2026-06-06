@@ -1,5 +1,5 @@
 import { UserGame } from "@types";
-import HydraIcon from "@renderer/assets/icons/hydra.svg?react";
+import HydraIcon from "@renderer/assets/icons/gamehub.svg?react";
 import { useFormat, useToast } from "@renderer/hooks";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useContext, useEffect, useState } from "react";

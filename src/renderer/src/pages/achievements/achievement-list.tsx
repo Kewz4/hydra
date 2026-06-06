@@ -3,7 +3,7 @@ import type { UserAchievement } from "@types";
 import { useTranslation } from "react-i18next";
 import "./achievements.scss";
 import { EyeClosedIcon } from "@primer/octicons-react";
-import HydraIcon from "@renderer/assets/icons/hydra.svg?react";
+import HydraIcon from "@renderer/assets/icons/gamehub.svg?react";
 import { useSubscription } from "@renderer/hooks/use-subscription";
 
 interface AchievementListProps {

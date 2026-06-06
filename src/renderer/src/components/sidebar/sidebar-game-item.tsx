@@ -1,4 +1,8 @@
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
+import EpicLogo from "@renderer/assets/epic-logo.svg?react";
+import GogLogo from "@renderer/assets/gog-logo.svg?react";
+import BattleNetLogo from "@renderer/assets/battlenet-logo.svg?react";
+import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
 import PlayLogo from "@renderer/assets/play-logo.svg?react";
 import { LibraryGame } from "@types";
 import cn from "classnames";
@@ -46,13 +50,17 @@ export function SidebarGameItem({
     ? game.libraryImageUrl || game.iconUrl
     : game.customIconUrl || game.iconUrl;
 
-  // Determine fallback icon based on game type
-  const getFallbackIcon = () => {
-    if (isCustomGame) {
-      return <PlayLogo className="sidebar__game-icon" />;
-    }
-    return <SteamLogo className="sidebar__game-icon" />;
+  const shopFallbackIcon: Record<string, JSX.Element> = {
+    steam: <SteamLogo className="sidebar__game-icon" />,
+    epic: <EpicLogo className="sidebar__game-icon" />,
+    gog: <GogLogo className="sidebar__game-icon" />,
+    battlenet: <BattleNetLogo className="sidebar__game-icon" />,
+    xbox: <XboxLogo className="sidebar__game-icon" />,
+    custom: <PlayLogo className="sidebar__game-icon" />,
   };
+
+  const getFallbackIcon = () =>
+    shopFallbackIcon[game.shop] ?? <SteamLogo className="sidebar__game-icon" />;
 
   return (
     <>

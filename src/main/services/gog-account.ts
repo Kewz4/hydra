@@ -3,10 +3,11 @@ import { logger } from "./logger";
 
 const CLIENT_ID = "46899977096215655";
 const CLIENT_SECRET = "9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9";
-const REDIRECT_URI = "https://www.gog.com/on_login_success";
+// GOG's public client only accepts this exact redirect URI
+const REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
 
 export const GOG_AUTH_URL =
-  `https://login.gog.com/auth?client_id=${CLIENT_ID}` +
+  `https://auth.gog.com/auth?client_id=${CLIENT_ID}` +
   `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
   `&response_type=code&layout=client2`;
 

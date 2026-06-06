@@ -126,9 +126,9 @@ export function useUserDetails() {
   const unblockUser = (userId: string) =>
     globalThis.window.electron.hydraApi.post(`/users/${userId}/unblock`);
 
+  // Cloud saves are free for all logged-in users
   const hasActiveSubscription = useMemo(() => {
-    const expiresAt = new Date(userDetails?.subscription?.expiresAt ?? 0);
-    return expiresAt > new Date();
+    return userDetails != null;
   }, [userDetails]);
 
   return {

@@ -24,9 +24,7 @@ import {
 } from "@renderer/features";
 import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { useSubscription } from "./hooks/use-subscription";
 import { ArchiveDeletionModal } from "./pages/downloads/archive-deletion-error-modal";
-import { HydraCloudModal } from "./pages/shared-modals/hydra-cloud/hydra-cloud-modal";
 
 import type { UserPreferences } from "@types";
 import "./app.scss";
@@ -63,14 +61,11 @@ export function App() {
   const workwondersRef = useRef<WorkWonders | null>(null);
 
   const {
-    hasActiveSubscription,
     fetchUserDetails,
     updateUserDetails,
     clearUserDetails,
   } = useUserDetails();
 
-  const { hideHydraCloudModal, isHydraCloudModalVisible, hydraCloudFeature } =
-    useSubscription();
 
   const dispatch = useAppDispatch();
 
@@ -408,12 +403,7 @@ export function App() {
     <>
       {window.electron.platform === "win32" && (
         <div className="title-bar">
-          <h4>
-            GameHub
-            {hasActiveSubscription && (
-              <span className="title-bar__cloud-text"> Cloud</span>
-            )}
-          </h4>
+          <h4>GameHub</h4>
         </div>
       )}
 
@@ -426,11 +416,6 @@ export function App() {
         duration={toast.duration}
       />
 
-      <HydraCloudModal
-        visible={isHydraCloudModalVisible}
-        onClose={hideHydraCloudModal}
-        feature={hydraCloudFeature}
-      />
 
       <ArchiveDeletionModal
         visible={showArchiveDeletionModal}

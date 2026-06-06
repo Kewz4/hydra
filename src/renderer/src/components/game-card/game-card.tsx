@@ -2,6 +2,10 @@ import { DownloadIcon, PeopleIcon } from "@primer/octicons-react";
 import type { GameStats, ShopAssets } from "@types";
 
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
+import EpicLogo from "@renderer/assets/epic-logo.svg?react";
+import GogLogo from "@renderer/assets/gog-logo.svg?react";
+import BattleNetLogo from "@renderer/assets/battlenet-logo.svg?react";
+import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
 
 import "./game-card.scss";
 
@@ -19,8 +23,12 @@ export interface GameCardProps
   game: ShopAssets;
 }
 
-const shopIcon = {
+const shopIcon: Record<string, JSX.Element> = {
   steam: <SteamLogo className="game-card__shop-icon" />,
+  epic: <EpicLogo className="game-card__shop-icon" />,
+  gog: <GogLogo className="game-card__shop-icon" />,
+  battlenet: <BattleNetLogo className="game-card__shop-icon" />,
+  xbox: <XboxLogo className="game-card__shop-icon" />,
 };
 
 export function GameCard({ game, ...props }: GameCardProps) {

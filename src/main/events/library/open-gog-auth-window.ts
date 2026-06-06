@@ -21,7 +21,7 @@ const openGogAuthWindow = async (
     win.loadURL(GOG_AUTH_URL);
 
     const checkUrl = async (url: string) => {
-      if (!url.includes("on_login_success")) return;
+      if (!url.includes("on_login_success") && !url.includes("embed.gog.com/on_login_success")) return;
 
       try {
         const params = new URL(url).searchParams;
