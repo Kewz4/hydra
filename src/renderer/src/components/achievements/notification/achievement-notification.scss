@@ -413,13 +413,14 @@ $margin-bottom: 28px;
     &__icon {
       width: 16px;
       height: 16px;
+      color: #ffffff;
       path {
-        fill: globals.$background-color;
+        fill: currentColor;
       }
     }
 
     &__label {
-      color: globals.$background-color;
+      color: #ffffff;
       font-weight: 700;
     }
   }

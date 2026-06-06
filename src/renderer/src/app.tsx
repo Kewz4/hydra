@@ -35,6 +35,7 @@ import {
   removeCustomCss,
 } from "./helpers";
 import { levelDBService } from "./services/leveldb.service";
+import GameHubIcon from "@renderer/assets/icons/gamehub.svg?react";
 
 export interface AppProps {
   children: React.ReactNode;
@@ -370,6 +371,7 @@ export function App() {
     <>
       {window.electron.platform === "win32" && (
         <div className="title-bar">
+          <GameHubIcon style={{ width: 18, height: 18, color: "#ffffff", flexShrink: 0 }} />
           <h4>GameHub</h4>
         </div>
       )}

@@ -25,6 +25,13 @@
   align-items: center;
   gap: 8px;
 
+  &__icon {
+    width: 72px;
+    height: 72px;
+    color: #ffffff;
+    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.15));
+  }
+
   h1 {
     font-size: 1.75rem;
     font-weight: 700;
@@ -140,5 +147,23 @@
 
   &:hover {
     color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+.onboarding-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-accent, #5e81f4);
+  font-size: inherit;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    opacity: 0.8;
   }
 }

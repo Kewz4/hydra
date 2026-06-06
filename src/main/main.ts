@@ -66,6 +66,22 @@ export const loadState = async () => {
 
   void seedDefaultSources();
 
+  // Re-sync Xbox achievements for library games that have a stored titleId
+  if ((userPreferences as any)?.xboxXuid && userPreferences?.xboxXstsToken) {
+    Promise.all([
+      import("./services/achievements/get-xbox-achievements"),
+      import("./level"),
+    ]).then(([{ syncXboxGameAchievements }, { gamesSublevel }]) => {
+      gamesSublevel.values().all().then((games) => {
+        for (const g of games) {
+          if (g.shop === "xbox" && (g as any).xboxTitleId) {
+            syncXboxGameAchievements(g.objectId, (g as any).xboxTitleId).catch(() => {});
+          }
+        }
+      });
+    }).catch(() => {});
+  }
+
   if (userPreferences?.realDebridApiToken) {
     RealDebridClient.authorize(userPreferences.realDebridApiToken);
   }

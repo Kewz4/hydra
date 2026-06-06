@@ -47,6 +47,9 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
         const details = await getGogGameDetails(productId);
         if (!details) return;
 
+        // Skip DLCs, packs, and non-game products
+        if (details.game_type && details.game_type !== "game") return;
+
         const iconUrl = details.images?.logo2x
           ? `https:${details.images.logo2x}`
           : null;

@@ -247,6 +247,11 @@ export function HeroPanelActions() {
     }
 
     if (game?.executablePath) {
+      // Protocol-scheme URLs (legendary://, goggalaxy://, msxbox://) launch via
+      // external platform. Show "Launch" for these to distinguish from local installs.
+      const isExternalLaunch = /^(legendary|goggalaxy|battlenet|msxbox|steam):\/\//.test(
+        game.executablePath
+      );
       return (
         <Button
           onClick={openGame}
@@ -255,7 +260,7 @@ export function HeroPanelActions() {
           className="hero-panel-actions__action"
         >
           <PlayIcon />
-          {t("play")}
+          {isExternalLaunch ? t("launch", { defaultValue: "Launch" }) : t("play")}
         </Button>
       );
     }

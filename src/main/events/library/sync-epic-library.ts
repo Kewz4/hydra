@@ -27,7 +27,10 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     if (existing && !existing.isDeleted) continue;
 
     const coverUrl = getLegendaryGameCoverUrl(epicGame);
-    const executablePath = `legendary://run/${objectId}`;
+    // Only set executablePath when locally installed — uninstalled games show Download
+    const executablePath = epicGame.is_installed
+      ? `legendary://run/${objectId}`
+      : null;
 
     const game = {
       title: epicGame.app_title,

@@ -89,7 +89,7 @@ export const getGogOwnedGameIds = async (
 
 export const getGogGameDetails = async (
   productId: number
-): Promise<{ id: number; title: string; images: { logo2x: string; background: string } } | null> => {
+): Promise<{ id: number; title: string; game_type: string; images: { logo2x: string; background: string } } | null> => {
   try {
     const response = await axios.get(
       `https://api.gog.com/products/${productId}`,

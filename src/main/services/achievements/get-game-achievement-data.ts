@@ -35,6 +35,12 @@ export const getGameAchievementData = async (
 
   const cachedAchievements = await gameAchievementsSublevel.get(gameKey);
 
+  // Non-Steam shops store achievements locally during integration sync.
+  // Always return local data for these — the Hydra API doesn't know their achievements.
+  if (shop !== "steam" && cachedAchievements?.achievements) {
+    return cachedAchievements.achievements;
+  }
+
   if (cachedAchievements?.achievements && useCachedData) {
     return cachedAchievements.achievements;
   }

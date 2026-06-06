@@ -5,19 +5,34 @@ import { useAppSelector } from "@renderer/hooks";
 import {
   CheckCircleFillIcon,
   PersonIcon,
+  LinkExternalIcon,
 } from "@primer/octicons-react";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
 import EpicLogo from "@renderer/assets/epic-logo.svg?react";
 import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
+import GameHubIcon from "@renderer/assets/icons/gamehub.svg?react";
+import { AuthPage } from "@shared";
 import "./onboarding.scss";
 
-type StepId = "welcome" | "steam" | "epic" | "gog" | "xbox" | "done";
-
-const STEPS: StepId[] = ["welcome", "steam", "epic", "gog", "xbox", "done"];
+// Steps (account is gating: skip account → skip integrations)
+type StepId = "welcome" | "account" | "steam" | "epic" | "gog" | "xbox" | "done";
+const ALL_STEPS: StepId[] = ["welcome", "account", "steam", "epic", "gog", "xbox", "done"];
+const INTEGRATION_STEPS: StepId[] = ["steam", "epic", "gog", "xbox"];
 
 interface OnboardingProps {
   onComplete: () => void;
+}
+
+/** Extract Steam ID from a profile URL or return the value as-is. */
+function parseSteamId(input: string): string {
+  const trimmed = input.trim();
+  // https://steamcommunity.com/profiles/76561198...
+  const profileMatch = trimmed.match(/steamcommunity\.com\/profiles\/(\d{17})/);
+  if (profileMatch) return profileMatch[1];
+  // plain numeric ID
+  if (/^\d{15,18}$/.test(trimmed)) return trimmed;
+  return trimmed;
 }
 
 export function Onboarding({ onComplete }: OnboardingProps) {
@@ -26,51 +41,71 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   const [stepIndex, setStepIndex] = useState(0);
 
-  // Steam state
-  const [steamId, setSteamId] = useState("");
+  // Steam
+  const [steamInput, setSteamInput] = useState("");
   const [steamApiKey, setSteamApiKey] = useState("");
   const [steamLinked, setSteamLinked] = useState(false);
   const [steamBusy, setSteamBusy] = useState(false);
+  const [steamError, setSteamError] = useState("");
 
-  // Epic state
+  // Epic
   const [epicBusy, setEpicBusy] = useState(false);
   const [epicLinked, setEpicLinked] = useState(false);
   const [epicAccount, setEpicAccount] = useState<string | null>(null);
 
-  // GOG state
+  // GOG
   const [gogBusy, setGogBusy] = useState(false);
   const [gogLinked, setGogLinked] = useState(false);
   const [gogUsername, setGogUsername] = useState<string | null>(null);
 
-  // Xbox state
+  // Xbox
   const [xboxBusy, setXboxBusy] = useState(false);
   const [xboxLinked, setXboxLinked] = useState(!!userPreferences?.xboxGamertag);
   const [xboxGamertag, setXboxGamertag] = useState(userPreferences?.xboxGamertag ?? null);
 
-  const currentStep = STEPS[stepIndex];
+  const currentStep = ALL_STEPS[stepIndex];
 
   const next = useCallback(() => {
-    if (stepIndex < STEPS.length - 1) {
-      setStepIndex((i) => i + 1);
-    }
-  }, [stepIndex]);
+    setStepIndex((i) => Math.min(i + 1, ALL_STEPS.length - 1));
+  }, []);
+
+  const skipToEnd = useCallback(() => {
+    setStepIndex(ALL_STEPS.indexOf("done"));
+  }, []);
 
   const finish = useCallback(async () => {
     await window.electron.updateUserPreferences({ onboardingComplete: true });
     onComplete();
   }, [onComplete]);
 
+  const handleAccountSignIn = () => {
+    window.electron.openAuthWindow(AuthPage.SignIn);
+    // Move to next step — the user can complete sign-in in the auth window
+    next();
+  };
+
   const handleSteamConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!steamId.trim() || !steamApiKey.trim()) return;
+    setSteamError("");
+    const steamId = parseSteamId(steamInput);
+    if (!steamId || !steamApiKey.trim()) return;
     setSteamBusy(true);
     try {
-      const summary = await window.electron.getSteamPlayerSummary(steamId.trim(), steamApiKey.trim());
-      if (!summary) return;
-      await window.electron.updateUserPreferences({ steamId: steamId.trim(), steamApiKey: steamApiKey.trim() });
+      const summary = await window.electron.getSteamPlayerSummary(
+        steamId,
+        steamApiKey.trim()
+      );
+      if (!summary) {
+        setSteamError("Steam account not found. Check your Steam ID and API key.");
+        return;
+      }
+      await window.electron.updateUserPreferences({
+        steamId,
+        steamApiKey: steamApiKey.trim(),
+      });
       setSteamLinked(true);
     } catch {
-      // silently ignore — user can configure later in Settings
+      setSteamError("Could not connect to Steam. Verify your credentials.");
     } finally {
       setSteamBusy(false);
     }
@@ -79,7 +114,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const handleEpicConnect = async () => {
     setEpicBusy(true);
     try {
-      // Try to install legendary first if needed
       const status = await window.electron.getLegendaryStatus().catch(() => null);
       if (!status?.binaryFound) {
         await window.electron.installLegendary().catch(() => null);
@@ -90,7 +124,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         setEpicAccount(result.account ?? "Epic");
       }
     } catch {
-      // ignore — user can configure later
+      // user can retry in Settings
     } finally {
       setEpicBusy(false);
     }
@@ -101,12 +135,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     try {
       const result = await window.electron.openGogAuthWindow();
       if (result) {
-        await window.electron.updateUserPreferences({ gogRefreshToken: result.refresh_token });
+        await window.electron.updateUserPreferences({
+          gogRefreshToken: result.refresh_token,
+        });
         setGogLinked(true);
         setGogUsername(result.username ?? "GOG User");
       }
     } catch {
-      // ignore
+      // user can retry in Settings
     } finally {
       setGogBusy(false);
     }
@@ -121,37 +157,45 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         setXboxGamertag(result.gamertag ?? "Xbox User");
       }
     } catch {
-      // ignore
+      // user can retry in Settings
     } finally {
       setXboxBusy(false);
     }
   };
 
-  const stepDots = STEPS.slice(0, -1); // exclude "done" from dots
+  // Dot indicators: only show for integration steps
+  const dotSteps = INTEGRATION_STEPS;
+  const showDots =
+    currentStep !== "welcome" &&
+    currentStep !== "account" &&
+    currentStep !== "done";
 
   return (
     <div className="onboarding-overlay">
       <div className="onboarding-card">
         {/* Logo */}
         <div className="onboarding-logo">
+          <GameHubIcon className="onboarding-logo__icon" />
           <h1>GameHub</h1>
           {currentStep === "welcome" && (
             <p>Your all-in-one game launcher</p>
           )}
         </div>
 
-        {/* Step dots (not shown on welcome or done) */}
-        {currentStep !== "welcome" && currentStep !== "done" && (
+        {/* Progress dots (integration steps only) */}
+        {showDots && (
           <div className="onboarding-steps">
-            {stepDots.slice(1).map((s, i) => {
-              const realIndex = i + 1;
+            {dotSteps.map((s) => {
+              const isActive = currentStep === s;
+              const isDone =
+                dotSteps.indexOf(s) < dotSteps.indexOf(currentStep as any);
               return (
                 <div
                   key={s}
                   className={[
                     "onboarding-step-dot",
-                    stepIndex === realIndex ? "onboarding-step-dot--active" : "",
-                    stepIndex > realIndex ? "onboarding-step-dot--done" : "",
+                    isActive ? "onboarding-step-dot--active" : "",
+                    isDone ? "onboarding-step-dot--done" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -162,16 +206,46 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         )}
 
         <div className="onboarding-body">
+
           {/* ── Welcome ── */}
           {currentStep === "welcome" && (
             <>
               <p className="onboarding-step-description">
-                Let's connect your game libraries so everything shows up in one place.
-                You can skip any integration and connect it later in Settings.
+                Let's get you set up. First we'll connect your GameHub account,
+                then link your game libraries so everything shows up in one place.
+                You can skip any step and configure it later in Settings.
               </p>
               <div className="onboarding-actions">
                 <Button type="button" onClick={next}>
                   Get Started
+                </Button>
+              </div>
+            </>
+          )}
+
+          {/* ── GameHub Account ── */}
+          {currentStep === "account" && (
+            <>
+              <div className="onboarding-step-header">
+                <GameHubIcon width={24} height={24} />
+                <h2>GameHub Account</h2>
+              </div>
+              <p className="onboarding-step-description">
+                Sign in or create a GameHub account to enable cloud saves,
+                profiles, and cross-device sync. This is optional — you can
+                use GameHub entirely offline.
+              </p>
+              <div className="onboarding-actions">
+                <button
+                  type="button"
+                  className="onboarding-skip"
+                  onClick={skipToEnd}
+                >
+                  Skip — use without account
+                </button>
+                <Button type="button" onClick={handleAccountSignIn}>
+                  <PersonIcon size={14} />
+                  Sign in / Register
                 </Button>
               </div>
             </>
@@ -186,49 +260,73 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
 
               {steamLinked ? (
-                <div className="onboarding-connected-badge">
-                  <CheckCircleFillIcon size={16} />
-                  Steam connected — library will sync automatically
-                </div>
+                <>
+                  <div className="onboarding-connected-badge">
+                    <CheckCircleFillIcon size={16} />
+                    Steam connected — library will sync
+                  </div>
+                  <div className="onboarding-actions">
+                    <Button type="button" onClick={next}>Continue</Button>
+                  </div>
+                </>
               ) : (
                 <form className="onboarding-form" onSubmit={handleSteamConnect}>
                   <p className="onboarding-step-description">
-                    Enter your Steam ID and API key to sync your Steam library and achievements.
-                    Get your API key at steamcommunity.com/dev/apikey
+                    Paste your Steam profile URL or numeric Steam ID, plus your
+                    Steam Web API key.
                   </p>
+
                   <TextField
-                    label={t("steam_id")}
-                    value={steamId}
-                    onChange={(e) => setSteamId(e.target.value)}
-                    placeholder="76561198..."
+                    label="Steam Profile URL or ID"
+                    value={steamInput}
+                    onChange={(e) => setSteamInput(e.target.value)}
+                    placeholder="https://steamcommunity.com/profiles/76561198… or 765611…"
+                    hint="Paste your full profile URL — we'll extract the ID automatically"
                   />
+
                   <TextField
-                    label={t("steam_api_key")}
+                    label="Steam Web API Key"
                     value={steamApiKey}
                     onChange={(e) => setSteamApiKey(e.target.value)}
                     type="password"
-                    placeholder={t("steam_api_key_placeholder")}
+                    placeholder="Your 32-character API key"
+                    hint={
+                      <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        Get a key at{" "}
+                        <button
+                          type="button"
+                          className="onboarding-link"
+                          onClick={() =>
+                            window.electron.openExternal(
+                              "https://steamcommunity.com/dev/apikey"
+                            )
+                          }
+                        >
+                          steamcommunity.com/dev/apikey
+                          <LinkExternalIcon size={10} />
+                        </button>
+                      </span>
+                    }
                   />
+
+                  {steamError && (
+                    <p style={{ color: "var(--color-danger, #f87171)", margin: 0, fontSize: "0.85rem" }}>
+                      {steamError}
+                    </p>
+                  )}
+
                   <div className="onboarding-actions">
                     <button type="button" className="onboarding-skip" onClick={next}>
                       Skip for now
                     </button>
                     <Button
                       type="submit"
-                      disabled={!steamId.trim() || !steamApiKey.trim() || steamBusy}
+                      disabled={!steamInput.trim() || !steamApiKey.trim() || steamBusy}
                     >
-                      {steamBusy ? t("connecting") : "Connect Steam"}
+                      {steamBusy ? "Connecting…" : "Connect Steam"}
                     </Button>
                   </div>
                 </form>
-              )}
-
-              {steamLinked && (
-                <div className="onboarding-actions">
-                  <Button type="button" onClick={next}>
-                    Continue
-                  </Button>
-                </div>
               )}
             </>
           )}
@@ -242,8 +340,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
 
               <p className="onboarding-step-description">
-                Connect your Epic Games account via the Legendary open-source CLI.
-                GameHub will install it automatically.
+                Connect your Epic Games account via Legendary (open-source CLI).
+                GameHub will install Legendary automatically.
               </p>
 
               {epicLinked ? (
@@ -268,7 +366,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     style={{ display: "flex", alignItems: "center", gap: "6px" }}
                   >
                     <PersonIcon size={14} />
-                    {epicBusy ? t("signing_in") : "Connect Epic"}
+                    {epicBusy ? "Opening Epic login…" : "Connect Epic"}
                   </Button>
                 </div>
               )}
@@ -284,7 +382,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
 
               <p className="onboarding-step-description">
-                Connect your GOG account to sync your DRM-free game library.
+                Connect your GOG account to import your DRM-free game library.
+                A sign-in window will open in your browser.
               </p>
 
               {gogLinked ? (
@@ -309,7 +408,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     style={{ display: "flex", alignItems: "center", gap: "6px" }}
                   >
                     <PersonIcon size={14} />
-                    {gogBusy ? t("connecting") : "Connect GOG"}
+                    {gogBusy ? "Waiting for sign-in…" : "Connect GOG"}
                   </Button>
                 </div>
               )}
@@ -325,7 +424,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
 
               <p className="onboarding-step-description">
-                Sign in with your Microsoft account to sync your Xbox and Game Pass PC library.
+                Sign in with your Microsoft account to import your Xbox and
+                Game Pass PC library. A sign-in window will open.
               </p>
 
               {xboxLinked ? (
@@ -350,7 +450,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     style={{ display: "flex", alignItems: "center", gap: "6px" }}
                   >
                     <PersonIcon size={14} />
-                    {xboxBusy ? t("signing_in") : "Connect Xbox"}
+                    {xboxBusy ? "Waiting for sign-in…" : "Connect Xbox"}
                   </Button>
                 </div>
               )}
@@ -360,10 +460,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Done ── */}
           {currentStep === "done" && (
             <>
-              <p className="onboarding-step-description" style={{ textAlign: "center", fontSize: "1rem" }}>
-                🎮 You're all set!<br /><br />
-                Your libraries will sync in the background. You can connect more services
-                anytime from <strong>Settings → Integrations</strong>.
+              <p
+                className="onboarding-step-description"
+                style={{ textAlign: "center", fontSize: "1rem" }}
+              >
+                You're all set!
+                <br />
+                <br />
+                Your libraries will sync in the background. You can connect
+                more services anytime from{" "}
+                <strong>Settings → Integrations</strong>.
               </p>
               <div className="onboarding-actions" style={{ justifyContent: "center" }}>
                 <Button type="button" onClick={finish}>
