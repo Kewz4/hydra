@@ -171,11 +171,11 @@ export async function exchangeMsaForXboxTokens(
 
   const expiry = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
 
-  const hasGamePass = await checkGamePass(uhs, xsts.token);
-
+  // Don't try to detect Game Pass via API — it requires Microsoft partner access
+  // and public endpoints are unreliable. User sets the toggle manually in settings.
   return {
     tokens: { accessToken: msaAccessToken, userHash: uhs, xstsToken: xsts.token, expiry },
-    user: { gamertag: xsts.gamertag, xuid: xsts.xuid, hasGamePass },
+    user: { gamertag: xsts.gamertag, xuid: xsts.xuid, hasGamePass: false },
   };
 }
 

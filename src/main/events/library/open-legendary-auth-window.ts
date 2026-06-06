@@ -5,12 +5,10 @@ import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import { logger } from "@main/services";
 
-// The redirect API endpoint — Epic shows this page with the code JSON after login
 const REDIRECT_API =
   "https://www.epicgames.com/id/api/redirect" +
   "?clientId=34a02cf8f4414e29b15921876da36f9a&responseType=code";
 
-// Open the login page with the redirect encoded so Epic sends the user there after auth
 const EPIC_LOGIN_URL =
   "https://www.epicgames.com/id/login" +
   "?redirectUrl=" +
@@ -20,11 +18,7 @@ const EPIC_LOGIN_URL =
 const extractCode = (bodyText: string): string | null => {
   try {
     const json = JSON.parse(bodyText.trim());
-    const code =
-      json?.authorizationCode ||
-      json?.exchangeCode ||
-      json?.code ||
-      null;
+    const code = json?.authorizationCode || json?.exchangeCode || json?.code || null;
     if (code && typeof code === "string" && code.length > 8) return code;
   } catch {}
   return null;
@@ -34,9 +28,7 @@ const openLegendaryAuthWindow = async (
   _event: Electron.IpcMainInvokeEvent
 ): Promise<{ success: boolean; account?: string }> => {
   const prefs = await db
-    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
-      valueEncoding: "json",
-    })
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, { valueEncoding: "json" })
     .catch(() => null);
 
   return new Promise((resolve) => {
@@ -44,12 +36,7 @@ const openLegendaryAuthWindow = async (
       width: 640,
       height: 800,
       title: "Sign in to Epic Games",
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        // Allow the Epic login to work correctly
-        webSecurity: true,
-      },
+      webPreferences: { nodeIntegration: false, contextIsolation: true, webSecurity: true },
     });
 
     win.loadURL(EPIC_LOGIN_URL);
@@ -58,14 +45,11 @@ const openLegendaryAuthWindow = async (
 
     const tryExtract = async (url: string) => {
       if (handled) return;
-      // Only look at the redirect API page — not the login or 2FA pages
       if (!url.includes("/id/api/redirect")) return;
 
       let bodyText = "";
       try {
-        bodyText = await win.webContents.executeJavaScript(
-          "document.body.innerText"
-        );
+        bodyText = await win.webContents.executeJavaScript("document.body.innerText");
       } catch {
         return;
       }
@@ -87,11 +71,12 @@ const openLegendaryAuthWindow = async (
       }
     };
 
+    // Listen on all navigation events to catch every possible redirect path
+    win.webContents.on("will-navigate", (_e, url) => tryExtract(url));
+    win.webContents.on("will-redirect", (_e, url) => tryExtract(url));
     win.webContents.on("did-navigate", (_e, url) => tryExtract(url));
     win.webContents.on("did-navigate-in-page", (_e, url) => tryExtract(url));
-    win.webContents.on("dom-ready", () => {
-      tryExtract(win.webContents.getURL());
-    });
+    win.webContents.on("dom-ready", () => tryExtract(win.webContents.getURL()));
 
     win.on("closed", () => {
       if (!handled) resolve({ success: false });

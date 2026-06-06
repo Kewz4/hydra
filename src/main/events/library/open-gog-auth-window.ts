@@ -1,10 +1,6 @@
 import { BrowserWindow } from "electron";
 import { registerEvent } from "../register-event";
-import {
-  GOG_AUTH_URL,
-  exchangeGogCode,
-  getGogUserInfo,
-} from "@main/services/gog-account";
+import { GOG_AUTH_URL, exchangeGogCode } from "@main/services/gog-account";
 import { logger } from "@main/services";
 
 const openGogAuthWindow = async (
@@ -20,30 +16,34 @@ const openGogAuthWindow = async (
 
     win.loadURL(GOG_AUTH_URL);
 
+    let handled = false;
+
     const checkUrl = async (url: string) => {
-      if (!url.includes("on_login_success") && !url.includes("embed.gog.com/on_login_success")) return;
+      if (handled) return;
+      if (!url.includes("on_login_success")) return;
+
+      const code = new URL(url).searchParams.get("code");
+      if (!code) return;
+
+      handled = true;
+      win.close();
 
       try {
-        const params = new URL(url).searchParams;
-        const code = params.get("code");
-        if (!code) return;
-
-        win.close();
-
         const tokens = await exchangeGogCode(code);
         resolve({ refresh_token: tokens.refresh_token, username: tokens.username });
       } catch (err) {
-        logger.error("GOG auth window exchange failed", err);
-        win.close();
+        logger.error("GOG token exchange failed", err);
         resolve(null);
       }
     };
 
     win.webContents.on("will-navigate", (_e, url) => checkUrl(url));
-    win.webContents.on("did-navigate", (_e, url) => checkUrl(url));
     win.webContents.on("will-redirect", (_e, url) => checkUrl(url));
+    win.webContents.on("did-navigate", (_e, url) => checkUrl(url));
 
-    win.on("closed", () => resolve(null));
+    win.on("closed", () => {
+      if (!handled) resolve(null);
+    });
   });
 };
 

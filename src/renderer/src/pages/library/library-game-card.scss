@@ -259,3 +259,24 @@
   height: auto;
   aspect-ratio: 215 / 320;
 }
+
+.library-game-card {
+  &__shop-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    border-radius: 4px;
+    padding: 3px;
+    flex-shrink: 0;
+  }
+
+  &__shop-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.9;
+  }
+}

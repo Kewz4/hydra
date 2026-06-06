@@ -11,6 +11,19 @@ import {
 import { memo, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./library-game-card-large.scss";
+import SteamLogo from "@renderer/assets/steam-logo.svg?react";
+import EpicLogo from "@renderer/assets/epic-logo.svg?react";
+import GogLogo from "@renderer/assets/gog-logo.svg?react";
+import BattleNetLogo from "@renderer/assets/battlenet-logo.svg?react";
+import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
+
+const shopIcon: Record<string, JSX.Element> = {
+  steam: <SteamLogo className="library-game-card-large__shop-icon" />,
+  epic: <EpicLogo className="library-game-card-large__shop-icon" />,
+  gog: <GogLogo className="library-game-card-large__shop-icon" />,
+  battlenet: <BattleNetLogo className="library-game-card-large__shop-icon" />,
+  xbox: <XboxLogo className="library-game-card-large__shop-icon" />,
+};
 
 interface LibraryGameCardLargeProps {
   game: LibraryGame;
@@ -197,6 +210,12 @@ export const LibraryGameCardLarge = memo(function LibraryGameCardLarge({
             <h3 className="library-game-card-large__title">{game.title}</h3>
           )}
         </div>
+
+        {shopIcon[game.shop] && (
+          <div className="library-game-card-large__shop-badge">
+            {shopIcon[game.shop]}
+          </div>
+        )}
 
         <div className="library-game-card-large__info-bar">
           {/* Achievements section */}

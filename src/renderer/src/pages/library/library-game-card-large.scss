@@ -246,3 +246,27 @@
     white-space: nowrap;
   }
 }
+
+.library-game-card-large {
+  &__shop-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    border-radius: 6px;
+    padding: 4px;
+    z-index: 2;
+  }
+
+  &__shop-icon {
+    width: 20px;
+    height: 20px;
+    opacity: 0.9;
+  }
+}

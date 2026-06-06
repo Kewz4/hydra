@@ -927,6 +927,8 @@
     "xbox_game_pass": "Xbox Game Pass",
     "xbox_description": "Connect your Xbox account to sync your Game Pass PC catalog into GameHub. Games launch via the Xbox app.",
     "sign_in_xbox": "Sign in with Microsoft",
+    "xbox_signed_in_as": "Signed in as {{gamertag}}",
+    "xbox_i_have_gamepass": "I have Xbox Game Pass PC",
     "xbox_signed_in_with_gamepass": "Signed in as {{gamertag}} — Game Pass active",
     "xbox_signed_in_no_gamepass": "Signed in as {{gamertag}} — no active Game Pass found",
     "xbox_no_gamepass_hint": "An active Xbox Game Pass PC subscription is required to sync the catalog.",

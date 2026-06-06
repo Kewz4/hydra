@@ -1,55 +1,35 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components";
 import { useToast } from "@renderer/hooks";
-import { AlertIcon, CheckCircleFillIcon, PersonIcon, SyncIcon } from "@primer/octicons-react";
-
-interface XboxState {
-  gamertag: string | null;
-  hasGamePass: boolean;
-}
+import { CheckCircleFillIcon, PersonIcon, SyncIcon } from "@primer/octicons-react";
+import { settingsContext } from "@renderer/context";
+import { useAppSelector } from "@renderer/hooks";
 
 export function SettingsXbox() {
   const { t } = useTranslation("settings");
   const { showSuccessToast, showErrorToast } = useToast();
+  const { updateUserPreferences } = useContext(settingsContext);
+  const userPreferences = useAppSelector((state) => state.userPreferences.value);
 
-  const [xboxState, setXboxState] = useState<XboxState | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ added: number; total: number } | null>(null);
 
-  // Restore persisted state (gamertag + hasGamePass stored in preferences)
-  useEffect(() => {
-    window.electron.getUserPreferences().then((prefs: any) => {
-      if (prefs?.xboxGamertag) {
-        setXboxState({
-          gamertag: prefs.xboxGamertag,
-          hasGamePass: prefs.xboxHasGamePass ?? false,
-        });
-      }
-    });
-  }, []);
+  const gamertag = userPreferences?.xboxGamertag ?? null;
+  const hasGamePass = userPreferences?.xboxHasGamePass ?? false;
+  const isSignedIn = !!gamertag;
 
   const handleSignIn = async () => {
     setIsSigningIn(true);
     try {
       const result = await window.electron.openXboxAuthWindow();
       if (result.success) {
-        const state = {
-          gamertag: result.gamertag ?? "Xbox User",
-          hasGamePass: result.hasGamePass ?? false,
-        };
-        setXboxState(state);
-        // Persist gamertag/hasGamePass to preferences for next session
-        await window.electron.updateUserPreferences({
-          xboxGamertag: state.gamertag,
-          xboxHasGamePass: state.hasGamePass,
+        await updateUserPreferences({
+          xboxGamertag: result.gamertag ?? "Xbox User",
+          xboxHasGamePass: false, // user sets this manually below
         } as any);
-        showSuccessToast(
-          result.hasGamePass
-            ? t("xbox_signed_in_with_gamepass", { gamertag: state.gamertag })
-            : t("xbox_signed_in_no_gamepass", { gamertag: state.gamertag })
-        );
+        showSuccessToast(t("xbox_signed_in_as", { gamertag: result.gamertag ?? "Xbox User" }));
       } else {
         showErrorToast(t("xbox_auth_failed"));
       }
@@ -61,9 +41,8 @@ export function SettingsXbox() {
   };
 
   const handleSignOut = async () => {
-    setXboxState(null);
     setSyncResult(null);
-    await window.electron.updateUserPreferences({
+    await updateUserPreferences({
       xboxAccessToken: null,
       xboxUserHash: null,
       xboxXstsToken: null,
@@ -74,15 +53,17 @@ export function SettingsXbox() {
     showSuccessToast(t("xbox_signed_out"));
   };
 
+  const handleToggleGamePass = async (value: boolean) => {
+    await updateUserPreferences({ xboxHasGamePass: value } as any);
+  };
+
   const handleSync = async () => {
     setIsSyncing(true);
     setSyncResult(null);
     try {
       const result = await window.electron.syncGamePassLibrary();
       setSyncResult(result);
-      showSuccessToast(
-        t("xbox_library_synced", { added: result.added, total: result.total })
-      );
+      showSuccessToast(t("xbox_library_synced", { added: result.added, total: result.total }));
     } catch (err: any) {
       showErrorToast(err?.message ?? t("xbox_sync_failed"));
     } finally {
@@ -94,8 +75,7 @@ export function SettingsXbox() {
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <p style={{ margin: 0, opacity: 0.8 }}>{t("xbox_description")}</p>
 
-      {/* Not signed in */}
-      {!xboxState && (
+      {!isSignedIn ? (
         <Button
           type="button"
           onClick={handleSignIn}
@@ -105,10 +85,7 @@ export function SettingsXbox() {
           <PersonIcon size={14} />
           {isSigningIn ? t("signing_in") : t("sign_in_xbox")}
         </Button>
-      )}
-
-      {/* Signed in */}
-      {xboxState && (
+      ) : (
         <>
           <div
             style={{
@@ -120,49 +97,47 @@ export function SettingsXbox() {
               background: "var(--color-background-2, rgba(255,255,255,0.05))",
             }}
           >
-            {xboxState.hasGamePass ? (
-              <CheckCircleFillIcon size={16} />
-            ) : (
-              <AlertIcon size={16} />
-            )}
-            <span style={{ flex: 1 }}>
-              {xboxState.hasGamePass
-                ? t("xbox_signed_in_with_gamepass", { gamertag: xboxState.gamertag })
-                : t("xbox_signed_in_no_gamepass", { gamertag: xboxState.gamertag })}
-            </span>
+            <CheckCircleFillIcon size={16} />
+            <span style={{ flex: 1 }}>{t("xbox_signed_in_as", { gamertag })}</span>
             <Button type="button" theme="outline" onClick={handleSignOut}>
               {t("sign_out")}
             </Button>
           </div>
 
-          {!xboxState.hasGamePass && (
-            <p style={{ margin: 0, fontSize: "0.8em", opacity: 0.6 }}>
-              {t("xbox_no_gamepass_hint")}
-            </p>
-          )}
+          {/* Manual Game Pass toggle — API detection is unreliable without partner access */}
+          <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+            <input
+              type="checkbox"
+              checked={hasGamePass}
+              onChange={(e) => handleToggleGamePass(e.target.checked)}
+              style={{ width: 16, height: 16, cursor: "pointer" }}
+            />
+            <span>{t("xbox_i_have_gamepass")}</span>
+          </label>
 
-          {xboxState.hasGamePass && (
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <Button
-                type="button"
-                onClick={handleSync}
-                disabled={isSyncing}
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-              >
-                <SyncIcon size={14} />
-                {isSyncing ? t("syncing") : t("sync_xbox_library")}
-              </Button>
-              {syncResult && (
-                <small style={{ opacity: 0.7 }}>
-                  {t("sync_result", { added: syncResult.added, total: syncResult.total })}
-                </small>
-              )}
-            </div>
+          {hasGamePass && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <Button
+                  type="button"
+                  onClick={handleSync}
+                  disabled={isSyncing}
+                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                >
+                  <SyncIcon size={14} />
+                  {isSyncing ? t("syncing") : t("sync_xbox_library")}
+                </Button>
+                {syncResult && (
+                  <small style={{ opacity: 0.7 }}>
+                    {t("xbox_library_synced", { added: syncResult.added, total: syncResult.total })}
+                  </small>
+                )}
+              </div>
+              <p style={{ margin: 0, fontSize: "0.8em", opacity: 0.6 }}>
+                {t("xbox_launch_hint")}
+              </p>
+            </>
           )}
-
-          <p style={{ margin: 0, fontSize: "0.8em", opacity: 0.6 }}>
-            {t("xbox_launch_hint")}
-          </p>
         </>
       )}
     </div>
