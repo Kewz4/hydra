@@ -1,4 +1,4 @@
-import { BottomPanel, Header, Sidebar, Toast } from "@renderer/components";
+import { Header, Sidebar, Toast } from "@renderer/components";
 import {
   useAppDispatch,
   useAppSelector,
@@ -408,7 +408,6 @@ export function App() {
         </article>
       </main>
 
-      <BottomPanel />
     </>
   );
 }

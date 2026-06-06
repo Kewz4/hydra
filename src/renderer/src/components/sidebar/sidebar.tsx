@@ -558,23 +558,32 @@ export function Sidebar() {
         <div className="sidebar__content">
           <section className="sidebar__section">
             <ul className="sidebar__menu">
-              {routes.map(({ nameKey, path, render }) => (
-                <li
-                  key={nameKey}
-                  className={cn("sidebar__menu-item", {
-                    "sidebar__menu-item--active": location.pathname === path,
-                  })}
-                >
-                  <button
-                    type="button"
-                    className="sidebar__menu-item-button"
-                    onClick={() => handleSidebarItemClick(path)}
+              {routes.map(({ nameKey, path, render }) => {
+                const isDownloads = path === "/downloads";
+                const isDownloading = isDownloads && !!lastPacket;
+                return (
+                  <li
+                    key={nameKey}
+                    className={cn("sidebar__menu-item", {
+                      "sidebar__menu-item--active": location.pathname === path,
+                    })}
                   >
-                    {render()}
-                    <span>{t(nameKey)}</span>
-                  </button>
-                </li>
-              ))}
+                    <button
+                      type="button"
+                      className="sidebar__menu-item-button"
+                      onClick={() => handleSidebarItemClick(path)}
+                    >
+                      {render()}
+                      <span>{t(nameKey)}</span>
+                      {isDownloading && (
+                        <span className="sidebar__download-pill">
+                          {progress}%
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
 
               <li className="sidebar__menu-item">
                 <button
