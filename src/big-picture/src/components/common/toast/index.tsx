@@ -8,6 +8,7 @@ import {
 } from "react";
 import confetti from "canvas-confetti";
 import { DownloadSimpleIcon, GearIcon, XIcon } from "@phosphor-icons/react";
+import GameHubIcon from "../../../assets/gamehub-icon.svg?react";
 import { useTranslation } from "react-i18next";
 import cn from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
@@ -41,8 +42,6 @@ interface BigPictureToastProps extends BigPictureToastCardProps {
 }
 
 const INITIAL_PROGRESS = 100;
-const hydraIconUrl = new URL("../../../assets/hydra-icon.svg", import.meta.url)
-  .href;
 const DEFAULT_FALLBACK_VISUAL: BigPictureToastFallbackVisual = "hydra";
 
 function fireToastConfetti(
@@ -134,9 +133,8 @@ export function BigPictureToastCard({
         className="big-picture-toast__fallback-symbol"
       />
     ) : (
-      <img
-        src={hydraIconUrl}
-        alt=""
+      <GameHubIcon
+        aria-hidden
         className="big-picture-toast__fallback-image"
       />
     );
