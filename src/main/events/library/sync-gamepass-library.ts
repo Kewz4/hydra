@@ -56,6 +56,7 @@ const syncGamePassLibrary = async () => {
       playTimeInMilliseconds: 0,
       lastTimePlayed: null,
       addedToLibraryAt: new Date(),
+      automaticCloudSync: true,
       executablePath: `msxbox://game/?productId=${xboxGame.productId}`,
       xboxTitleId: xboxGame.titleId ?? null,
     } as any;

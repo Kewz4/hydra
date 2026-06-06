@@ -50,16 +50,19 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   // Epic
   const [epicBusy, setEpicBusy] = useState(false);
+  const [epicWindowOpen, setEpicWindowOpen] = useState(false);
   const [epicLinked, setEpicLinked] = useState(false);
   const [epicAccount, setEpicAccount] = useState<string | null>(null);
 
   // GOG
   const [gogBusy, setGogBusy] = useState(false);
+  const [gogWindowOpen, setGogWindowOpen] = useState(false);
   const [gogLinked, setGogLinked] = useState(false);
   const [gogUsername, setGogUsername] = useState<string | null>(null);
 
   // Xbox
   const [xboxBusy, setXboxBusy] = useState(false);
+  const [xboxWindowOpen, setXboxWindowOpen] = useState(false);
   const [xboxLinked, setXboxLinked] = useState(!!userPreferences?.xboxGamertag);
   const [xboxGamertag, setXboxGamertag] = useState(userPreferences?.xboxGamertag ?? null);
 
@@ -118,13 +121,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (!status?.binaryFound) {
         await window.electron.installLegendary().catch(() => null);
       }
+      setEpicWindowOpen(true);
       const result = await window.electron.openLegendaryAuthWindow();
+      setEpicWindowOpen(false);
       if (result?.success) {
         setEpicLinked(true);
         setEpicAccount(result.account ?? "Epic");
       }
     } catch {
-      // user can retry in Settings
+      setEpicWindowOpen(false);
     } finally {
       setEpicBusy(false);
     }
@@ -133,7 +138,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const handleGogConnect = async () => {
     setGogBusy(true);
     try {
+      setGogWindowOpen(true);
       const result = await window.electron.openGogAuthWindow();
+      setGogWindowOpen(false);
       if (result) {
         await window.electron.updateUserPreferences({
           gogRefreshToken: result.refresh_token,
@@ -142,7 +149,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         setGogUsername(result.username ?? "GOG User");
       }
     } catch {
-      // user can retry in Settings
+      setGogWindowOpen(false);
     } finally {
       setGogBusy(false);
     }
@@ -151,13 +158,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const handleXboxConnect = async () => {
     setXboxBusy(true);
     try {
+      setXboxWindowOpen(true);
       const result = await window.electron.openXboxAuthWindow();
+      setXboxWindowOpen(false);
       if (result?.success) {
         setXboxLinked(true);
         setXboxGamertag(result.gamertag ?? "Xbox User");
       }
     } catch {
-      // user can retry in Settings
+      setXboxWindowOpen(false);
     } finally {
       setXboxBusy(false);
     }
@@ -354,6 +363,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     <Button type="button" onClick={next}>Continue</Button>
                   </div>
                 </>
+              ) : epicWindowOpen ? (
+                <div className="onboarding-actions" style={{ justifyContent: "center" }}>
+                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>Waiting for sign-in…</span>
+                </div>
               ) : (
                 <div className="onboarding-actions">
                   <button
@@ -402,6 +415,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     <Button type="button" onClick={next}>Continue</Button>
                   </div>
                 </>
+              ) : gogWindowOpen ? (
+                <div className="onboarding-actions" style={{ justifyContent: "center" }}>
+                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>Waiting for sign-in…</span>
+                </div>
               ) : (
                 <div className="onboarding-actions">
                   <button
@@ -420,7 +437,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     style={{ display: "flex", alignItems: "center", gap: "6px" }}
                   >
                     <PersonIcon size={14} />
-                    {gogBusy ? "Waiting for sign-in…" : "Connect GOG"}
+                    {gogBusy ? "Opening GOG login…" : "Connect GOG"}
                   </Button>
                 </div>
               )}
@@ -450,6 +467,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     <Button type="button" onClick={next}>Continue</Button>
                   </div>
                 </>
+              ) : xboxWindowOpen ? (
+                <div className="onboarding-actions" style={{ justifyContent: "center" }}>
+                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>Waiting for sign-in…</span>
+                </div>
               ) : (
                 <div className="onboarding-actions">
                   <button
@@ -468,7 +489,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     style={{ display: "flex", alignItems: "center", gap: "6px" }}
                   >
                     <PersonIcon size={14} />
-                    {xboxBusy ? "Waiting for sign-in…" : "Connect Xbox"}
+                    {xboxBusy ? "Opening Xbox login…" : "Connect Xbox"}
                   </Button>
                 </div>
               )}

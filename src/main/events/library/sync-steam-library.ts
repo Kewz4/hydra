@@ -44,6 +44,7 @@ const syncSteamLibrary = async (
       playTimeInMilliseconds: ownedGame.playtime_forever * 60 * 1000,
       lastTimePlayed: null,
       addedToLibraryAt: new Date(),
+      automaticCloudSync: true,
       executablePath,
     };
 

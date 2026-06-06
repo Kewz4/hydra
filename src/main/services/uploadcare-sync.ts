@@ -35,14 +35,18 @@ export class UploadcareSync {
 
     const uuid = uploadRes.data.file;
 
-    // Attach metadata via management API so files can be queried later
-    await axios.patch(`${API_BASE}/files/${uuid}/metadata/`, metadata, {
-      headers: {
-        Authorization: AUTH_HEADER,
-        "Content-Type": "application/json",
-        Accept: "application/vnd.uploadcare-v0.7+json",
-      },
-    });
+    // Attach metadata — non-fatal if it fails (file is already backed up)
+    try {
+      await axios.patch(`${API_BASE}/files/${uuid}/metadata/`, metadata, {
+        headers: {
+          Authorization: AUTH_HEADER,
+          "Content-Type": "application/json",
+          Accept: "application/vnd.uploadcare-v0.7+json",
+        },
+      });
+    } catch (metaErr) {
+      logger.error(`Uploadcare: metadata patch failed for ${uuid}`, metaErr);
+    }
 
     logger.log(`Uploadcare: uploaded ${uuid} with metadata`, metadata);
     return uuid;

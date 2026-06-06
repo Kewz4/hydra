@@ -73,6 +73,7 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
       playTimeInMilliseconds: 0,
       lastTimePlayed: null,
       addedToLibraryAt: new Date(),
+      automaticCloudSync: true,
       executablePath,
     };
 

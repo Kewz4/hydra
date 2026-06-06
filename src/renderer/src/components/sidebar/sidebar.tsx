@@ -89,7 +89,7 @@ export function Sidebar() {
 
   const { hasActiveSubscription, userDetails } = useUserDetails();
 
-  const { lastPacket, progress } = useDownload();
+  const { lastPacket, progress, eta } = useDownload();
 
   const { showWarningToast, showSuccessToast, showErrorToast } = useToast();
 
@@ -577,7 +577,7 @@ export function Sidebar() {
                       <span>{t(nameKey)}</span>
                       {isDownloading && (
                         <span className="sidebar__download-pill">
-                          {progress}%
+                          {progress}%{eta ? ` · ${eta}` : ""}
                         </span>
                       )}
                     </button>
