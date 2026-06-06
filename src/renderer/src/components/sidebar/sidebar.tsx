@@ -30,7 +30,6 @@ import { buildGameDetailsPath } from "@renderer/helpers";
 
 import {
   ChevronRightIcon,
-  CommentDiscussionIcon,
   FileDirectoryIcon,
   HeartIcon,
   PencilIcon,
@@ -780,21 +779,6 @@ export function Sidebar() {
             )}
           </section>
         </div>
-      </div>
-
-      <div className="sidebar__bottom-buttons">
-        {hasActiveSubscription && (
-          <button
-            type="button"
-            className="sidebar__help-button"
-            data-open-support-chat
-          >
-            <div className="sidebar__help-button-icon">
-              <CommentDiscussionIcon size={14} />
-            </div>
-            <span>{t("need_help")}</span>
-          </button>
-        )}
       </div>
 
       <button

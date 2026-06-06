@@ -10,7 +10,6 @@ import {
 import { useDownloadOptionsListener } from "@renderer/hooks/use-download-options-listener";
 import i18n from "i18next";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { WorkWonders } from "workwonders-sdk";
 
 import {
   clearExtraction,
@@ -40,13 +39,6 @@ export interface AppProps {
   children: React.ReactNode;
 }
 
-type WorkWondersWithKnowledge = WorkWonders & {
-  knowledge?: {
-    initKnowledgeWidget?: () => void;
-    showArticle?: (articleId: number) => void;
-  };
-};
-
 export function App() {
   const contentRef = useRef<HTMLDivElement>(null);
   const { updateLibrary, library } = useLibrary();
@@ -58,7 +50,6 @@ export function App() {
 
   const { clearDownload, setLastPacket, lastPacket } = useDownload();
 
-  const workwondersRef = useRef<WorkWonders | null>(null);
 
   const {
     fetchUserDetails,
@@ -154,35 +145,6 @@ export function App() {
     }
   }, [clearDownload, lastPacket?.gameId, library]);
 
-  const setupWorkWonders = useCallback(
-    async (token?: string, locale?: string) => {
-      if (workwondersRef.current) return;
-
-      workwondersRef.current = new WorkWonders();
-
-      const possibleLocales = ["en", "pt", "ru"];
-
-      const parsedLocale =
-        possibleLocales.find((l) => l === locale?.slice(0, 2)) ?? "en";
-
-      await workwondersRef.current.init({
-        organization: "hydra",
-        token,
-        locale: parsedLocale,
-      });
-
-      workwondersRef.current.changelog.initChangelogWidget();
-      workwondersRef.current.changelog.initChangelogWidgetMini();
-      const workWondersWithKnowledge =
-        workwondersRef.current as WorkWondersWithKnowledge;
-      workWondersWithKnowledge.knowledge?.initKnowledgeWidget?.();
-
-      if (token) {
-        workwondersRef.current.feedback.initFeedbackWidget();
-      }
-    },
-    [workwondersRef]
-  );
 
   useEffect(() => {
     const onClick = async (event: MouseEvent) => {
@@ -215,11 +177,7 @@ export function App() {
             article as keyof typeof articleMapping
           ] ?? articleMapping["en"]?.[article as keyof typeof articleMapping];
 
-        if (articleId) {
-          const workWondersWithKnowledge =
-            workwondersRef.current as WorkWondersWithKnowledge | null;
-          workWondersWithKnowledge?.knowledge?.showArticle?.(articleId);
-        }
+        if (articleId) { /* article lookup preserved for future use */ }
       }
     };
 
@@ -248,7 +206,6 @@ export function App() {
       updateUserDetails(userDetails);
     }
 
-    setupWorkWonders(userDetails?.workwondersJwt, userPreferences?.language);
 
     if (!document.getElementById("external-resources")) {
       const $script = document.createElement("script");
@@ -256,7 +213,7 @@ export function App() {
       $script.src = `${import.meta.env.RENDERER_VITE_EXTERNAL_RESOURCES_URL}/bundle.js?t=${Date.now()}`;
       document.head.appendChild($script);
     }
-  }, [fetchUserDetails, updateUserDetails, dispatch, setupWorkWonders]);
+  }, [fetchUserDetails, updateUserDetails, dispatch]);
 
   useEffect(() => {
     setupExternalResources();
@@ -334,11 +291,7 @@ export function App() {
   }, [onSignIn, updateLibrary, clearUserDetails, dispatch, showErrorToast, t]);
 
   useEffect(() => {
-    const asyncScrollAndNotify = async () => {
-      if (contentRef.current) contentRef.current.scrollTop = 0;
-      await workwondersRef.current?.notifyUrlChange?.();
-    };
-    asyncScrollAndNotify();
+    if (contentRef.current) contentRef.current.scrollTop = 0;
   }, [location.pathname, location.search]);
 
   useEffect(() => {
