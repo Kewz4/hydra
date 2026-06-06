@@ -57,6 +57,9 @@ const openXboxAuthWindow = async (
             xboxUserHash: tokens.userHash,
             xboxXstsToken: tokens.xstsToken,
             xboxTokenExpiry: tokens.expiry.toISOString(),
+            xboxGamertag: user.gamertag,
+            xboxHasGamePass: user.hasGamePass,
+            xboxXuid: user.xuid,
           } as UserPreferences,
           { valueEncoding: "json" }
         );

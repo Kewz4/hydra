@@ -389,6 +389,7 @@ declare global {
       objectId: string,
       shop: GameShop
     ) => Promise<GameArtifact[]>;
+    deleteGameArtifact: (artifactId: string) => Promise<{ ok: boolean }>;
     getGameBackupPreview: (
       objectId: string,
       shop: GameShop

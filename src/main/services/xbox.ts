@@ -11,6 +11,7 @@ export interface XboxGame {
   packageFamilyName: string;
   coverUrl: string | null;
   description: string | null;
+  titleId?: string | null;
 }
 
 export interface XboxTokenSet {
@@ -246,7 +247,11 @@ export async function getGamePassCatalog(uhs?: string, xstsToken?: string): Prom
         const images: any[] = product.LocalizedProperties?.[0]?.Images ?? [];
         const coverUrl = pickImageUrl(images);
 
-        games.push({ productId: id, title, packageFamilyName: pfn, coverUrl, description });
+        const altIds: any[] = product.AlternateIds ?? [];
+        const titleIdEntry = altIds.find((a: any) => a.IdType === "XboxTitleId");
+        const titleId: string | null = titleIdEntry?.Value ?? null;
+
+        games.push({ productId: id, title, packageFamilyName: pfn, coverUrl, description, titleId });
       }
     } catch {
       // skip failed batch

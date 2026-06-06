@@ -6,13 +6,12 @@ import fs from "node:fs";
 import os from "node:os";
 import type { GameShop } from "@types";
 import { backupsPath } from "@main/constants";
-import { HydraApi } from "./hydra-api";
 import { normalizePath, parseRegFile } from "@main/helpers";
 import { logger } from "./logger";
 import { WindowManager } from "./window-manager";
-import axios from "axios";
 import { Ludusavi } from "./ludusavi";
 import { formatDate } from "@shared";
+import { UploadcareSync } from "./uploadcare-sync";
 import i18next, { t } from "i18next";
 import { SystemPath } from "./system-path";
 import { Wine } from "./wine";
@@ -105,7 +104,8 @@ export class CloudSync {
     objectId: string,
     shop: GameShop,
     downloadOptionTitle: string | null,
-    label?: string
+    label?: string,
+    userId?: string
   ) {
     const game = await gamesSublevel.get(levelKeys.game(shop, objectId));
     const effectiveWinePrefixPath = Wine.getEffectivePrefixPath(
@@ -119,47 +119,33 @@ export class CloudSync {
       effectiveWinePrefixPath
     );
 
-    const stat = await fs.promises.stat(bundleLocation);
-
-    const { uploadUrl } = await HydraApi.post<{
-      id: string;
-      uploadUrl: string;
-    }>("/profile/games/artifacts", {
-      artifactLengthInBytes: stat.size,
-      shop,
-      objectId,
-      hostname: os.hostname(),
-      winePrefixPath: effectiveWinePrefixPath
-        ? fs.existsSync(effectiveWinePrefixPath)
-          ? fs.realpathSync(effectiveWinePrefixPath)
-          : effectiveWinePrefixPath
-        : null,
-      homeDir: this.getWindowsLikeUserProfilePath(effectiveWinePrefixPath),
-      downloadOptionTitle,
-      platform: process.platform,
-      label,
-    });
-
-    const fileBuffer = await fs.promises.readFile(bundleLocation);
-
-    await axios.put(uploadUrl, fileBuffer, {
-      headers: {
-        "Content-Type": "application/tar",
-      },
-      onUploadProgress: (progressEvent) => {
-        logger.log(progressEvent);
-      },
-    });
-
-    WindowManager.mainWindow?.webContents.send(
-      `on-upload-complete-${objectId}-${shop}`,
-      true
-    );
-
     try {
-      await fs.promises.unlink(bundleLocation);
-    } catch (error) {
-      logger.error("Failed to remove tar file", { bundleLocation, error });
+      await UploadcareSync.uploadFile(bundleLocation, {
+        userId: userId ?? "anonymous",
+        shop,
+        objectId,
+        hostname: os.hostname(),
+        ...(downloadOptionTitle ? { downloadOptionTitle } : {}),
+        ...(label ? { label } : {}),
+        homeDir: this.getWindowsLikeUserProfilePath(effectiveWinePrefixPath),
+        winePrefixPath: effectiveWinePrefixPath
+          ? fs.existsSync(effectiveWinePrefixPath)
+            ? fs.realpathSync(effectiveWinePrefixPath)
+            : effectiveWinePrefixPath
+          : "",
+        platform: process.platform,
+      });
+
+      WindowManager.mainWindow?.webContents.send(
+        `on-upload-complete-${objectId}-${shop}`,
+        true
+      );
+    } finally {
+      try {
+        await fs.promises.unlink(bundleLocation);
+      } catch (error) {
+        logger.error("Failed to remove tar file", { bundleLocation, error });
+      }
     }
   }
 }

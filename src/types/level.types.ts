@@ -171,6 +171,12 @@ export interface UserPreferences {
   xboxUserHash?: string | null;
   xboxXstsToken?: string | null;
   xboxTokenExpiry?: string | null;
+  xboxGamertag?: string | null;
+  xboxHasGamePass?: boolean | null;
+  xboxXuid?: string | null;
+  uploadcarePublicKey?: string | null;
+  uploadcareSecretKey?: string | null;
+  cloudSyncUserId?: string | null;
 }
 
 export interface ScreenState {

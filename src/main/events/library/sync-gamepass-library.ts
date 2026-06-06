@@ -4,6 +4,7 @@ import { gamesSublevel, levelKeys, db } from "@main/level";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
 import type { UserPreferences } from "@types";
+import { syncXboxGameAchievements } from "@main/services/achievements/get-xbox-achievements";
 
 const syncGamePassLibrary = async () => {
   const prefs = await db
@@ -43,6 +44,11 @@ const syncGamePassLibrary = async () => {
     await gamesSublevel.put(gameKey, game);
     await createGame(game).catch(() => {});
     added++;
+
+    // Sync achievements for this game if titleId is available
+    if (xboxGame.titleId) {
+      syncXboxGameAchievements(xboxGame.productId, xboxGame.titleId).catch(() => {});
+    }
   }
 
   logger.log(`Xbox Game Pass sync complete: ${added} games added`);

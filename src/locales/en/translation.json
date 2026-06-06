@@ -936,7 +936,16 @@
     "xbox_library_synced": "Synced {{total}} Game Pass titles ({{added}} new)",
     "xbox_sync_failed": "Failed to sync Xbox Game Pass library.",
     "xbox_launch_hint": "Games are launched using the Xbox app (msxbox:// protocol). The Xbox app must be installed.",
-    "integrations_sign_in_required": "Sign in to GameHub to access integrations and unlock cloud saves for your connected accounts."
+    "integrations_sign_in_required": "Sign in to GameHub to access integrations and unlock cloud saves for your connected accounts.",
+    "cloud_saves_storage": "Cloud Saves Storage (Uploadcare)",
+    "uploadcare_description": "Connect your Uploadcare account to enable cloud saves across all your devices. Get free API keys at uploadcare.com.",
+    "uploadcare_public_key": "Public Key",
+    "uploadcare_secret_key": "Secret Key",
+    "uploadcare_key_hint": "Get your API keys from the <0>Uploadcare dashboard</0>.",
+    "uploadcare_saved": "Uploadcare keys saved — cloud saves enabled!",
+    "uploadcare_save_failed": "Failed to save Uploadcare keys.",
+    "uploadcare_connected": "Uploadcare connected — cloud saves are active.",
+    "uploadcare_disconnected": "Uploadcare disconnected."
   },
   "notifications": {
     "download_complete": "Download complete",
