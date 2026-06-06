@@ -365,13 +365,26 @@ export function RepacksModal({
             steam: "Steam",
             battlenet: "Battle.net",
           };
-          const shopProtocolUrl: Record<string, string> = {
-            steam: `steam://run/${game.objectId}`,
-            gog: `goggalaxy://openGame/${game.objectId}`,
-            xbox: `msxbox://game/?productId=${game.objectId}`,
-            battlenet: `battlenet://${game.objectId}`,
+          const shopPlatformOption: Record<string, { url: string; label: string }> = {
+            steam: {
+              url: `steam://install/${game.objectId}`,
+              label: "Download via Steam",
+            },
+            gog: {
+              url: `goggalaxy://openGame/${game.objectId}`,
+              label: "Download via GOG Galaxy",
+            },
+            xbox: {
+              url: `msxbox://game/?productId=${game.objectId}`,
+              label: "Download via Xbox",
+            },
+            battlenet: {
+              url: `battlenet://${game.objectId}`,
+              label: "Download via Battle.net",
+            },
           };
-          const primaryProtocolUrl = shopProtocolUrl[game.shop];
+          const primaryPlatform = shopPlatformOption[game.shop];
+          const primaryProtocolUrl = primaryPlatform?.url;
           const altShops = game.alternativeShops ?? [];
           const hasPlatformOptions = primaryProtocolUrl || altShops.length > 0;
 
@@ -392,7 +405,7 @@ export function RepacksModal({
                       onClose();
                     }}
                   >
-                    {`Play via ${shopLabel[game.shop] ?? game.shop}`}
+                    {primaryPlatform?.label ?? `Download via ${shopLabel[game.shop] ?? game.shop}`}
                   </Button>
                 )}
                 {altShops.map((alt) => {
