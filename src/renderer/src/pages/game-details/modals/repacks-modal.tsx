@@ -452,7 +452,8 @@ export function RepacksModal({
           const primaryProtocolUrl = primaryPlatform?.url;
           const altShops = game.alternativeShops ?? [];
           const isGogGame = game.shop === "gog";
-          const hasPlatformOptions = primaryProtocolUrl || isGogGame || altShops.length > 0;
+          const isEpicGame = game.shop === "epic";
+          const hasPlatformOptions = primaryProtocolUrl || isGogGame || isEpicGame || altShops.length > 0;
 
           if (!hasPlatformOptions) return null;
 
@@ -472,6 +473,18 @@ export function RepacksModal({
                     }}
                   >
                     {primaryPlatform?.label ?? `Download via ${shopLabel[game.shop] ?? game.shop}`}
+                  </Button>
+                )}
+                {isEpicGame && (
+                  <Button
+                    theme="outline"
+                    className="repacks-modal__platform-button"
+                    onClick={() => {
+                      window.electron.downloadViaLegendary(game.objectId);
+                      onClose();
+                    }}
+                  >
+                    {"Download via Epic (Legendary)"}
                   </Button>
                 )}
                 {isGogGame && (

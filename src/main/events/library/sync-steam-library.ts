@@ -3,6 +3,7 @@ import { gamesShopAssetsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { getSteamOwnedGames } from "@main/services/steam-account";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
+import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
 
 
 const syncSteamLibrary = async (
@@ -50,6 +51,34 @@ const syncSteamLibrary = async (
 
     await gamesSublevel.put(gameKey, game);
     await createGame(game).catch(() => {});
+
+    // Fetch SGDB artwork in background for new games that don't have a hero yet
+    setImmediate(async () => {
+      try {
+        const hasHero = gameAssets?.libraryHeroImageUrl || gameAssets?.coverImageUrl;
+        if (!hasHero) {
+          const sgdb = await getSteamGridDbArtwork(ownedGame.name).catch(() => null);
+          if (sgdb) {
+            await gamesShopAssetsSublevel.put(gameKey, {
+              ...(gameAssets ?? {}),
+              objectId,
+              shop: "steam" as const,
+              title: ownedGame.name,
+              iconUrl: gameAssets?.iconUrl ?? null,
+              coverImageUrl: sgdb.gridUrl ?? gameAssets?.coverImageUrl ?? null,
+              libraryHeroImageUrl: sgdb.heroUrl ?? gameAssets?.libraryHeroImageUrl ?? null,
+              libraryImageUrl: gameAssets?.libraryImageUrl ?? null,
+              logoImageUrl: sgdb.logoUrl ?? gameAssets?.logoImageUrl ?? null,
+              logoPosition: gameAssets?.logoPosition ?? null,
+              downloadSources: gameAssets?.downloadSources ?? [],
+              updatedAt: Date.now(),
+            });
+          }
+        }
+      } catch {
+        // Non-fatal
+      }
+    });
 
     added++;
   }
