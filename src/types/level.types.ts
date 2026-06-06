@@ -66,6 +66,7 @@ export interface Game {
   unlockedAchievementCount?: number;
   pinnedDate?: Date | null;
   automaticCloudSync?: boolean;
+  lastCloudSaveAt?: Date | null;
   hasManuallyUpdatedPlaytime?: boolean;
   newDownloadOptionsCount?: number;
   installedSizeInBytes?: number | null;

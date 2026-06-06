@@ -136,6 +136,13 @@ export class CloudSync {
         platform: process.platform,
       });
 
+      // Stamp the last cloud save time on the game record
+      const gameKey = levelKeys.game(shop, objectId);
+      const saved = await gamesSublevel.get(gameKey).catch(() => null);
+      if (saved) {
+        await gamesSublevel.put(gameKey, { ...saved, lastCloudSaveAt: new Date() });
+      }
+
       WindowManager.mainWindow?.webContents.send(
         `on-upload-complete-${objectId}-${shop}`,
         true

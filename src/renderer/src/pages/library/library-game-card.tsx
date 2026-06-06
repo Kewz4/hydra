@@ -6,6 +6,7 @@ import {
   AlertFillIcon,
   TrophyIcon,
   ImageIcon,
+  CloudIcon,
 } from "@primer/octicons-react";
 import "./library-game-card.scss";
 import { logger } from "@renderer/logger";
@@ -43,6 +44,20 @@ export const LibraryGameCard = memo(function LibraryGameCard({
 }: Readonly<LibraryGameCardProps>) {
   const { formatPlayTime, handleCardClick, handleContextMenuClick } =
     useGameCard(game, onContextMenu);
+
+  const lastSaveLabel = (() => {
+    if (!game.lastCloudSaveAt) return null;
+    const date = new Date(game.lastCloudSaveAt);
+    const diffMs = Date.now() - date.getTime();
+    const diffMin = Math.floor(diffMs / 60_000);
+    const diffHr = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHr / 24);
+    if (diffMin < 1) return "Just now";
+    if (diffMin < 60) return `${diffMin}m ago`;
+    if (diffHr < 24) return `${diffHr}h ago`;
+    if (diffDay < 7) return `${diffDay}d ago`;
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  })();
 
   const sources = [
     game.customIconUrl, // Level 0
@@ -138,6 +153,13 @@ export const LibraryGameCard = memo(function LibraryGameCard({
             </span>
           </div>
         </div>
+
+        {lastSaveLabel && (
+          <div className="library-game-card__cloud-save" title={`Last cloud save: ${new Date(game.lastCloudSaveAt!).toLocaleString()}`}>
+            <CloudIcon size={10} />
+            <span>{lastSaveLabel}</span>
+          </div>
+        )}
 
         {(game.achievementCount ?? 0) > 0 && (
           <div className="library-game-card__achievements">

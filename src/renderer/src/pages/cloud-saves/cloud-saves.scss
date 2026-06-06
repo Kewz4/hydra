@@ -29,6 +29,57 @@
     opacity: 0.5;
   }
 
+  &__explainer {
+    background: globals.$dark-background-color;
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    padding: 20px 24px;
+    color: globals.$muted-color;
+
+    h3 {
+      margin: 0 0 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.75);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    li {
+      font-size: 0.85rem;
+      line-height: 1.5;
+      padding-left: 14px;
+      position: relative;
+      opacity: 0.8;
+
+      &::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: globals.$brand-teal;
+      }
+
+      strong {
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+      }
+
+      em {
+        font-style: normal;
+        color: rgba(255, 255, 255, 0.75);
+      }
+    }
+  }
+
   &__empty {
     display: flex;
     flex-direction: column;
