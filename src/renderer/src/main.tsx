@@ -33,6 +33,7 @@ import Achievements from "./pages/achievements/achievements";
 import ThemeEditor from "./pages/theme-editor/theme-editor";
 import Library from "./pages/library/library";
 import Notifications from "./pages/notifications/notifications";
+import CloudSaves from "./pages/cloud-saves/cloud-saves";
 import { AchievementNotification } from "./pages/achievements/notification/achievement-notification";
 import { AchievementNotificationOverlay } from "./components/achievements/notification/achievement-notification-overlay";
 import GameLauncher from "./pages/game-launcher/game-launcher";
@@ -110,6 +111,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/cloud-saves" element={<CloudSaves />} />
           </Route>
 
           <Route path="/theme-editor" element={<ThemeEditor />} />

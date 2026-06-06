@@ -468,6 +468,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("downloadGameArtifact", objectId, shop, gameArtifactId),
   getGameArtifacts: (objectId: string, shop: GameShop) =>
     ipcRenderer.invoke("getGameArtifacts", objectId, shop),
+  getAllArtifacts: () =>
+    ipcRenderer.invoke("getAllArtifacts"),
   deleteGameArtifact: (artifactId: string) =>
     ipcRenderer.invoke("deleteGameArtifact", artifactId),
   getGameBackupPreview: (objectId: string, shop: GameShop) =>

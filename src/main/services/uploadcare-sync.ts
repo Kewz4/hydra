@@ -2,7 +2,7 @@ import axios from "axios";
 import FormData from "form-data";
 import fs from "node:fs";
 import crypto from "node:crypto";
-import type { GameArtifact, GameShop } from "@types";
+import type { GameArtifact, GameArtifactWithGame, GameShop } from "@types";
 import { logger } from "./logger";
 
 const UPLOAD_BASE = "https://upload.uploadcare.com/base/";
@@ -85,6 +85,41 @@ export class UploadcareSync {
       label: (f.metadata?.label as string) ?? undefined,
       isFrozen: false,
     }));
+  }
+
+  /** List all save artifacts across all games for a user, newest first. */
+  static async listAllArtifacts(userId: string): Promise<GameArtifactWithGame[]> {
+    const res = await axios.get(`${API_BASE}/files/`, {
+      params: {
+        "metadata[userId]": userId,
+        ordering: "-datetime_uploaded",
+        limit: 100,
+      },
+      headers: {
+        Authorization: AUTH_HEADER,
+        Accept: "application/vnd.uploadcare-v0.7+json",
+      },
+      timeout: 20_000,
+    });
+
+    const results: any[] = res.data.results ?? [];
+    return results
+      .filter((f) => f.metadata?.shop && f.metadata?.objectId)
+      .map((f) => ({
+        id: f.uuid as string,
+        artifactLengthInBytes: f.size as number,
+        downloadOptionTitle: (f.metadata?.downloadOptionTitle as string) ?? null,
+        createdAt: f.datetime_uploaded as string,
+        updatedAt: f.datetime_uploaded as string,
+        hostname: (f.metadata?.hostname as string) ?? "",
+        downloadCount: 0,
+        label: (f.metadata?.label as string) ?? undefined,
+        isFrozen: false,
+        shop: f.metadata.shop as GameShop,
+        objectId: f.metadata.objectId as string,
+        gameTitle: "",
+        gameIconUrl: null,
+      }));
   }
 
   /** Download a file by UUID to a local path. */

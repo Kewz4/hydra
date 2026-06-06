@@ -344,6 +344,13 @@ export interface GameArtifact {
   isFrozen: boolean;
 }
 
+export interface GameArtifactWithGame extends GameArtifact {
+  shop: import("./level.types").GameShop;
+  objectId: string;
+  gameTitle: string;
+  gameIconUrl: string | null;
+}
+
 export type NotificationType =
   | "FRIEND_REQUEST_RECEIVED"
   | "FRIEND_REQUEST_ACCEPTED"

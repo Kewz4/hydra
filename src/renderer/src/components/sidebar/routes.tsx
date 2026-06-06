@@ -1,5 +1,6 @@
 import {
   AppsIcon,
+  CloudIcon,
   DownloadIcon,
   GearIcon,
   HomeIcon,
@@ -26,6 +27,11 @@ export const routes = [
     path: "/downloads",
     nameKey: "downloads",
     render: () => <DownloadIcon />,
+  },
+  {
+    path: "/cloud-saves",
+    nameKey: "cloud_saves",
+    render: () => <CloudIcon />,
   },
   {
     path: "/settings",

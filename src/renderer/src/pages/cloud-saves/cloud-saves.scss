@@ -1,0 +1,240 @@
+@use "../../scss/globals.scss";
+
+.cloud-saves {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: calc(globals.$spacing-unit * 3);
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 1.5);
+    color: globals.$muted-color;
+
+    h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+    }
+  }
+
+  &__count {
+    margin-left: auto;
+    font-size: 0.8rem;
+    opacity: 0.5;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: globals.$spacing-unit;
+    padding: 64px 24px;
+    color: globals.$muted-color;
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: calc(globals.$spacing-unit * 2);
+  }
+
+  &__game-group {
+    background: globals.$background-color;
+    border: 1px solid globals.$border-color;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  &__game-header {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 1.5);
+    width: 100%;
+    padding: 14px 16px;
+    background: globals.$dark-background-color;
+    border: none;
+    border-bottom: 1px solid globals.$border-color;
+    color: #fff;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.1s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  &__game-icon {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+
+    &--placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.08);
+      color: globals.$muted-color;
+    }
+  }
+
+  &__game-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__game-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.1);
+    color: globals.$muted-color;
+    flex-shrink: 0;
+  }
+
+  &__entries {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: globals.$spacing-unit;
+    padding: 12px 16px;
+    border-bottom: 1px solid globals.$border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
+
+  &__entry-meta {
+    display: flex;
+    align-items: center;
+    gap: calc(globals.$spacing-unit * 1.5);
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  &__entry-label {
+    font-size: 0.875rem;
+    color: #fff;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  &__entry-detail {
+    font-size: 0.78rem;
+    color: globals.$muted-color;
+    white-space: nowrap;
+    opacity: 0.7;
+  }
+
+  &__entry-host {
+    font-family: monospace;
+    opacity: 0.5;
+  }
+
+  &__entry-actions {
+    display: flex;
+    align-items: center;
+    gap: globals.$spacing-unit;
+    flex-shrink: 0;
+  }
+
+  &__icon-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.1s ease;
+    color: globals.$muted-color;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    &--danger {
+      &:hover {
+        background: rgba(248, 113, 113, 0.15);
+        color: #f87171;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+  }
+
+  &__confirm-delete {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: #f87171;
+    animation: fadeIn 0.1s ease;
+  }
+
+  &__danger-btn {
+    background: rgba(248, 113, 113, 0.15);
+    border: 1px solid rgba(248, 113, 113, 0.4);
+    color: #f87171;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(248, 113, 113, 0.25);
+    }
+  }
+
+  &__cancel-btn {
+    background: none;
+    border: 1px solid globals.$border-color;
+    color: globals.$muted-color;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 0.8rem;
+    cursor: pointer;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}

@@ -18,6 +18,7 @@ import type {
   FriendRequestSync,
   NotificationSync,
   GameArtifact,
+  GameArtifactWithGame,
   LudusaviBackup,
   UserAchievement,
   ComparedAchievements,
@@ -390,6 +391,7 @@ declare global {
       objectId: string,
       shop: GameShop
     ) => Promise<GameArtifact[]>;
+    getAllArtifacts: () => Promise<GameArtifactWithGame[]>;
     deleteGameArtifact: (artifactId: string) => Promise<{ ok: boolean }>;
     getGameBackupPreview: (
       objectId: string,
