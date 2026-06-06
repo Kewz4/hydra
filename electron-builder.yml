@@ -64,13 +64,13 @@ linux:
   maintainer: electronjs.org
   category: Game
   mimeTypes:
-    - x-scheme-handler/hydralauncher
+    - x-scheme-handler/gamehub
 appImage:
   artifactName: ${name}-${version}.${ext}
 npmRebuild: false
 publish:
   provider: github
-  owner: hydralauncher
+  owner: Kewz4
   repo: hydra
 electronDownload:
   mirror: https://npmmirror.com/mirrors/electron/

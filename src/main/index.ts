@@ -33,7 +33,7 @@ const { autoUpdater } = updater;
 
 autoUpdater.setFeedURL({
   provider: "github",
-  owner: "hydralauncher",
+  owner: "Kewz4",
   repo: "hydra",
 });
 
@@ -55,7 +55,7 @@ i18n.init({
   },
 });
 
-const PROTOCOL = "hydralauncher";
+const PROTOCOL = "gamehub";
 
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
@@ -155,9 +155,9 @@ app.whenReady().then(async () => {
 
   // Check if starting from a "run" deep link - don't show main window in that case
   const deepLinkArg = process.argv.find((arg) =>
-    arg.startsWith("hydralauncher://")
+    arg.startsWith("gamehub://")
   );
-  const isRunDeepLink = deepLinkArg?.startsWith("hydralauncher://run");
+  const isRunDeepLink = deepLinkArg?.startsWith("gamehub://run");
 
   if (!process.argv.includes("--hidden") && !isRunDeepLink) {
     WindowManager.createMainWindow();
@@ -252,11 +252,11 @@ const handleDeepLinkPath = (uri?: string) => {
 
 app.on("second-instance", (_event, commandLine) => {
   const deepLink = commandLine.find((arg) =>
-    arg.startsWith("hydralauncher://")
+    arg.startsWith("gamehub://")
   );
 
   // Check if this is a "run" deep link - don't show main window in that case
-  const isRunDeepLink = deepLink?.startsWith("hydralauncher://run");
+  const isRunDeepLink = deepLink?.startsWith("gamehub://run");
 
   if (!isRunDeepLink) {
     if (WindowManager.mainWindow) {

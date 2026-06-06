@@ -5,7 +5,7 @@ import axios from "axios";
 import sudo from "sudo-prompt";
 import { app } from "electron";
 import {
-  HYDRA_DECKY_PLUGIN_LOCATION,
+  GAMEHUB_DECKY_PLUGIN_LOCATION,
   DECKY_PLUGINS_LOCATION,
 } from "@main/constants";
 import { logger } from "./logger";
@@ -42,7 +42,7 @@ export class DeckyPlugin {
   }
 
   private static getPackageJsonPath(): string {
-    return path.join(HYDRA_DECKY_PLUGIN_LOCATION, "package.json");
+    return path.join(GAMEHUB_DECKY_PLUGIN_LOCATION, "package.json");
   }
 
   private static async downloadPlugin(): Promise<string> {
@@ -122,7 +122,7 @@ export class DeckyPlugin {
     const sourcePath = path.join(extractPath, "GameHub");
 
     return new Promise((resolve, reject) => {
-      const command = `mkdir -p "${DECKY_PLUGINS_LOCATION}" && rm -rf "${HYDRA_DECKY_PLUGIN_LOCATION}" && cp -r "${sourcePath}" "${HYDRA_DECKY_PLUGIN_LOCATION}" && chown -R ${username}: "${DECKY_PLUGINS_LOCATION}"`;
+      const command = `mkdir -p "${DECKY_PLUGINS_LOCATION}" && rm -rf "${GAMEHUB_DECKY_PLUGIN_LOCATION}" && cp -r "${sourcePath}" "${GAMEHUB_DECKY_PLUGIN_LOCATION}" && chown -R ${username}: "${DECKY_PLUGINS_LOCATION}"`;
 
       sudo.exec(
         command,
@@ -154,14 +154,14 @@ export class DeckyPlugin {
       await fs.promises.mkdir(DECKY_PLUGINS_LOCATION, { recursive: true });
     }
 
-    if (fs.existsSync(HYDRA_DECKY_PLUGIN_LOCATION)) {
-      await fs.promises.rm(HYDRA_DECKY_PLUGIN_LOCATION, {
+    if (fs.existsSync(GAMEHUB_DECKY_PLUGIN_LOCATION)) {
+      await fs.promises.rm(GAMEHUB_DECKY_PLUGIN_LOCATION, {
         recursive: true,
         force: true,
       });
     }
 
-    await fs.promises.cp(sourcePath, HYDRA_DECKY_PLUGIN_LOCATION, {
+    await fs.promises.cp(sourcePath, GAMEHUB_DECKY_PLUGIN_LOCATION, {
       recursive: true,
     });
 
@@ -214,7 +214,7 @@ export class DeckyPlugin {
   }
 
   public static async checkAndUpdateIfOutdated(): Promise<void> {
-    if (!fs.existsSync(HYDRA_DECKY_PLUGIN_LOCATION)) {
+    if (!fs.existsSync(GAMEHUB_DECKY_PLUGIN_LOCATION)) {
       logger.log("GameHub Decky plugin not installed, skipping update check");
       return;
     }
@@ -259,7 +259,7 @@ export class DeckyPlugin {
     try {
       const releaseInfo = await this.getDeckyReleaseInfo();
 
-      if (!fs.existsSync(HYDRA_DECKY_PLUGIN_LOCATION)) {
+      if (!fs.existsSync(GAMEHUB_DECKY_PLUGIN_LOCATION)) {
         logger.log("GameHub Decky plugin folder not found, installing...");
 
         try {

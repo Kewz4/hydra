@@ -68,6 +68,6 @@
 !macro customUnInstall
   ${ifNot} ${isUpdated}
     RMDir /r "$LOCALAPPDATA\gamehub-updater"
-    RMDir /r "$LOCALAPPDATA\hydralauncher-updater"
+    RMDir /r "$LOCALAPPDATA\gamehub-updater"
   ${endIf}
 !macroend
