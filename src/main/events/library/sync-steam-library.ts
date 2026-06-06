@@ -1,10 +1,9 @@
 import { registerEvent } from "../register-event";
-import { db, gamesShopAssetsSublevel, gameAchievementsSublevel, gamesSublevel, levelKeys } from "@main/level";
-import type { UserPreferences } from "@types";
+import { gamesShopAssetsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { getSteamOwnedGames } from "@main/services/steam-account";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
-import { getGameAchievementData } from "@main/services/achievements/get-game-achievement-data";
+
 
 const syncSteamLibrary = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -56,30 +55,6 @@ const syncSteamLibrary = async (
   }
 
   logger.log(`Steam library sync complete: ${added} games added`);
-
-  // Background-prefetch achievement definitions for Steam games that don't have
-  // them cached yet. Non-blocking — silently skips if not logged in to HydraApi.
-  setImmediate(async () => {
-    const allSteamGames = await gamesSublevel
-      .values()
-      .all()
-      .then((gs) => gs.filter((g) => g.shop === "steam" && !g.isDeleted));
-
-    for (const game of allSteamGames) {
-      try {
-        const cached = await gameAchievementsSublevel
-          .get(levelKeys.game("steam", game.objectId))
-          .catch(() => null);
-        if (!cached?.achievements?.length) {
-          await getGameAchievementData(game.objectId, "steam", false);
-        }
-      } catch {
-        // Silently ignore — user may not be logged in
-      }
-    }
-
-    logger.log("Steam achievement pre-fetch complete");
-  });
 
   return { total: ownedGames.length, added };
 };

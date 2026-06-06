@@ -16,14 +16,36 @@ const addCustomGameToLibrary = async (
   const gameKey = levelKeys.game(shop, objectId);
 
   const existingGames = await gamesSublevel.iterator().all();
-  const existingGame = existingGames.find(
+  const existingByPath = existingGames.find(
     ([_key, game]) => game.executablePath === executablePath && !game.isDeleted
   );
 
-  if (existingGame) {
+  if (existingByPath) {
     throw new Error(
       "A game with this executable path already exists in your library"
     );
+  }
+
+  // If a game with the same title already exists (e.g. from a store sync with metadata),
+  // link the custom executable to that entry instead of creating a duplicate.
+  const titleLower = title.toLowerCase();
+  const existingByTitle = existingGames.find(
+    ([_key, game]) =>
+      !game.isDeleted && game.title.toLowerCase() === titleLower
+  );
+
+  if (existingByTitle) {
+    const [existingKey, existingGame] = existingByTitle;
+    const mergedGame = {
+      ...existingGame,
+      executablePath,
+      iconUrl: iconUrl || existingGame.iconUrl || null,
+      logoImageUrl: logoImageUrl || existingGame.logoImageUrl || null,
+      libraryHeroImageUrl:
+        libraryHeroImageUrl || existingGame.libraryHeroImageUrl || null,
+    };
+    await gamesSublevel.put(existingKey, mergedGame);
+    return mergedGame;
   }
 
   const assets = {

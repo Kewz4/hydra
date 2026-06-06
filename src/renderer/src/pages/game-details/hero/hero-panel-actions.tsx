@@ -265,59 +265,6 @@ export function HeroPanelActions() {
       );
     }
 
-    const shopProtocolMap: Record<string, { label: string; url: string }> = {
-      steam: {
-        label: t("play_via_steam", { defaultValue: "Play via Steam" }),
-        url: `steam://run/${game?.objectId}`,
-      },
-      gog: {
-        label: t("open_in_gog", { defaultValue: "Open in GOG" }),
-        url: `goggalaxy://openGame/${game?.objectId}`,
-      },
-      epic: {
-        label: t("launch_via_epic", { defaultValue: "Launch via Epic" }),
-        url: `legendary://run/${game?.objectId}`,
-      },
-      xbox: {
-        label: t("open_in_xbox", { defaultValue: "Open in Xbox" }),
-        url: `msxbox://game/?productId=${game?.objectId}`,
-      },
-    };
-
-    const shopEntry = game?.shop ? shopProtocolMap[game.shop] : null;
-
-    if (shopEntry && game) {
-      return (
-        <>
-          <Button
-            onClick={() =>
-              window.electron.openGame(
-                game.shop,
-                game.objectId,
-                shopEntry.url,
-                null
-              )
-            }
-            theme="outline"
-            disabled={deleting}
-            className="hero-panel-actions__action"
-          >
-            <PlayIcon />
-            {shopEntry.label}
-          </Button>
-          <Button
-            onClick={() => setShowRepacksModal(true)}
-            theme="outline"
-            disabled={isGameDownloading}
-            className={`hero-panel-actions__action ${repacks.length === 0 ? "hero-panel-actions__action--disabled" : ""}`}
-          >
-            <DownloadIcon />
-            {t("download")}
-          </Button>
-        </>
-      );
-    }
-
     return (
       <Button
         onClick={() => setShowRepacksModal(true)}

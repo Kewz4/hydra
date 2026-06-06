@@ -8,8 +8,7 @@ const getAllArtifacts = async (_event: Electron.IpcMainInvokeEvent) => {
     .get<string, UserPreferences>(levelKeys.userPreferences, { valueEncoding: "json" })
     .catch(() => ({} as UserPreferences));
 
-  const userId = prefs?.cloudSyncUserId;
-  if (!userId) return [];
+  const userId = prefs?.cloudSyncUserId ?? "anonymous";
 
   const artifacts = await UploadcareSync.listAllArtifacts(userId);
 

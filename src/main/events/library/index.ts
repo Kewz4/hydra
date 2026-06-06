@@ -72,3 +72,4 @@ import "./install-gogdl";
 
 import "./transfer-game-files";
 import "./get-available-drives";
+import "./generate-missing-metadata";

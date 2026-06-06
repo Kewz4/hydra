@@ -14,7 +14,7 @@ import {
 } from "@renderer/components";
 import type { DownloadDirectoryPreference } from "@types";
 import { useTranslation } from "react-i18next";
-import { useAppSelector } from "@renderer/hooks";
+import { useAppSelector, useToast } from "@renderer/hooks";
 import { changeLanguage } from "i18next";
 import languageResources from "@locales";
 import { orderBy } from "lodash-es";
@@ -44,6 +44,7 @@ export function SettingsGeneral() {
   const { t } = useTranslation("settings");
 
   const { updateUserPreferences } = useContext(settingsContext);
+  const { showSuccessToast, showErrorToast } = useToast();
 
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
@@ -51,6 +52,7 @@ export function SettingsGeneral() {
 
   const [canInstallCommonRedist, setCanInstallCommonRedist] = useState(false);
   const [installingCommonRedist, setInstallingCommonRedist] = useState(false);
+  const [generatingMetadata, setGeneratingMetadata] = useState(false);
 
   const [form, setForm] = useState({
     downloadsPath: "",
@@ -453,6 +455,33 @@ export function SettingsGeneral() {
         {installingCommonRedist
           ? t("installing_common_redist")
           : t("install_common_redist")}
+      </Button>
+
+      <h2 className="settings-general__section-title">Library</h2>
+
+      <p className="settings-general__common-redist-description">
+        Fetch artwork and metadata from SteamGridDB for all library games that are missing cover images.
+      </p>
+
+      <Button
+        onClick={async () => {
+          setGeneratingMetadata(true);
+          try {
+            const result = await window.electron.generateMissingMetadata();
+            showSuccessToast(
+              `Metadata updated for ${result.updated} game${result.updated !== 1 ? "s" : ""}.`
+            );
+          } catch {
+            showErrorToast("Failed to generate metadata.");
+          } finally {
+            setGeneratingMetadata(false);
+          }
+        }}
+        className="settings-general__common-redist-button"
+        disabled={generatingMetadata}
+      >
+        <DesktopDownloadIcon />
+        {generatingMetadata ? "Generating metadata…" : "Generate missing metadata"}
       </Button>
 
       <DownloadDirectoryReplacementModal

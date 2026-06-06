@@ -84,10 +84,14 @@ export function App() {
     Promise.all([
       levelDBService.get("userPreferences", null, "json"),
       updateLibrary(),
-    ]).then(([preferences]) => {
-      dispatch(setUserPreferences(preferences as UserPreferences | null));
-      setPrefsChecked(true);
-    });
+    ])
+      .then(([preferences]) => {
+        dispatch(setUserPreferences(preferences as UserPreferences | null));
+      })
+      .catch(() => {})
+      .finally(() => {
+        setPrefsChecked(true);
+      });
   }, [navigate, location.pathname, dispatch, updateLibrary]);
 
   useEffect(() => {
