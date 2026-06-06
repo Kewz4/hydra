@@ -12,6 +12,8 @@ export enum Downloader {
   Rootz = 11,
   Premiumize = 12,
   AllDebrid = 13,
+  Legendary = "legendary",
+  Gogdl = "gogdl",
 }
 
 export enum DownloadSourceStatus {

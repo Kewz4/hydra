@@ -754,6 +754,18 @@ contextBridge.exposeInMainWorld("electron", {
   },
   downloadViaLegendary: (objectId: string, downloadPath?: string) =>
     ipcRenderer.invoke("downloadViaLegendary", objectId, downloadPath),
+  cancelLegendaryDownload: (objectId: string) =>
+    ipcRenderer.invoke("cancelLegendaryDownload", objectId),
+  downloadViaGogdl: (objectId: string, downloadPath?: string) =>
+    ipcRenderer.invoke("downloadViaGogdl", objectId, downloadPath),
+  cancelGogdlDownload: (objectId: string) =>
+    ipcRenderer.invoke("cancelGogdlDownload", objectId),
+  installGogdl: () => ipcRenderer.invoke("installGogdl"),
+  onGogdlInstallProgress: (cb: (pct: number) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, pct: number) => cb(pct);
+    ipcRenderer.on("on-gogdl-install-progress", listener);
+    return () => ipcRenderer.removeListener("on-gogdl-install-progress", listener);
+  },
   onSignOut: (cb: () => void) => {
     const listener = (_event: Electron.IpcRendererEvent) => cb();
     ipcRenderer.on("on-signout", listener);

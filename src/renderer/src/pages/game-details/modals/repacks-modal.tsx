@@ -370,10 +370,6 @@ export function RepacksModal({
               url: `steam://install/${game.objectId}`,
               label: "Download via Steam",
             },
-            gog: {
-              url: `goggalaxy://openGame/${game.objectId}`,
-              label: "Download via GOG Galaxy",
-            },
             xbox: {
               url: `msxbox://game/?productId=${game.objectId}`,
               label: "Download via Xbox",
@@ -386,7 +382,8 @@ export function RepacksModal({
           const primaryPlatform = shopPlatformOption[game.shop];
           const primaryProtocolUrl = primaryPlatform?.url;
           const altShops = game.alternativeShops ?? [];
-          const hasPlatformOptions = primaryProtocolUrl || altShops.length > 0;
+          const isGogGame = game.shop === "gog";
+          const hasPlatformOptions = primaryProtocolUrl || isGogGame || altShops.length > 0;
 
           if (!hasPlatformOptions) return null;
 
@@ -408,6 +405,30 @@ export function RepacksModal({
                     {primaryPlatform?.label ?? `Download via ${shopLabel[game.shop] ?? game.shop}`}
                   </Button>
                 )}
+                {isGogGame && (
+                  <>
+                    <Button
+                      theme="outline"
+                      className="repacks-modal__platform-button"
+                      onClick={() => {
+                        window.electron.downloadViaGogdl(game.objectId);
+                        onClose();
+                      }}
+                    >
+                      {"Download via gogdl"}
+                    </Button>
+                    <Button
+                      theme="outline"
+                      className="repacks-modal__platform-button"
+                      onClick={() => {
+                        window.electron.openGame(game.shop, game.objectId, `goggalaxy://openGame/${game.objectId}`, null);
+                        onClose();
+                      }}
+                    >
+                      {"Open in GOG Galaxy"}
+                    </Button>
+                  </>
+                )}
                 {altShops.map((alt) => {
                   const altLabel = alt.executablePath
                     ? `Launch via ${shopLabel[alt.shop] ?? alt.shop}`
@@ -422,6 +443,8 @@ export function RepacksModal({
                           window.electron.openGame(alt.shop, alt.objectId, alt.executablePath, undefined);
                         } else if (alt.shop === "epic") {
                           window.electron.downloadViaLegendary(alt.objectId);
+                        } else if (alt.shop === "gog") {
+                          window.electron.downloadViaGogdl(alt.objectId);
                         }
                         onClose();
                       }}

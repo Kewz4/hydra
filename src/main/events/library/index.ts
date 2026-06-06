@@ -65,6 +65,8 @@ import "./sync-gamepass-library";
 import "./open-xbox-auth-window";
 
 import "./download-via-legendary";
+import "./download-via-gogdl";
+import "./install-gogdl";
 
 //UPDATEDD
 

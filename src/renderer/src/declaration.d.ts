@@ -676,6 +676,11 @@ declare global {
     cancelGameTransfer: (shop: GameShop, objectId: string) => Promise<void>;
 
     downloadViaLegendary: (objectId: string, downloadPath?: string) => Promise<{ ok: boolean }>;
+    cancelLegendaryDownload: (objectId: string) => Promise<{ ok: boolean }>;
+    downloadViaGogdl: (objectId: string, downloadPath?: string) => Promise<{ ok: boolean }>;
+    cancelGogdlDownload: (objectId: string) => Promise<{ ok: boolean }>;
+    installGogdl: () => Promise<{ path: string }>;
+    onGogdlInstallProgress: (cb: (pct: number) => void) => () => void;
 
     /* Event listeners for transfer progress */
     on: (channel: string, listener: (...args: any[]) => void) => void;

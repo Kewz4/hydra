@@ -2,36 +2,41 @@ import { registerEvent } from "../register-event";
 import { WindowManager, logger } from "@main/services";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
-import { spawnLegendaryInstall, findLegendaryBinary } from "@main/services/legendary";
+import { spawnGogdlInstall } from "@main/services/gogdl";
+import { refreshGogToken } from "@main/services/gog-account";
 import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { Downloader } from "@shared";
 
-// Track active legendary downloads by gameId
-const activeLegendaryDownloads = new Map<string, () => void>();
+// Track active gogdl downloads by gameKey
+const activeGogdlDownloads = new Map<string, () => void>();
 
-const downloadViaLegendary = async (
+const downloadViaGogdl = async (
   _event: Electron.IpcMainInvokeEvent,
-  objectId: string, // Legendary app_name
+  objectId: string,
   customDownloadPath?: string
 ) => {
   const prefs = await db.get<string, UserPreferences | null>(levelKeys.userPreferences, { valueEncoding: "json" }).catch(() => null);
-  const binary = findLegendaryBinary(prefs?.legendaryBinaryPath);
-  if (!binary) throw new Error("Legendary binary not found");
+
+  const gogRefreshToken = prefs?.gogRefreshToken;
+  if (!gogRefreshToken) throw new Error("GOG account not authenticated");
+
+  // Refresh token to get a fresh access token
+  const tokens = await refreshGogToken(gogRefreshToken);
+  const { access_token: accessToken, refresh_token: newRefreshToken } = tokens;
 
   const downloadPath = customDownloadPath ?? await getDownloadsPath();
-  const gameKey = levelKeys.game("epic", objectId);
+  const gameKey = levelKeys.game("gog", objectId);
 
-  // Mark download as active in downloads sublevel so the UI tracks it
   const existingDownload = await downloadsSublevel.get(gameKey).catch(() => null);
   const initialRecord = {
     ...(existingDownload ?? {}),
-    shop: "epic",
+    shop: "gog",
     objectId,
-    uri: `legendary://install/${objectId}`,
+    uri: `gogdl://install/${objectId}`,
     folderName: null,
     downloadPath,
     progress: 0,
-    downloader: Downloader.Legendary,
+    downloader: Downloader.Gogdl,
     bytesDownloaded: 0,
     fileSize: null,
     shouldSeed: false,
@@ -43,13 +48,14 @@ const downloadViaLegendary = async (
   };
   await downloadsSublevel.put(gameKey, initialRecord);
 
-  // Keep a mutable reference for progress updates
   let currentRecord = { ...initialRecord };
 
-  const cancel = spawnLegendaryInstall(
+  const cancel = spawnGogdlInstall(
     objectId,
     downloadPath,
-    prefs?.legendaryBinaryPath,
+    accessToken,
+    newRefreshToken,
+    null,
     async (progress, downloadedMB, totalMB, speedMBs) => {
       currentRecord = {
         ...currentRecord,
@@ -68,17 +74,17 @@ const downloadViaLegendary = async (
         numSeeds: 0,
         isDownloadingMetadata: false,
         isCheckingFiles: false,
-        download: { shop: "epic", objectId, downloadPath, status: "active" },
+        download: { shop: "gog", objectId, downloadPath, status: "active" },
       });
     },
     async () => {
       // On complete: update game executablePath and set status to complete
-      activeLegendaryDownloads.delete(gameKey);
+      activeGogdlDownloads.delete(gameKey);
       const game = await gamesSublevel.get(gameKey).catch(() => null);
       if (game) {
         await gamesSublevel.put(gameKey, {
           ...game,
-          executablePath: `legendary://run/${objectId}`,
+          executablePath: `goggalaxy://openGame/${objectId}`,
         });
       }
       await downloadsSublevel.put(gameKey, {
@@ -95,31 +101,31 @@ const downloadViaLegendary = async (
         numSeeds: 0,
         isDownloadingMetadata: false,
         isCheckingFiles: false,
-        download: { shop: "epic", objectId, downloadPath, status: "complete" },
+        download: { shop: "gog", objectId, downloadPath, status: "complete" },
       });
     },
     async (err) => {
-      activeLegendaryDownloads.delete(gameKey);
-      logger.error("Legendary download failed", { objectId, err });
+      activeGogdlDownloads.delete(gameKey);
+      logger.error("gogdl download failed", { objectId, err });
       await downloadsSublevel.del(gameKey).catch(() => {});
     }
   );
 
-  activeLegendaryDownloads.set(gameKey, cancel);
+  activeGogdlDownloads.set(gameKey, cancel);
   return { ok: true };
 };
 
-registerEvent("downloadViaLegendary", downloadViaLegendary);
+registerEvent("downloadViaGogdl", downloadViaGogdl);
 
-const cancelLegendaryDownload = async (
+const cancelGogdlDownload = async (
   _event: Electron.IpcMainInvokeEvent,
   objectId: string
 ) => {
-  const gameKey = levelKeys.game("epic", objectId);
-  activeLegendaryDownloads.get(gameKey)?.();
-  activeLegendaryDownloads.delete(gameKey);
+  const gameKey = levelKeys.game("gog", objectId);
+  activeGogdlDownloads.get(gameKey)?.();
+  activeGogdlDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
   return { ok: true };
 };
 
-registerEvent("cancelLegendaryDownload", cancelLegendaryDownload);
+registerEvent("cancelGogdlDownload", cancelGogdlDownload);
