@@ -175,6 +175,7 @@ export interface UserPreferences {
   xboxHasGamePass?: boolean | null;
   xboxXuid?: string | null;
   cloudSyncUserId?: string | null;
+  onboardingComplete?: boolean;
 }
 
 export interface ScreenState {

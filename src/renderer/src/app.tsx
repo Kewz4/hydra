@@ -24,6 +24,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { ArchiveDeletionModal } from "./pages/downloads/archive-deletion-error-modal";
+import { Onboarding } from "./pages/onboarding/onboarding";
 
 import type { UserPreferences } from "@types";
 import "./app.scss";
@@ -68,6 +69,9 @@ export function App() {
   );
 
   const toast = useAppSelector((state) => state.toast);
+  const userPreferences = useAppSelector((state) => state.userPreferences.value);
+  const [onboardingDone, setOnboardingDone] = useState(false);
+  const [prefsChecked, setPrefsChecked] = useState(false);
 
   const { showSuccessToast, showErrorToast } = useToast();
 
@@ -81,6 +85,7 @@ export function App() {
       updateLibrary(),
     ]).then(([preferences]) => {
       dispatch(setUserPreferences(preferences as UserPreferences | null));
+      setPrefsChecked(true);
     });
   }, [navigate, location.pathname, dispatch, updateLibrary]);
 
@@ -351,6 +356,15 @@ export function App() {
   const handleToastClose = useCallback(() => {
     dispatch(closeToast());
   }, [dispatch]);
+
+  const showOnboarding =
+    prefsChecked &&
+    !onboardingDone &&
+    !userPreferences?.onboardingComplete;
+
+  if (showOnboarding) {
+    return <Onboarding onComplete={() => setOnboardingDone(true)} />;
+  }
 
   return (
     <>
