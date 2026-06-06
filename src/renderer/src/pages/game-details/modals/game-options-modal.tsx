@@ -902,6 +902,21 @@ export function GameOptionsModal({
                 }
                 onOpenChangePlaytime={() => setShowChangePlaytimeModal(true)}
                 onOpenRemoveFiles={() => setShowDeleteModal(true)}
+                onUninstall={async () => {
+                  if (game.download?.downloadPath) {
+                    await window.electron
+                      .deleteGameFolder(game.shop, game.objectId)
+                      .catch(() => {});
+                  }
+                  await window.electron.removeGameFromLibrary(
+                    game.shop,
+                    game.objectId
+                  );
+                  window.dispatchEvent(
+                    new CustomEvent("hydra:game-removed-from-library")
+                  );
+                  onClose();
+                }}
               />
             )}
           </div>

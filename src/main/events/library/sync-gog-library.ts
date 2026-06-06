@@ -13,6 +13,7 @@ import { findGameByTitle } from "@main/helpers/find-game-by-title";
 import { findSteamAppIdByTitle, getSteamCdnUrls } from "@main/services/steam-metadata";
 
 const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
+  try {
   const prefs = await db
     .get<string, UserPreferences | null>(levelKeys.userPreferences, {
       valueEncoding: "json",
@@ -110,6 +111,11 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
 
   logger.log(`GOG library sync complete: ${added} games added`);
   return { total: ownedIds.length, added };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    logger.error("GOG library sync failed", err);
+    return { total: 0, added: 0, error: message };
+  }
 };
 
 registerEvent("syncGogLibrary", syncGogLibrary);

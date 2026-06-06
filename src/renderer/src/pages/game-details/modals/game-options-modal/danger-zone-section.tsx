@@ -14,6 +14,7 @@ interface DangerZoneSectionProps {
   onOpenResetAchievements: () => void;
   onOpenChangePlaytime: () => void;
   onOpenRemoveFiles: () => void;
+  onUninstall: () => void;
 }
 
 export function DangerZoneSection({
@@ -27,6 +28,7 @@ export function DangerZoneSection({
   onOpenResetAchievements,
   onOpenChangePlaytime,
   onOpenRemoveFiles,
+  onUninstall,
 }: Readonly<DangerZoneSectionProps>) {
   const { t } = useTranslation("game_details");
 
@@ -76,6 +78,16 @@ export function DangerZoneSection({
             }
           >
             {t("remove_files")}
+          </Button>
+        )}
+
+        {(game.executablePath || game.download?.downloadPath) && (
+          <Button
+            onClick={onUninstall}
+            theme="danger"
+            disabled={deleting || isGameDownloading}
+          >
+            {t("uninstall_game", { defaultValue: "Uninstall Game" })}
           </Button>
         )}
       </div>

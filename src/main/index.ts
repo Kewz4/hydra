@@ -11,6 +11,8 @@ if (process.env.PORTABLE_EXECUTABLE_DIR) {
   const dataDir = path.join(process.env.PORTABLE_EXECUTABLE_DIR, "data");
   app.setPath("userData", dataDir);
   app.setPath("logs", path.join(dataDir, "logs"));
+  app.setPath("sessionData", path.join(dataDir, "session"));
+  app.setPath("crashDumps", path.join(dataDir, "crashes"));
 }
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import {
