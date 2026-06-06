@@ -357,50 +357,70 @@ export function RepacksModal({
           </div>
         </div>
 
-        {game?.alternativeShops && game.alternativeShops.length > 0 && (
-          <div className="repacks-modal__platform-options">
-            <p className="repacks-modal__platform-options-label">
-              {t("platform_options", { defaultValue: "Download via platform" })}
-            </p>
-            <div className="repacks-modal__platform-buttons">
-              {game.alternativeShops.map((alt) => {
-                const shopLabel: Record<string, string> = {
-                  epic: "Epic Games (Legendary)",
-                  gog: "GOG Galaxy",
-                  xbox: "Xbox",
-                  steam: "Steam",
-                  battlenet: "Battle.net",
-                };
-                const label = alt.executablePath
-                  ? `Launch via ${shopLabel[alt.shop] ?? alt.shop}`
-                  : `Download via ${shopLabel[alt.shop] ?? alt.shop}`;
+        {game && (() => {
+          const shopLabel: Record<string, string> = {
+            epic: "Epic Games (Legendary)",
+            gog: "GOG Galaxy",
+            xbox: "Xbox",
+            steam: "Steam",
+            battlenet: "Battle.net",
+          };
+          const shopProtocolUrl: Record<string, string> = {
+            steam: `steam://run/${game.objectId}`,
+            gog: `goggalaxy://openGame/${game.objectId}`,
+            xbox: `msxbox://game/?productId=${game.objectId}`,
+            battlenet: `battlenet://${game.objectId}`,
+          };
+          const primaryProtocolUrl = shopProtocolUrl[game.shop];
+          const altShops = game.alternativeShops ?? [];
+          const hasPlatformOptions = primaryProtocolUrl || altShops.length > 0;
 
-                return (
+          if (!hasPlatformOptions) return null;
+
+          return (
+            <div className="repacks-modal__platform-options">
+              <p className="repacks-modal__platform-options-label">
+                {t("platform_options", { defaultValue: "Download via platform" })}
+              </p>
+              <div className="repacks-modal__platform-buttons">
+                {primaryProtocolUrl && (
                   <Button
-                    key={`${alt.shop}:${alt.objectId}`}
                     theme="outline"
                     className="repacks-modal__platform-button"
                     onClick={() => {
-                      if (alt.executablePath) {
-                        window.electron.openGame(
-                          alt.shop,
-                          alt.objectId,
-                          alt.executablePath,
-                          undefined
-                        );
-                      } else if (alt.shop === "epic") {
-                        window.electron.downloadViaLegendary(alt.objectId);
-                      }
+                      window.electron.openGame(game.shop, game.objectId, primaryProtocolUrl, null);
                       onClose();
                     }}
                   >
-                    {label}
+                    {`Play via ${shopLabel[game.shop] ?? game.shop}`}
                   </Button>
-                );
-              })}
+                )}
+                {altShops.map((alt) => {
+                  const altLabel = alt.executablePath
+                    ? `Launch via ${shopLabel[alt.shop] ?? alt.shop}`
+                    : `Download via ${shopLabel[alt.shop] ?? alt.shop}`;
+                  return (
+                    <Button
+                      key={`${alt.shop}:${alt.objectId}`}
+                      theme="outline"
+                      className="repacks-modal__platform-button"
+                      onClick={() => {
+                        if (alt.executablePath) {
+                          window.electron.openGame(alt.shop, alt.objectId, alt.executablePath, undefined);
+                        } else if (alt.shop === "epic") {
+                          window.electron.downloadViaLegendary(alt.objectId);
+                        }
+                        onClose();
+                      }}
+                    >
+                      {altLabel}
+                    </Button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         <div className="repacks-modal__repacks">
           {filteredRepacks.length === 0 ? (
