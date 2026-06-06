@@ -143,7 +143,7 @@ const buildRunDeepLink = (shop: GameShop, objectId: string) => {
     objectId,
   });
 
-  return `gamehub://run?${query.toString()}`;
+  return `hydralauncher://run?${query.toString()}`;
 };
 
 const quoteLinuxExecArg = (value: string) => {

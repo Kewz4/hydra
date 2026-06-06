@@ -446,7 +446,7 @@ export class GameFilesManager {
       objectId: this.objectId,
     });
 
-    return `gamehub://run?${query.toString()}`;
+    return `hydralauncher://run?${query.toString()}`;
   }
 
   private quoteLinuxExecArg(value: string) {

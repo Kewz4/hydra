@@ -405,14 +405,14 @@ export class WindowManager {
       });
 
       authWindow.webContents.on("will-navigate", (_event, url) => {
-        if (url.startsWith("gamehub://auth")) {
+        if (url.startsWith("hydralauncher://auth")) {
           authWindow.close();
 
           HydraApi.handleExternalAuth(url);
           return;
         }
 
-        if (url.startsWith("gamehub://update-account")) {
+        if (url.startsWith("hydralauncher://update-account")) {
           authWindow.close();
 
           WindowManager.mainWindow?.webContents.send("on-account-updated");
