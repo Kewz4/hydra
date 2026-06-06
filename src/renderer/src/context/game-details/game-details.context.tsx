@@ -205,7 +205,7 @@ export function GameDetailsContextProvider({
       });
     }
 
-    const assetsPromise = window.electron.getGameAssets(objectId, shop);
+    const assetsPromise = window.electron.getGameAssets(objectId, shop, game?.title);
 
     Promise.all([shopDetailsPromise, assetsPromise])
       .then(([_, assets]) => {

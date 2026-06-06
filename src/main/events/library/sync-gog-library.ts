@@ -11,6 +11,7 @@ import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
 import { findGameByTitle } from "@main/helpers/find-game-by-title";
 import { findSteamAppIdByTitle, getSteamCdnUrls } from "@main/services/steam-metadata";
+import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
 
 const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   try {
@@ -77,21 +78,29 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
           ? `https:${details.images.background}`
           : null;
 
-        // Try to get high-quality Steam art
+        // Try to get high-quality art: Steam CDN first, then SteamGridDB
         let finalIconUrl: string | null = iconUrl;
         let finalHeroUrl: string | null = heroUrl;
+        let finalLogoUrl: string | null = null;
         const steamAppId = await findSteamAppIdByTitle(details.title).catch(() => null);
         if (steamAppId) {
           const cdnUrls = getSteamCdnUrls(steamAppId);
           finalHeroUrl = cdnUrls.heroImageUrl;
           finalIconUrl = cdnUrls.iconUrl;
+        } else {
+          const sgdb = await getSteamGridDbArtwork(details.title).catch(() => null);
+          if (sgdb) {
+            finalIconUrl = sgdb.gridUrl ?? finalIconUrl;
+            finalHeroUrl = sgdb.heroUrl ?? finalHeroUrl;
+            finalLogoUrl = sgdb.logoUrl;
+          }
         }
 
         const game = {
           title: details.title,
           iconUrl: finalIconUrl,
           libraryHeroImageUrl: finalHeroUrl,
-          logoImageUrl: null,
+          logoImageUrl: finalLogoUrl,
           objectId,
           shop: "gog" as const,
           remoteId: null,

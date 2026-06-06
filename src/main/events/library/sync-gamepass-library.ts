@@ -6,6 +6,8 @@ import { logger } from "@main/services";
 import type { UserPreferences } from "@types";
 import { syncXboxGameAchievements } from "@main/services/achievements/get-xbox-achievements";
 import { findGameByTitle } from "@main/helpers/find-game-by-title";
+import { findSteamAppIdByTitle, getSteamCdnUrls } from "@main/services/steam-metadata";
+import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
 
 const syncGamePassLibrary = async () => {
   const prefs = await db
@@ -44,11 +46,29 @@ const syncGamePassLibrary = async () => {
       continue; // Don't create a duplicate entry
     }
 
+    // Try to get high-quality art: Steam CDN first, then SteamGridDB
+    let finalIconUrl: string | null = xboxGame.coverUrl ?? null;
+    let finalHeroUrl: string | null = xboxGame.coverUrl ?? null;
+    let finalLogoUrl: string | null = null;
+    const steamAppId = await findSteamAppIdByTitle(xboxGame.title).catch(() => null);
+    if (steamAppId) {
+      const cdnUrls = getSteamCdnUrls(steamAppId);
+      finalHeroUrl = cdnUrls.heroImageUrl;
+      finalIconUrl = cdnUrls.iconUrl;
+    } else {
+      const sgdb = await getSteamGridDbArtwork(xboxGame.title).catch(() => null);
+      if (sgdb) {
+        finalIconUrl = sgdb.gridUrl ?? finalIconUrl;
+        finalHeroUrl = sgdb.heroUrl ?? finalHeroUrl;
+        finalLogoUrl = sgdb.logoUrl;
+      }
+    }
+
     const game = {
       title: xboxGame.title,
-      iconUrl: xboxGame.coverUrl ?? null,
-      libraryHeroImageUrl: xboxGame.coverUrl ?? null,
-      logoImageUrl: null,
+      iconUrl: finalIconUrl,
+      libraryHeroImageUrl: finalHeroUrl,
+      logoImageUrl: finalLogoUrl,
       objectId: xboxGame.productId,
       shop: "xbox" as const,
       remoteId: null,

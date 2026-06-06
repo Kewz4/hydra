@@ -120,7 +120,8 @@ declare global {
     getGameStats: (objectId: string, shop: GameShop) => Promise<GameStats>;
     getGameAssets: (
       objectId: string,
-      shop: GameShop
+      shop: GameShop,
+      title?: string
     ) => Promise<ShopAssets | null>;
     onUpdateAchievements: (
       objectId: string,

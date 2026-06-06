@@ -2,17 +2,13 @@ import type { GameShop, ShopAssets } from "@types";
 import { registerEvent } from "../register-event";
 import { HydraApi } from "@main/services";
 import { gamesShopAssetsSublevel, levelKeys } from "@main/level";
+import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
 
 const LOCAL_CACHE_EXPIRATION = 1000 * 60 * 60 * 8; // 8 hours
 
-export const getGameAssets = async (objectId: string, shop: GameShop) => {
-  if (shop === "custom" || shop === "epic" || shop === "gog" || shop === "battlenet" || shop === "xbox") {
-    return null;
-  }
-
-  const cachedAssets = await gamesShopAssetsSublevel.get(
-    levelKeys.game(shop, objectId)
-  );
+export const getGameAssets = async (objectId: string, shop: GameShop, title?: string) => {
+  const cacheKey = levelKeys.game(shop, objectId);
+  const cachedAssets = await gamesShopAssetsSublevel.get(cacheKey).catch(() => null);
 
   if (
     cachedAssets &&
@@ -21,35 +17,63 @@ export const getGameAssets = async (objectId: string, shop: GameShop) => {
     return cachedAssets;
   }
 
-  return HydraApi.get<ShopAssets | null>(
-    `/games/${shop}/${objectId}/assets`,
-    null,
-    {
-      needsAuth: false,
+  // Steam: try HydraApi first, fall back to SteamGridDB
+  if (shop === "steam") {
+    const assets = await HydraApi.get<ShopAssets | null>(
+      `/games/${shop}/${objectId}/assets`,
+      null,
+      { needsAuth: false }
+    ).catch(() => null);
+
+    if (assets) {
+      const shouldPreserveTitle =
+        cachedAssets?.title && cachedAssets.title !== assets.title;
+
+      await gamesShopAssetsSublevel.put(cacheKey, {
+        ...assets,
+        title: shouldPreserveTitle ? cachedAssets!.title : assets.title,
+        updatedAt: Date.now(),
+      });
+      return assets;
     }
-  ).then(async (assets) => {
-    if (!assets) return null;
+  }
 
-    // Preserve existing title if it differs from the incoming title (indicating it was customized)
-    const shouldPreserveTitle =
-      cachedAssets?.title && cachedAssets.title !== assets.title;
+  // For all shops: try SteamGridDB using the provided title or cached title
+  const searchTitle = title ?? cachedAssets?.title;
+  if (!searchTitle) return cachedAssets ?? null;
 
-    await gamesShopAssetsSublevel.put(levelKeys.game(shop, objectId), {
-      ...assets,
-      title: shouldPreserveTitle ? cachedAssets.title : assets.title,
-      updatedAt: Date.now(),
-    });
+  const sgdb = await getSteamGridDbArtwork(searchTitle).catch(() => null);
+  if (!sgdb) return cachedAssets ?? null;
 
-    return assets;
+  const merged: ShopAssets = {
+    ...(cachedAssets ?? {}),
+    objectId,
+    shop,
+    title: searchTitle,
+    iconUrl: sgdb.gridUrl ?? cachedAssets?.iconUrl ?? null,
+    coverImageUrl: sgdb.gridUrl ?? cachedAssets?.coverImageUrl ?? null,
+    libraryHeroImageUrl: sgdb.heroUrl ?? cachedAssets?.libraryHeroImageUrl ?? null,
+    libraryImageUrl: cachedAssets?.libraryImageUrl ?? null,
+    logoImageUrl: sgdb.logoUrl ?? cachedAssets?.logoImageUrl ?? null,
+    logoPosition: cachedAssets?.logoPosition ?? null,
+    downloadSources: cachedAssets?.downloadSources ?? [],
+  } as ShopAssets;
+
+  await gamesShopAssetsSublevel.put(cacheKey, {
+    ...merged,
+    updatedAt: Date.now(),
   });
+
+  return merged;
 };
 
 const getGameAssetsEvent = async (
   _event: Electron.IpcMainInvokeEvent,
   objectId: string,
-  shop: GameShop
+  shop: GameShop,
+  title?: string
 ) => {
-  return getGameAssets(objectId, shop);
+  return getGameAssets(objectId, shop, title);
 };
 
 registerEvent("getGameAssets", getGameAssetsEvent);

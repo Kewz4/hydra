@@ -9,6 +9,7 @@ import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
 import { findGameByTitle } from "@main/helpers/find-game-by-title";
 import { findSteamAppIdByTitle, getSteamCdnUrls } from "@main/services/steam-metadata";
+import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
 
 const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const prefs = await db
@@ -51,21 +52,29 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
       ? `legendary://run/${objectId}`
       : null;
 
-    // Try to get high-quality Steam art
+    // Try to get high-quality art: Steam CDN first, then SteamGridDB
     let finalIconUrl: string | null = coverUrl;
     let finalHeroUrl: string | null = coverUrl;
+    let finalLogoUrl: string | null = null;
     const steamAppId = await findSteamAppIdByTitle(epicGame.app_title).catch(() => null);
     if (steamAppId) {
       const cdnUrls = getSteamCdnUrls(steamAppId);
       finalHeroUrl = cdnUrls.heroImageUrl;
       finalIconUrl = cdnUrls.iconUrl;
+    } else {
+      const sgdb = await getSteamGridDbArtwork(epicGame.app_title).catch(() => null);
+      if (sgdb) {
+        finalIconUrl = sgdb.gridUrl ?? finalIconUrl;
+        finalHeroUrl = sgdb.heroUrl ?? finalHeroUrl;
+        finalLogoUrl = sgdb.logoUrl;
+      }
     }
 
     const game = {
       title: epicGame.app_title,
       iconUrl: finalIconUrl,
       libraryHeroImageUrl: finalHeroUrl,
-      logoImageUrl: null,
+      logoImageUrl: finalLogoUrl,
       objectId,
       shop: "epic" as const,
       remoteId: null,
