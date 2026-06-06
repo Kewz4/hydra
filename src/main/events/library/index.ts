@@ -64,6 +64,8 @@ import "./install-battlenet";
 import "./sync-gamepass-library";
 import "./open-xbox-auth-window";
 
+import "./download-via-legendary";
+
 //UPDATEDD
 
 import "./transfer-game-files";

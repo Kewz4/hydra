@@ -752,6 +752,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("on-battlenet-install-progress", listener);
     return () => ipcRenderer.removeListener("on-battlenet-install-progress", listener);
   },
+  downloadViaLegendary: (objectId: string, downloadPath?: string) =>
+    ipcRenderer.invoke("downloadViaLegendary", objectId, downloadPath),
   onSignOut: (cb: () => void) => {
     const listener = (_event: Electron.IpcRendererEvent) => cb();
     ipcRenderer.on("on-signout", listener);

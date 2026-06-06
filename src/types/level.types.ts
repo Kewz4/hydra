@@ -71,6 +71,11 @@ export interface Game {
   installedSizeInBytes?: number | null;
   installerSizeInBytes?: number | null;
   steamShortcutAppId?: number;
+  alternativeShops?: Array<{
+    shop: GameShop;
+    objectId: string;
+    executablePath: string | null;
+  }>;
 }
 
 export interface Download {

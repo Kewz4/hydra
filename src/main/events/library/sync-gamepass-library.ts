@@ -5,6 +5,7 @@ import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
 import type { UserPreferences } from "@types";
 import { syncXboxGameAchievements } from "@main/services/achievements/get-xbox-achievements";
+import { findGameByTitle } from "@main/helpers/find-game-by-title";
 
 const syncGamePassLibrary = async () => {
   const prefs = await db
@@ -25,6 +26,23 @@ const syncGamePassLibrary = async () => {
     const gameKey = levelKeys.game("xbox", xboxGame.productId);
     const existing = await gamesSublevel.get(gameKey).catch(() => null);
     if (existing && !existing.isDeleted) continue;
+
+    // Check for same game from another shop — attach as alternativeShop instead of duplicating
+    const titleMatch = await findGameByTitle(xboxGame.title);
+    if (titleMatch) {
+      const [matchKey, matchGame] = titleMatch;
+      const alreadyLinked = matchGame.alternativeShops?.some(s => s.shop === "xbox" && s.objectId === xboxGame.productId);
+      if (!alreadyLinked) {
+        await gamesSublevel.put(matchKey, {
+          ...matchGame,
+          alternativeShops: [
+            ...(matchGame.alternativeShops ?? []),
+            { shop: "xbox", objectId: xboxGame.productId, executablePath: `msxbox://game/?productId=${xboxGame.productId}` },
+          ],
+        });
+      }
+      continue; // Don't create a duplicate entry
+    }
 
     const game = {
       title: xboxGame.title,

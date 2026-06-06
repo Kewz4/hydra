@@ -9,6 +9,8 @@ import {
 } from "@main/services/gog-account";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
+import { findGameByTitle } from "@main/helpers/find-game-by-title";
+import { findSteamAppIdByTitle, getSteamCdnUrls } from "@main/services/steam-metadata";
 
 const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const prefs = await db
@@ -50,6 +52,23 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
         // Skip DLCs, packs, and non-game products
         if (details.game_type && details.game_type !== "game") return;
 
+        // Check for same game from another shop — attach as alternativeShop instead of duplicating
+        const titleMatch = await findGameByTitle(details.title);
+        if (titleMatch) {
+          const [matchKey, matchGame] = titleMatch;
+          const alreadyLinked = matchGame.alternativeShops?.some(s => s.shop === "gog" && s.objectId === objectId);
+          if (!alreadyLinked) {
+            await gamesSublevel.put(matchKey, {
+              ...matchGame,
+              alternativeShops: [
+                ...(matchGame.alternativeShops ?? []),
+                { shop: "gog", objectId, executablePath: `goggalaxy://openGame/${objectId}` },
+              ],
+            });
+          }
+          return; // Don't create a duplicate entry
+        }
+
         const iconUrl = details.images?.logo2x
           ? `https:${details.images.logo2x}`
           : null;
@@ -57,10 +76,20 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
           ? `https:${details.images.background}`
           : null;
 
+        // Try to get high-quality Steam art
+        let finalIconUrl: string | null = iconUrl;
+        let finalHeroUrl: string | null = heroUrl;
+        const steamAppId = await findSteamAppIdByTitle(details.title).catch(() => null);
+        if (steamAppId) {
+          const cdnUrls = getSteamCdnUrls(steamAppId);
+          finalHeroUrl = cdnUrls.heroImageUrl;
+          finalIconUrl = cdnUrls.iconUrl;
+        }
+
         const game = {
           title: details.title,
-          iconUrl,
-          libraryHeroImageUrl: heroUrl,
+          iconUrl: finalIconUrl,
+          libraryHeroImageUrl: finalHeroUrl,
           logoImageUrl: null,
           objectId,
           shop: "gog" as const,

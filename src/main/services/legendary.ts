@@ -134,6 +134,71 @@ export const getLegendaryGameCoverUrl = (game: LegendaryGame): string | null => 
   return game.key_images[0]?.url ?? null;
 };
 
+export function spawnLegendaryInstall(
+  appName: string,
+  downloadPath: string,
+  binaryPath: string | null | undefined,
+  onProgress: (progress: number, downloadedMB: number, totalMB: number, speedMBs: number) => void,
+  onComplete: () => void,
+  onError: (err: string) => void
+): () => void {
+  const binary = findLegendaryBinary(binaryPath);
+  if (!binary) {
+    onError("Legendary binary not found");
+    return () => {};
+  }
+
+  const child = spawn(binary, ["install", appName, "--base-path", downloadPath, "--yes"], {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  const progressRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB.*?(\d+\.?\d*)\s+MB\/s/;
+  const completeRegex = /Finished installation|Successfully installed/i;
+
+  const handleLine = (line: string) => {
+    const progressMatch = line.match(progressRegex);
+    if (progressMatch) {
+      const downloadedMB = parseFloat(progressMatch[1]);
+      const totalMB = parseFloat(progressMatch[2]);
+      const speedMBs = parseFloat(progressMatch[3]);
+      const progress = totalMB > 0 ? downloadedMB / totalMB : 0;
+      onProgress(progress, downloadedMB, totalMB, speedMBs);
+      return;
+    }
+    if (completeRegex.test(line)) {
+      onComplete();
+    }
+  };
+
+  let stdoutBuffer = "";
+  child.stdout?.on("data", (chunk: Buffer) => {
+    stdoutBuffer += chunk.toString();
+    const lines = stdoutBuffer.split("\n");
+    stdoutBuffer = lines.pop() ?? "";
+    for (const line of lines) handleLine(line);
+  });
+
+  let stderrBuffer = "";
+  child.stderr?.on("data", (chunk: Buffer) => {
+    stderrBuffer += chunk.toString();
+    const lines = stderrBuffer.split("\n");
+    stderrBuffer = lines.pop() ?? "";
+    for (const line of lines) handleLine(line);
+  });
+
+  child.on("error", (err) => onError(err.message));
+
+  child.on("close", (code) => {
+    if (code !== 0 && code !== null) {
+      onError(`Legendary exited with code ${code}`);
+    }
+  });
+
+  return () => {
+    try { child.kill(); } catch {}
+  };
+}
+
 interface GitHubRelease {
   assets: { name: string; browser_download_url: string }[];
 }

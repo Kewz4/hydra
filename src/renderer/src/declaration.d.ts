@@ -675,6 +675,8 @@ declare global {
     // Cancel for game transfers
     cancelGameTransfer: (shop: GameShop, objectId: string) => Promise<void>;
 
+    downloadViaLegendary: (objectId: string, downloadPath?: string) => Promise<{ ok: boolean }>;
+
     /* Event listeners for transfer progress */
     on: (channel: string, listener: (...args: any[]) => void) => void;
     off: (channel: string, listener: (...args: any[]) => void) => void;
