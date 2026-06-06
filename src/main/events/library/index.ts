@@ -62,6 +62,7 @@ import "./add-battlenet-games-to-library";
 import "./install-battlenet";
 
 import "./sync-gamepass-library";
+import "./open-xbox-auth-window";
 
 //UPDATEDD
 

@@ -167,6 +167,10 @@ export interface UserPreferences {
   steamApiKey?: string | null;
   legendaryBinaryPath?: string | null;
   gogRefreshToken?: string | null;
+  xboxAccessToken?: string | null;
+  xboxUserHash?: string | null;
+  xboxXstsToken?: string | null;
+  xboxTokenExpiry?: string | null;
 }
 
 export interface ScreenState {

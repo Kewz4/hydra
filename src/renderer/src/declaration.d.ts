@@ -182,6 +182,7 @@ declare global {
     }>;
     addBattleNetGamesToLibrary: (productCodes: string[]) => Promise<{ added: number }>;
     syncGamePassLibrary: () => Promise<{ added: number; total: number }>;
+    openXboxAuthWindow: () => Promise<{ success: boolean; gamertag?: string; hasGamePass?: boolean }>;
     addCustomGameToLibrary: (
       title: string,
       executablePath: string,

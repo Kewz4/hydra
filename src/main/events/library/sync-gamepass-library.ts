@@ -1,11 +1,22 @@
 import { registerEvent } from "../register-event";
 import { getGamePassCatalog } from "@main/services/xbox";
-import { gamesSublevel, levelKeys } from "@main/level";
+import { gamesSublevel, levelKeys, db } from "@main/level";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
+import type { UserPreferences } from "@types";
 
 const syncGamePassLibrary = async () => {
-  const games = await getGamePassCatalog();
+  const prefs = await db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
+
+  if (!prefs?.xboxXstsToken || !prefs?.xboxUserHash) {
+    throw new Error("Xbox account not connected. Sign in first.");
+  }
+
+  const games = await getGamePassCatalog(prefs.xboxUserHash, prefs.xboxXstsToken);
 
   let added = 0;
 

@@ -1,4 +1,9 @@
 import axios from "axios";
+import { logger } from "./logger";
+
+// ──────────────────────────────────────────────────────────
+// Types
+// ──────────────────────────────────────────────────────────
 
 export interface XboxGame {
   productId: string;
@@ -8,9 +13,177 @@ export interface XboxGame {
   description: string | null;
 }
 
+export interface XboxTokenSet {
+  accessToken: string;   // MSA token
+  userHash: string;      // XBL uhs claim
+  xstsToken: string;     // XSTS token
+  expiry: Date;
+}
+
+export interface XboxUserInfo {
+  gamertag: string;
+  xuid: string;
+  hasGamePass: boolean;
+}
+
+// ──────────────────────────────────────────────────────────
+// OAuth URL (popup shown to user)
+// ──────────────────────────────────────────────────────────
+
+export const XBOX_OAUTH_URL =
+  "https://login.live.com/oauth20_authorize.srf?" +
+  new URLSearchParams({
+    client_id: "000000004C12AE6F",
+    redirect_uri: "https://login.live.com/oauth20_desktop.srf",
+    response_type: "token",
+    scope: "service::user.auth.xboxlive.com::MBI_SSL",
+    display: "touch",
+    locale: "en",
+  }).toString();
+
+const REDIRECT_HOST = "login.live.com";
+const REDIRECT_PATH = "/oauth20_desktop.srf";
+
+// ──────────────────────────────────────────────────────────
+// Token exchange helpers
+// ──────────────────────────────────────────────────────────
+
+/** Extract MSA access_token from the redirect URL fragment */
+export function extractMsaToken(url: string): string | null {
+  try {
+    const u = new URL(url);
+    if (u.hostname !== REDIRECT_HOST || !u.pathname.startsWith(REDIRECT_PATH)) {
+      return null;
+    }
+    // token is in the hash
+    const hash = u.hash.startsWith("#") ? u.hash.slice(1) : u.hash;
+    const params = new URLSearchParams(hash);
+    return params.get("access_token");
+  } catch {
+    return null;
+  }
+}
+
+/** Exchange MSA token for Xbox Live (XBL) token */
+async function getXblToken(msaToken: string): Promise<{ token: string; uhs: string }> {
+  const res = await axios.post(
+    "https://user.auth.xboxlive.com/user/authenticate",
+    {
+      Properties: {
+        AuthMethod: "RPS",
+        SiteName: "user.auth.xboxlive.com",
+        // MBI_SSL implicit flow token goes without "d=" prefix
+        RpsTicket: msaToken,
+      },
+      RelyingParty: "http://auth.xboxlive.com",
+      TokenType: "JWT",
+    },
+    { headers: { "Content-Type": "application/json", Accept: "application/json" } }
+  );
+  const uhs = res.data.DisplayClaims.xui[0].uhs as string;
+  return { token: res.data.Token as string, uhs };
+}
+
+/** Exchange XBL token for XSTS token */
+async function getXstsToken(xblToken: string): Promise<{ token: string; gamertag: string; xuid: string }> {
+  const res = await axios.post(
+    "https://xsts.auth.xboxlive.com/xsts/authorize",
+    {
+      Properties: {
+        SandboxId: "RETAIL",
+        UserTokens: [xblToken],
+      },
+      RelyingParty: "http://xboxlive.com",
+      TokenType: "JWT",
+    },
+    { headers: { "Content-Type": "application/json", Accept: "application/json" } }
+  );
+  const claims = res.data.DisplayClaims?.xui?.[0] ?? {};
+  return {
+    token: res.data.Token as string,
+    gamertag: (claims.gtg as string) ?? "Xbox User",
+    xuid: (claims.xid as string) ?? "",
+  };
+}
+
+/** Check if the authenticated user has an active Game Pass PC subscription */
+async function checkGamePass(uhs: string, xstsToken: string): Promise<boolean> {
+  try {
+    // Game Pass PC subscription product ID: CFQ7TTC0KGQ8
+    const res = await axios.get(
+      "https://displaycatalog.mp.microsoft.com/v7.0/products/CFQ7TTC0KGQ8",
+      {
+        params: {
+          market: "US",
+          languages: "en-us",
+          "MS-CV": "F.1",
+          actionFilter: "Purchase",
+        },
+        headers: {
+          Authorization: `XBL3.0 x=${uhs};${xstsToken}`,
+        },
+        timeout: 10000,
+      }
+    );
+    // If we can fetch the Game Pass product with the user's auth and
+    // it has an "Owned" or subscription status, they have it.
+    // Simpler heuristic: if the product is accessible, check entitlements.
+    const product = res.data?.Products?.[0];
+    if (!product) return false;
+
+    // Check if the user has an active subscription via availability
+    const availabilities = product.DisplaySkuAvailabilities ?? [];
+    for (const sku of availabilities) {
+      for (const avail of sku.Availabilities ?? []) {
+        if (avail.Actions?.includes("Fulfill")) return true;
+      }
+    }
+    return false;
+  } catch {
+    // Fallback: try the Game Pass catalog endpoint — if we can access it as
+    // an authenticated user, assume they have access
+    try {
+      const res = await axios.get(
+        "https://catalog.gamepass.com/sigls/v2?id=fdd9e2a7-0fee-49f6-ad69-4354098401ff&language=en-us&market=US",
+        {
+          headers: { Authorization: `XBL3.0 x=${uhs};${xstsToken}` },
+          timeout: 8000,
+        }
+      );
+      // A proper subscription shows personalised/entitled items
+      return Array.isArray(res.data) && res.data.length > 0;
+    } catch {
+      return false;
+    }
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+// Public: full sign-in flow
+// ──────────────────────────────────────────────────────────
+
+export async function exchangeMsaForXboxTokens(
+  msaAccessToken: string
+): Promise<{ tokens: XboxTokenSet; user: XboxUserInfo }> {
+  const { token: xblToken, uhs } = await getXblToken(msaAccessToken);
+  const xsts = await getXstsToken(xblToken);
+
+  const expiry = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000); // 14 days
+
+  const hasGamePass = await checkGamePass(uhs, xsts.token);
+
+  return {
+    tokens: { accessToken: msaAccessToken, userHash: uhs, xstsToken: xsts.token, expiry },
+    user: { gamertag: xsts.gamertag, xuid: xsts.xuid, hasGamePass },
+  };
+}
+
+// ──────────────────────────────────────────────────────────
+// Game Pass catalog
+// ──────────────────────────────────────────────────────────
+
 const GAMEPASS_CATALOG_URL =
   "https://catalog.gamepass.com/sigls/v2?id=fdd9e2a7-0fee-49f6-ad69-4354098401ff&language=en-us&market=US";
-
 const DISPLAY_CATALOG_URL =
   "https://displaycatalog.mp.microsoft.com/v7.0/products";
 
@@ -30,8 +203,12 @@ function pickImageUrl(images: any[]): string | null {
   return uri.startsWith("//") ? `https:${uri}` : uri;
 }
 
-export async function getGamePassCatalog(): Promise<XboxGame[]> {
+export async function getGamePassCatalog(uhs?: string, xstsToken?: string): Promise<XboxGame[]> {
+  const authHeader =
+    uhs && xstsToken ? { Authorization: `XBL3.0 x=${uhs};${xstsToken}` } : {};
+
   const catalogRes = await axios.get<any[]>(GAMEPASS_CATALOG_URL, {
+    headers: authHeader,
     timeout: 15000,
   });
 
@@ -52,26 +229,21 @@ export async function getGamePassCatalog(): Promise<XboxGame[]> {
           languages: "en-us",
           "MS-CV": "F.1",
         },
+        headers: authHeader,
         timeout: 15000,
       });
 
       const products: any[] = detailRes.data?.Products ?? [];
       for (const product of products) {
-        // Skip add-ons
         if (product.ProductBSchema === "ProductAddOn;3") continue;
-
-        const pfn: string =
-          product.Properties?.PackageFamilyName ?? "";
-        // Skip bundles/collections with no launchable package
+        const pfn: string = product.Properties?.PackageFamilyName ?? "";
         if (!pfn) continue;
 
         const id: string = product.ProductId;
-        const title: string =
-          product.LocalizedProperties?.[0]?.ProductTitle ?? id;
+        const title: string = product.LocalizedProperties?.[0]?.ProductTitle ?? id;
         const description: string | null =
           product.LocalizedProperties?.[0]?.ShortDescription ?? null;
-        const images: any[] =
-          product.LocalizedProperties?.[0]?.Images ?? [];
+        const images: any[] = product.LocalizedProperties?.[0]?.Images ?? [];
         const coverUrl = pickImageUrl(images);
 
         games.push({ productId: id, title, packageFamilyName: pfn, coverUrl, description });
@@ -81,16 +253,6 @@ export async function getGamePassCatalog(): Promise<XboxGame[]> {
     }
   }
 
+  logger.log(`Xbox Game Pass catalog: ${games.length} games fetched`);
   return games;
 }
-
-export const XBOX_AUTH_URL =
-  "https://login.live.com/oauth20_authorize.srf?" +
-  new URLSearchParams({
-    client_id: "000000004C12AE6F",
-    redirect_uri: "https://login.live.com/oauth20_desktop.srf",
-    response_type: "token",
-    scope: "service::user.auth.xboxlive.com::MBI_SSL",
-    display: "touch",
-    locale: "en",
-  }).toString();

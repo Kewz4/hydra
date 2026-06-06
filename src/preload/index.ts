@@ -227,6 +227,7 @@ contextBridge.exposeInMainWorld("electron", {
   addBattleNetGamesToLibrary: (productCodes: string[]) =>
     ipcRenderer.invoke("addBattleNetGamesToLibrary", productCodes),
   syncGamePassLibrary: () => ipcRenderer.invoke("syncGamePassLibrary"),
+  openXboxAuthWindow: () => ipcRenderer.invoke("openXboxAuthWindow"),
   addCustomGameToLibrary: (
     title: string,
     executablePath: string,

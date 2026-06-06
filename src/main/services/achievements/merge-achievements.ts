@@ -196,7 +196,7 @@ export const mergeAchievements = async (
         id: game.remoteId,
         achievements: mergedLocalAchievements,
       },
-      { needsSubscription: !newAchievements.length }
+      {}
     )
       .then((response) => {
         if (response) {

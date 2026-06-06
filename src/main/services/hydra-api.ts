@@ -48,8 +48,8 @@ export class HydraApi {
   }
 
   public static hasActiveSubscription() {
-    const expiresAt = new Date(this.userAuth.subscription?.expiresAt ?? 0);
-    return expiresAt > new Date();
+    // Cloud saves and achievements are free for all logged-in users
+    return this.isLoggedIn();
   }
 
   static async handleExternalAuth(uri: string) {
