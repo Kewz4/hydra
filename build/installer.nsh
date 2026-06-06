@@ -3,28 +3,20 @@
 ; ──────────────────────────────────────────────
 
 !macro customHeader
-  ; MUI2 color overrides – dark background
-  !define MUI_BGCOLOR               "1A1A2E"
-  !define MUI_INSTFILESPAGE_COLORS  "E2E2E2 1A1A2E"
-
-  ; Header image on the right side
-  !define MUI_HEADERIMAGE
-  !define MUI_HEADERIMAGE_RIGHT
-  !define MUI_HEADER_TRANSPARENT_TEXT
-
-  ; Welcome / Finish page text
-  !define MUI_WELCOMEPAGE_TITLE       "Welcome to GameHub"
-  !define MUI_WELCOMEPAGE_TEXT        "GameHub is your all-in-one game launcher.$\r$\n$\r$\nThis setup will install GameHub ${VERSION} on your computer.$\r$\n$\r$\nClick Next to continue."
-  !define MUI_FINISHPAGE_TITLE        "GameHub is ready!"
-  !define MUI_FINISHPAGE_TEXT         "GameHub has been successfully installed.$\r$\nClick Finish to launch the app and start gaming."
-  !define MUI_FINISHPAGE_RUN          "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
-  !define MUI_FINISHPAGE_RUN_TEXT     "Launch GameHub"
-  !define MUI_FINISHPAGE_LINK         "GameHub on GitHub"
-  !define MUI_FINISHPAGE_LINK_LOCATION "https://github.com/Kewz4/hydra"
-
-  ; Abort warning
-  !define MUI_ABORTWARNING
-  !define MUI_ABORTWARNING_TEXT "Are you sure you want to quit the GameHub installer?"
+  !define /redef MUI_BGCOLOR               "1A1A2E"
+  !define /redef MUI_INSTFILESPAGE_COLORS  "E2E2E2 1A1A2E"
+  !define /redef MUI_HEADERIMAGE
+  !define /redef MUI_HEADERIMAGE_RIGHT
+  !define /redef MUI_WELCOMEPAGE_TITLE       "Welcome to GameHub"
+  !define /redef MUI_WELCOMEPAGE_TEXT        "GameHub is your all-in-one game launcher.$\r$\n$\r$\nThis setup will install GameHub ${VERSION} on your computer.$\r$\n$\r$\nClick Next to continue."
+  !define /redef MUI_FINISHPAGE_TITLE        "GameHub is ready!"
+  !define /redef MUI_FINISHPAGE_TEXT         "GameHub has been successfully installed.$\r$\nClick Finish to launch the app and start gaming."
+  !define /redef MUI_FINISHPAGE_RUN          "$INSTDIR\${APP_EXECUTABLE_FILENAME}"
+  !define /redef MUI_FINISHPAGE_RUN_TEXT     "Launch GameHub"
+  !define /redef MUI_FINISHPAGE_LINK         "GameHub on GitHub"
+  !define /redef MUI_FINISHPAGE_LINK_LOCATION "https://github.com/Kewz4/hydra"
+  !define /redef MUI_ABORTWARNING
+  !define /redef MUI_ABORTWARNING_TEXT "Are you sure you want to quit the GameHub installer?"
 !macroend
 
 !macro customInstall
