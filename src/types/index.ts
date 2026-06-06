@@ -26,6 +26,7 @@ export interface GameRepack {
   downloadSourceId: string;
   downloadSourceName: string;
   createdAt: string;
+  installNotes?: string | null;
 }
 
 export interface DownloadSource {

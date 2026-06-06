@@ -1,10 +1,12 @@
-import { useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   PlusCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  TrophyIcon,
+  ZapIcon,
 } from "@primer/octicons-react";
 import { Tooltip } from "react-tooltip";
 
@@ -277,6 +279,27 @@ export function RepacksModal({
   };
 
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [showHyperVisorModal, setShowHyperVisorModal] = useState(false);
+
+  const ACHIEVEMENT_CRACKERS = useMemo(
+    () => [
+      "CODEX", "GOLDBERG", "EMPRESS", "SKIDROW", "FLT", "RAZOR1911",
+      "RLD", "RUNE", "ONLINEFIX", "CREAMAPI", "3DM", "RLE",
+      "SMARTSTEAMEMU", "DODI", "FITGIRL",
+    ],
+    []
+  );
+
+  const repackSupportsAchievements = useCallback(
+    (title: string) => {
+      const upper = title.toUpperCase();
+      return ACHIEVEMENT_CRACKERS.some((c) => upper.includes(c));
+    },
+    [ACHIEVEMENT_CRACKERS]
+  );
+
+  const repackIsHyperVisor = (title: string) =>
+    title.toLowerCase().includes("hypervisor");
 
   useEffect(() => {
     if (!visible) {
@@ -288,6 +311,49 @@ export function RepacksModal({
 
   return (
     <>
+      {showHyperVisorModal && (
+        <Modal
+          visible={showHyperVisorModal}
+          title="HyperVisor Crack"
+          description="What is a HyperVisor crack and how to set it up"
+          onClose={() => setShowHyperVisorModal(false)}
+        >
+          <div className="repacks-modal__hypervisor-info">
+            <p>
+              Some games use <strong>VMProtect</strong> or similar DRM that detects
+              when a hypervisor (virtual machine) is running on your CPU. A HyperVisor
+              crack bypasses this detection — but it requires specific BIOS and Windows
+              settings.
+            </p>
+            <h4>Setup steps</h4>
+            <ol>
+              <li>
+                <strong>Disable Hyper-V in Windows</strong> — open "Turn Windows
+                features on or off" and uncheck all Hyper-V entries. Restart.
+              </li>
+              <li>
+                <strong>Disable Device Guard / Credential Guard</strong> — in Group
+                Policy: Computer Configuration → Administrative Templates → System →
+                Device Guard → turn off "Turn on Virtualization Based Security".
+              </li>
+              <li>
+                <strong>Enable Virtualization in BIOS</strong> — enter BIOS/UEFI,
+                find the CPU settings and enable Intel VT-x or AMD-V (sometimes
+                labelled "SVM Mode").
+              </li>
+              <li>
+                Reboot and launch the game. The crack intercepts the hypervisor
+                detection call and reports no hypervisor is present.
+              </li>
+            </ol>
+            <p className="repacks-modal__hypervisor-note">
+              Note: disabling Hyper-V will prevent WSL2, Windows Sandbox, and Android
+              subsystem from running while it is off.
+            </p>
+          </div>
+        </Modal>
+      )}
+
       <DownloadSettingsModal
         visible={showSelectFolderModal}
         onClose={() => setShowSelectFolderModal(false)}
@@ -516,10 +582,38 @@ export function RepacksModal({
                     <Badge>{t("last_downloaded_option")}</Badge>
                   )}
 
+                  <div className="repacks-modal__badges">
+                    {repackSupportsAchievements(repack.title) && (
+                      <span className="repacks-modal__badge repacks-modal__badge--achievements">
+                        <TrophyIcon size={12} />
+                        {t("achievements_supported", { defaultValue: "Achievements" })}
+                      </span>
+                    )}
+                    {repackIsHyperVisor(repack.title) && (
+                      <button
+                        type="button"
+                        className="repacks-modal__badge repacks-modal__badge--hypervisor"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowHyperVisorModal(true);
+                        }}
+                      >
+                        <ZapIcon size={12} />
+                        HyperVisor Crack
+                      </button>
+                    )}
+                  </div>
+
                   <p className="repacks-modal__repack-info">
                     {repack.fileSize} - {repack.downloadSourceName} -{" "}
                     {repack.uploadDate ? formatDate(repack.uploadDate) : ""}
                   </p>
+
+                  {repack.installNotes && (
+                    <p className="repacks-modal__install-notes">
+                      {repack.installNotes}
+                    </p>
+                  )}
 
                   {hashesInDebrid[getHashFromMagnet(repack.uris[0]) ?? ""] && (
                     <DebridBadge />
