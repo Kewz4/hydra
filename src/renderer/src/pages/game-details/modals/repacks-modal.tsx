@@ -357,6 +357,51 @@ export function RepacksModal({
           </div>
         </div>
 
+        {game?.alternativeShops && game.alternativeShops.length > 0 && (
+          <div className="repacks-modal__platform-options">
+            <p className="repacks-modal__platform-options-label">
+              {t("platform_options", { defaultValue: "Download via platform" })}
+            </p>
+            <div className="repacks-modal__platform-buttons">
+              {game.alternativeShops.map((alt) => {
+                const shopLabel: Record<string, string> = {
+                  epic: "Epic Games (Legendary)",
+                  gog: "GOG Galaxy",
+                  xbox: "Xbox",
+                  steam: "Steam",
+                  battlenet: "Battle.net",
+                };
+                const label = alt.executablePath
+                  ? `Launch via ${shopLabel[alt.shop] ?? alt.shop}`
+                  : `Download via ${shopLabel[alt.shop] ?? alt.shop}`;
+
+                return (
+                  <Button
+                    key={`${alt.shop}:${alt.objectId}`}
+                    theme="outline"
+                    className="repacks-modal__platform-button"
+                    onClick={() => {
+                      if (alt.executablePath) {
+                        window.electron.openGame(
+                          alt.shop,
+                          alt.objectId,
+                          alt.executablePath,
+                          undefined
+                        );
+                      } else if (alt.shop === "epic") {
+                        window.electron.downloadViaLegendary(alt.objectId);
+                      }
+                      onClose();
+                    }}
+                  >
+                    {label}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="repacks-modal__repacks">
           {filteredRepacks.length === 0 ? (
             <div className="repacks-modal__no-results">

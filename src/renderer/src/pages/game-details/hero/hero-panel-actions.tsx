@@ -287,10 +287,42 @@ export function HeroPanelActions() {
     );
   }
 
+  const alternativeShopLaunchButtons = game?.alternativeShops
+    ?.filter((alt) => alt.executablePath)
+    .map((alt) => {
+      const shopLabel: Record<string, string> = {
+        epic: "Epic",
+        gog: "GOG",
+        xbox: "Xbox",
+        steam: "Steam",
+        battlenet: "Battle.net",
+      };
+      return (
+        <Button
+          key={`${alt.shop}:${alt.objectId}`}
+          theme="outline"
+          disabled={deleting}
+          className="hero-panel-actions__action"
+          onClick={() =>
+            window.electron.openGame(
+              alt.shop,
+              alt.objectId,
+              alt.executablePath!,
+              undefined
+            )
+          }
+        >
+          <PlayIcon />
+          {`Launch via ${shopLabel[alt.shop] ?? alt.shop}`}
+        </Button>
+      );
+    });
+
   if (game) {
     return (
       <div className="hero-panel-actions__container">
         {gameActionButton()}
+        {alternativeShopLaunchButtons}
         <div className="hero-panel-actions__separator" />
         <Button
           onClick={toggleGameFavorite}
