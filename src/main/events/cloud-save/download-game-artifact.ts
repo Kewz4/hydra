@@ -10,8 +10,8 @@ import * as tar from "tar";
 import { registerEvent } from "../register-event";
 import path from "node:path";
 import { backupsPath, publicProfilePath } from "@main/constants";
-import type { GameShop, LudusaviBackupMapping, UserPreferences } from "@types";
-import { db, levelKeys } from "@main/level";
+import type { GameShop, LudusaviBackupMapping } from "@types";
+import { gamesSublevel, levelKeys } from "@main/level";
 
 import YAML from "yaml";
 import { addTrailingSlash, normalizePath } from "@main/helpers";
@@ -91,9 +91,6 @@ const downloadGameArtifact = async (
   gameArtifactId: string  // Uploadcare UUID
 ) => {
   try {
-    const prefs = await db.get<string, UserPreferences>(levelKeys.userPreferences, { valueEncoding: "json" });
-    UploadcareSync.configure(prefs?.uploadcarePublicKey ?? null, prefs?.uploadcareSecretKey ?? null);
-
     const game = await gamesSublevel.get(levelKeys.game(shop, objectId));
     const effectiveWinePrefixPath = Wine.getEffectivePrefixPath(
       game?.winePrefixPath,

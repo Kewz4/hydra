@@ -1,6 +1,7 @@
-import { CloudSync, UploadcareSync } from "@main/services";
+import { CloudSync } from "@main/services";
 import { registerEvent } from "../register-event";
 import { db, levelKeys } from "@main/level";
+import { UploadcareSync } from "@main/services/uploadcare-sync";
 import type { GameShop, UserPreferences } from "@types";
 
 const uploadSaveGame = async (
@@ -9,12 +10,9 @@ const uploadSaveGame = async (
   shop: GameShop,
   downloadOptionTitle: string | null
 ) => {
-  const prefs = await db.get<string, UserPreferences>(levelKeys.userPreferences, {
-    valueEncoding: "json",
-  });
-
-  // Ensure Uploadcare is configured
-  UploadcareSync.configure(prefs?.uploadcarePublicKey ?? null, prefs?.uploadcareSecretKey ?? null);
+  const prefs = await db
+    .get<string, UserPreferences>(levelKeys.userPreferences, { valueEncoding: "json" })
+    .catch(() => ({} as UserPreferences));
 
   // Ensure a stable cloud sync user ID exists
   let userId = prefs?.cloudSyncUserId;

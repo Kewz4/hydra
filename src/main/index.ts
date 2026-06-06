@@ -2,19 +2,15 @@ import { app, BrowserWindow, net, protocol } from "electron";
 import updater from "electron-updater";
 import i18n from "i18next";
 import path from "node:path";
-import fs from "node:fs";
 import url from "node:url";
 
-// Portable mode: if a "portable" marker file exists next to the exe,
-// store all user data in a "data" folder alongside the exe.
-if (process.platform === "win32") {
-  const exeDir = path.dirname(app.getPath("exe"));
-  const portableMarker = path.join(exeDir, "portable");
-  if (fs.existsSync(portableMarker)) {
-    const dataDir = path.join(exeDir, "data");
-    app.setPath("userData", dataDir);
-    app.setPath("logs", path.join(dataDir, "logs"));
-  }
+// electron-builder sets PORTABLE_EXECUTABLE_DIR when running as a portable exe.
+// Redirect all user data into a "data" subfolder next to the exe so the
+// entire installation is self-contained and copyable.
+if (process.env.PORTABLE_EXECUTABLE_DIR) {
+  const dataDir = path.join(process.env.PORTABLE_EXECUTABLE_DIR, "data");
+  app.setPath("userData", dataDir);
+  app.setPath("logs", path.join(dataDir, "logs"));
 }
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import {

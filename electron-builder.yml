@@ -40,9 +40,6 @@ nsis:
   include: installer.nsh
 portable:
   artifactName: ${name}-${version}-portable.${ext}
-  extraResources:
-    - from: build/portable-marker
-      to: portable
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extraResources:
