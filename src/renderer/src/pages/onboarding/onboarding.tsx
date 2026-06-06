@@ -226,8 +226,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── GameHub Account ── */}
           {currentStep === "account" && (
             <>
-              <div className="onboarding-step-header">
-                <GameHubIcon width={24} height={24} />
+              <div className="onboarding-platform-hero">
+                <GameHubIcon className="onboarding-platform-hero__logo" />
                 <h2>GameHub Account</h2>
               </div>
               <p className="onboarding-step-description">
@@ -254,8 +254,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Steam ── */}
           {currentStep === "steam" && (
             <>
-              <div className="onboarding-step-header">
-                <SteamLogo width={24} height={24} />
+              <div className="onboarding-platform-hero">
+                <SteamLogo className="onboarding-platform-hero__logo" />
                 <h2>Steam</h2>
               </div>
 
@@ -334,8 +334,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Epic ── */}
           {currentStep === "epic" && (
             <>
-              <div className="onboarding-step-header">
-                <EpicLogo width={24} height={24} />
+              <div className="onboarding-platform-hero">
+                <EpicLogo className="onboarding-platform-hero__logo" />
                 <h2>Epic Games</h2>
               </div>
 
@@ -356,7 +356,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </>
               ) : (
                 <div className="onboarding-actions">
-                  <button type="button" className="onboarding-skip" onClick={next}>
+                  <button
+                    type="button"
+                    className="onboarding-skip"
+                    onClick={next}
+                    disabled={epicBusy}
+                    style={{ opacity: epicBusy ? 0.4 : 1, pointerEvents: epicBusy ? 'none' : 'auto' }}
+                  >
                     Skip for now
                   </button>
                   <Button
@@ -376,8 +382,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── GOG ── */}
           {currentStep === "gog" && (
             <>
-              <div className="onboarding-step-header">
-                <GogLogo width={24} height={24} />
+              <div className="onboarding-platform-hero">
+                <GogLogo className="onboarding-platform-hero__logo" />
                 <h2>GOG</h2>
               </div>
 
@@ -398,7 +404,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </>
               ) : (
                 <div className="onboarding-actions">
-                  <button type="button" className="onboarding-skip" onClick={next}>
+                  <button
+                    type="button"
+                    className="onboarding-skip"
+                    onClick={next}
+                    disabled={gogBusy}
+                    style={{ opacity: gogBusy ? 0.4 : 1, pointerEvents: gogBusy ? 'none' : 'auto' }}
+                  >
                     Skip for now
                   </button>
                   <Button
@@ -418,8 +430,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Xbox ── */}
           {currentStep === "xbox" && (
             <>
-              <div className="onboarding-step-header">
-                <XboxLogo width={24} height={24} />
+              <div className="onboarding-platform-hero">
+                <XboxLogo className="onboarding-platform-hero__logo" />
                 <h2>Xbox / Game Pass</h2>
               </div>
 
@@ -440,7 +452,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </>
               ) : (
                 <div className="onboarding-actions">
-                  <button type="button" className="onboarding-skip" onClick={next}>
+                  <button
+                    type="button"
+                    className="onboarding-skip"
+                    onClick={next}
+                    disabled={xboxBusy}
+                    style={{ opacity: xboxBusy ? 0.4 : 1, pointerEvents: xboxBusy ? 'none' : 'auto' }}
+                  >
                     Skip for now
                   </button>
                   <Button
