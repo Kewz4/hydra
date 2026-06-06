@@ -16,18 +16,24 @@ export const windowsStartMenuPath = path.join(
 
 export const publicProfilePath = "C:/Users/Public";
 
+// Portable installs store all user data next to the exe.
+// Read PORTABLE_EXECUTABLE_DIR directly here — app.setPath() runs after
+// module init so we can't rely on it being reflected in app.getPath() yet.
+const portableDataDir = process.env.PORTABLE_EXECUTABLE_DIR
+  ? path.join(process.env.PORTABLE_EXECUTABLE_DIR, "data")
+  : null;
+
+const getUserDataPath = () => portableDataDir ?? SystemPath.getPath("userData");
+
 export const levelDatabasePath = path.join(
-  SystemPath.getPath("userData"),
+  getUserDataPath(),
   `gamehub-db${isStaging ? "-staging" : ""}`
 );
 
-export const commonRedistPath = path.join(
-  SystemPath.getPath("userData"),
-  "CommonRedist"
-);
+export const commonRedistPath = path.join(getUserDataPath(), "CommonRedist");
 
 export const logsPath = path.join(
-  SystemPath.getPath("userData"),
+  getUserDataPath(),
   `logs${isStaging ? "-staging" : ""}`
 );
 
@@ -35,13 +41,13 @@ export const achievementSoundPath = app.isPackaged
   ? path.join(process.resourcesPath, "achievement.wav")
   : path.join(__dirname, "..", "..", "resources", "achievement.wav");
 
-export const backupsPath = path.join(SystemPath.getPath("userData"), "Backups");
+export const backupsPath = path.join(getUserDataPath(), "Backups");
 
 export const appVersion = app.getVersion() + (isStaging ? "-staging" : "");
 
-export const ASSETS_PATH = path.join(SystemPath.getPath("userData"), "Assets");
+export const ASSETS_PATH = path.join(getUserDataPath(), "Assets");
 
-export const THEMES_PATH = path.join(SystemPath.getPath("userData"), "themes");
+export const THEMES_PATH = path.join(getUserDataPath(), "themes");
 
 export const INTERVALS = {
   processWatcher: 2_000,

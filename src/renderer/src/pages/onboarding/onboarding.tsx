@@ -62,7 +62,6 @@ function parseSteamId(input: string): string {
 export function Onboarding({ onComplete }: OnboardingProps) {
   const { t, i18n } = useTranslation("settings");
   const userPreferences = useAppSelector((state) => state.userPreferences.value);
-  const dispatch = useAppDispatch();
 
   const [stepIndex, setStepIndex] = useState(0);
 
