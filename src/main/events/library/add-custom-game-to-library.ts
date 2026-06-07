@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { GameShop, CatalogueSearchResult } from "@types";
 import { HydraApi } from "@main/services";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
+import { deduplicateTitle } from "@main/helpers/deduplicate-title";
 
 const addCustomGameToLibrary = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -46,6 +47,8 @@ const addCustomGameToLibrary = async (
         libraryHeroImageUrl || existingGame.libraryHeroImageUrl || null,
     };
     await gamesSublevel.put(existingKey, mergedGame);
+    // Dedup in case there are other duplicate title entries
+    await deduplicateTitle(title).catch(() => {});
     return mergedGame;
   }
 
@@ -95,6 +98,7 @@ const addCustomGameToLibrary = async (
             libraryHeroImageUrl || existingCatalogue.libraryHeroImageUrl || null,
         };
         await gamesSublevel.put(catalogueKey, merged);
+        await deduplicateTitle(match.title).catch(() => {});
         return merged;
       }
       // Create a new entry using the catalogue's objectId/shop
@@ -131,6 +135,7 @@ const addCustomGameToLibrary = async (
       };
       await gamesShopAssetsSublevel.put(catalogueKey, catalogueAssets);
       await gamesSublevel.put(catalogueKey, catalogueGame);
+      await deduplicateTitle(match.title).catch(() => {});
       return catalogueGame;
     }
   } catch {
@@ -179,6 +184,7 @@ const addCustomGameToLibrary = async (
   };
 
   await gamesSublevel.put(gameKey, game);
+  await deduplicateTitle(title).catch(() => {});
 
   return game;
 };

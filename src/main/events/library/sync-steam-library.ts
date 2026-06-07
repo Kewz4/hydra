@@ -4,6 +4,7 @@ import { getSteamOwnedGames } from "@main/services/steam-account";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
+import { deduplicateTitle } from "@main/helpers/deduplicate-title";
 
 
 const syncSteamLibrary = async (
@@ -20,8 +21,12 @@ const syncSteamLibrary = async (
     const gameKey = levelKeys.game("steam", objectId);
 
     const existing = await gamesSublevel.get(gameKey).catch(() => null);
-
-    if (existing && !existing.isDeleted) continue;
+    if (existing && !existing.isDeleted) {
+      // Already have this exact Steam entry — still dedup by title to collapse
+      // any custom/other-shop entries with the same name
+      await deduplicateTitle(ownedGame.name).catch(() => {});
+      continue;
+    }
 
     const gameAssets = await gamesShopAssetsSublevel
       .get(gameKey)
@@ -75,6 +80,9 @@ const syncSteamLibrary = async (
 
     await gamesSublevel.put(gameKey, game);
     await createGame(game).catch(() => {});
+
+    // Collapse any duplicate entries (e.g. custom:uuid for same title)
+    await deduplicateTitle(ownedGame.name).catch(() => {});
 
     added++;
   }

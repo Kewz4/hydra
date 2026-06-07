@@ -7,6 +7,7 @@ import type { UserPreferences } from "@types";
 import { syncXboxGameAchievements } from "@main/services/achievements/get-xbox-achievements";
 import { findGameByTitle } from "@main/helpers/find-game-by-title";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
+import { deduplicateTitle } from "@main/helpers/deduplicate-title";
 
 const syncGamePassLibrary = async () => {
   const prefs = await db
@@ -70,6 +71,7 @@ const syncGamePassLibrary = async () => {
 
     await gamesSublevel.put(gameKey, game);
     await createGame(game).catch(() => {});
+    await deduplicateTitle(xboxGame.title).catch(() => {});
     added++;
 
     // Sync achievements for this game if titleId is available

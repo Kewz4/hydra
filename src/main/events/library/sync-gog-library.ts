@@ -11,6 +11,7 @@ import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
 import { findGameByTitle } from "@main/helpers/find-game-by-title";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
+import { deduplicateTitle } from "@main/helpers/deduplicate-title";
 
 const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   try {
@@ -97,6 +98,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
 
         await gamesSublevel.put(gameKey, game);
         await createGame(game).catch(() => {});
+        await deduplicateTitle(details.title).catch(() => {});
         added++;
       })
     );
