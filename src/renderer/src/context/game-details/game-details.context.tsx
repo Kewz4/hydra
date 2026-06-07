@@ -34,6 +34,8 @@ export const gameDetailsContext = createContext<GameDetailsContext>({
   shopDetails: null,
   repacks: [],
   shop: "steam",
+  canonicalShop: "steam",
+  canonicalObjectId: undefined,
   gameTitle: "",
   isGameRunning: false,
   isLoading: false,
@@ -72,9 +74,9 @@ export function GameDetailsContextProvider({
   gameTitle,
   shop,
 }: Readonly<GameDetailsContextProps>) {
-  const [shopDetails, setShopDetails] = useState<ShopDetailsWithAssets | null>(
-    null
-  );
+  const [shopDetails, setShopDetails] = useState<ShopDetailsWithAssets | null>(null);
+  const [canonicalShop, setCanonicalShop] = useState<GameShop>(shop);
+  const [canonicalObjectId, setCanonicalObjectId] = useState<string | undefined>(objectId);
   const [achievements, setAchievements] = useState<UserAchievement[] | null>(
     null
   );
@@ -204,26 +206,40 @@ export function GameDetailsContextProvider({
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    const shopDetailsPromise = window.electron
-      .getGameShopDetails(objectId, shop, getSteamLanguage(i18n.language))
-      .then((result) => {
-        if (abortController.signal.aborted) return;
+    const rawShopDetailsPromise = window.electron.getGameShopDetails(
+      objectId,
+      shop,
+      getSteamLanguage(i18n.language)
+    );
 
-        setShopDetails(result);
+    const shopDetailsPromise = rawShopDetailsPromise.then((result) => {
+      if (abortController.signal.aborted) return;
 
-        if (
-          result?.content_descriptors.ids.includes(
-            SteamContentDescriptor.AdultOnlySexualContent
-          ) &&
-          !userPreferences?.disableNsfwAlert
-        ) {
-          setHasNSFWContentBlocked(true);
-        }
+      setShopDetails(result);
 
-        if (result?.assets) {
-          setIsLoading(false);
-        }
-      });
+      // For non-Steam games, use the Steam equivalent for reviews/achievements/stats
+      if (result && shop !== "steam" && (result as any).steam_appid) {
+        const steamId = String((result as any).steam_appid);
+        setCanonicalShop("steam");
+        setCanonicalObjectId(steamId);
+      } else {
+        setCanonicalShop(shop);
+        setCanonicalObjectId(objectId);
+      }
+
+      if (
+        result?.content_descriptors?.ids?.includes(
+          SteamContentDescriptor.AdultOnlySexualContent
+        ) &&
+        !userPreferences?.disableNsfwAlert
+      ) {
+        setHasNSFWContentBlocked(true);
+      }
+
+      if (result?.assets) {
+        setIsLoading(false);
+      }
+    });
 
     if (shop !== "custom") {
       window.electron.getGameStats(objectId, shop).then((result) => {
@@ -253,13 +269,22 @@ export function GameDetailsContextProvider({
       });
 
     if (userDetails && shop !== "custom") {
-      window.electron
-        .getUnlockedAchievements(objectId, shop)
-        .then((achievements) => {
-          if (abortController.signal.aborted) return;
-          setAchievements(achievements);
-        })
-        .catch(() => void 0);
+      // Achievements are indexed by Steam — wait for shopDetails so we have the canonical Steam ID
+      rawShopDetailsPromise.then((details) => {
+        if (abortController.signal.aborted) return;
+        const steamId = shop !== "steam" && (details as any)?.steam_appid
+          ? String((details as any).steam_appid)
+          : null;
+        const achObjectId = steamId ?? objectId;
+        const achShop: GameShop = steamId ? "steam" : shop;
+        window.electron
+          .getUnlockedAchievements(achObjectId, achShop)
+          .then((achievements) => {
+            if (abortController.signal.aborted) return;
+            setAchievements(achievements);
+          })
+          .catch(() => void 0);
+      });
     }
   }, [
     updateGame,
@@ -278,6 +303,8 @@ export function GameDetailsContextProvider({
     setIsGameRunning(false);
     setAchievements(null);
     setGameOptionsInitialCategory("general");
+    setCanonicalShop(shop);
+    setCanonicalObjectId(objectId);
     dispatch(setHeaderTitle(gameTitle));
   }, [objectId, gameTitle, dispatch]);
 
@@ -522,6 +549,8 @@ export function GameDetailsContextProvider({
         game,
         shopDetails,
         shop,
+        canonicalShop,
+        canonicalObjectId,
         repacks,
         gameTitle,
         isGameRunning,

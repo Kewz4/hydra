@@ -100,7 +100,12 @@ const achievementsPlaceholder: UserAchievement[] = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  canonicalShop?: string;
+  canonicalObjectId?: string;
+}
+
+export function Sidebar({ canonicalShop, canonicalObjectId }: Readonly<SidebarProps> = {}) {
   const shouldShowProtonFeatures = window.electron.platform === "linux";
   const [howLongToBeat, setHowLongToBeat] = useState<{
     isLoading: boolean;
@@ -118,19 +123,22 @@ export function Sidebar() {
   const { gameTitle, shopDetails, objectId, shop, stats, achievements } =
     useContext(gameDetailsContext);
 
+  // Use canonical (Steam) IDs for HLTB and ProtonDB when available
+  const effectiveShop = (canonicalShop ?? shop) as string;
+  const effectiveObjectId = canonicalObjectId ?? objectId ?? "";
+
   const { showHydraCloudModal } = useSubscription();
   const { t } = useTranslation("game_details");
   const { formatDateTime } = useDate();
   const { numberFormatter } = useFormat();
 
   useEffect(() => {
-    if (objectId) {
+    if (effectiveObjectId) {
       setHowLongToBeat({ isLoading: true, data: null });
 
-      // Directly fetch from API without checking cache
       window.electron.hydraApi
         .get<HowLongToBeatCategory[] | null>(
-          `/games/${shop}/${objectId}/how-long-to-beat`,
+          `/games/${effectiveShop}/${effectiveObjectId}/how-long-to-beat`,
           {
             needsAuth: false,
           }
@@ -142,24 +150,24 @@ export function Sidebar() {
           setHowLongToBeat({ isLoading: false, data: null });
         });
     }
-  }, [objectId, shop]);
+  }, [effectiveObjectId, effectiveShop]);
 
   useEffect(() => {
-    if (!shouldShowProtonFeatures || !objectId) {
+    if (!shouldShowProtonFeatures || !effectiveObjectId) {
       setProtonDB({ isLoading: false, data: null });
       return;
     }
 
     setProtonDB({ isLoading: true, data: null });
 
-    getProtonDBData(shop, objectId)
+    getProtonDBData(effectiveShop, effectiveObjectId)
       .then((protonData) => {
         setProtonDB({ isLoading: false, data: protonData });
       })
       .catch(() => {
         setProtonDB({ isLoading: false, data: null });
       });
-  }, [shouldShowProtonFeatures, objectId, shop]);
+  }, [shouldShowProtonFeatures, effectiveObjectId, effectiveShop]);
 
   return (
     <aside className="content-sidebar">

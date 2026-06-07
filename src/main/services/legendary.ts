@@ -24,13 +24,15 @@ export interface LegendaryStatus {
 const getPlatformSearchPaths = (): string[] => {
   const userData = SystemPath.getPath("userData");
   const binDir = path.join(userData, "bin");
-  // Check bundled binary first (packed into app's extraResources/bin/)
+  // Bundled: try both resourcesPath and exe-adjacent resources (for portable builds)
   const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
+  const execAdjacentBin = path.join(path.dirname(process.execPath ?? ""), "resources", "bin");
 
   if (process.platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA ?? "";
     return [
       path.join(resourcesBin, "legendary.exe"),
+      path.join(execAdjacentBin, "legendary.exe"),
       path.join(binDir, "legendary.exe"),
       path.join(localAppData, "Programs", "legendary", "legendary.exe"),
       path.join(localAppData, "legendary", "legendary.exe"),
@@ -39,6 +41,7 @@ const getPlatformSearchPaths = (): string[] => {
   if (process.platform === "darwin") {
     return [
       path.join(resourcesBin, "legendary"),
+      path.join(execAdjacentBin, "legendary"),
       path.join(binDir, "legendary"),
       "/usr/local/bin/legendary",
       "/opt/homebrew/bin/legendary",
@@ -47,6 +50,7 @@ const getPlatformSearchPaths = (): string[] => {
   }
   return [
     path.join(resourcesBin, "legendary"),
+    path.join(execAdjacentBin, "legendary"),
     path.join(binDir, "legendary"),
     path.join(SystemPath.getPath("home"), ".local", "bin", "legendary"),
     "/usr/bin/legendary",
@@ -93,7 +97,7 @@ export const getLegendaryStatus = async (
   if (!binary) return { account: null, authenticated: false };
 
   try {
-    const output = await runLegendary(binary, ["status", "--json"]);
+    const output = await runLegendary(binary, [...legendaryBaseArgs(), "status", "--json"]);
     const data = JSON.parse(output);
     return {
       account: data.account ?? null,
@@ -111,13 +115,21 @@ export const getLegendaryGames = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  const output = await runLegendary(binary, ["list", "--json"]);
+  const output = await runLegendary(binary, [...legendaryBaseArgs(), "list", "--json"]);
   const data = JSON.parse(output);
 
   if (!Array.isArray(data)) throw new Error("Unexpected legendary output format");
 
   return data as LegendaryGame[];
 };
+
+export const getLegendaryConfigPath = (): string => {
+  const configPath = path.join(SystemPath.getPath("userData"), "legendary-config");
+  fs.mkdirSync(configPath, { recursive: true });
+  return configPath;
+};
+
+const legendaryBaseArgs = (): string[] => ["--config-path", getLegendaryConfigPath()];
 
 export const authenticateLegendary = async (
   code: string,
@@ -126,7 +138,7 @@ export const authenticateLegendary = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  await execFileAsync(binary, ["auth", "--code", code.trim()], { timeout: 30_000 });
+  await execFileAsync(binary, [...legendaryBaseArgs(), "auth", "--code", code.trim()], { timeout: 30_000 });
 };
 
 export const getLegendaryGameCoverUrl = (game: LegendaryGame): string | null => {
@@ -154,7 +166,7 @@ export function spawnLegendaryInstall(
     return () => {};
   }
 
-  const child = spawn(binary, ["install", appName, "--base-path", downloadPath, "--yes", "--skip-sdl"], {
+  const child = spawn(binary, [...legendaryBaseArgs(), "install", appName, "--base-path", downloadPath, "--yes", "--skip-sdl"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
 

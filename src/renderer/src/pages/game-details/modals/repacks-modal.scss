@@ -187,31 +187,63 @@
 
   &__platform-options {
     margin-bottom: 0;
-    padding: calc(globals.$spacing-unit * 2) calc(globals.$spacing-unit * 2.5);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: calc(globals.$spacing-unit * 2.5) calc(globals.$spacing-unit * 2.5);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
   &__platform-options-label {
-    font-size: globals.$small-font-size;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 800;
     color: var(--color-text);
-    margin-bottom: calc(globals.$spacing-unit * 1.5);
-    letter-spacing: 0.02em;
+    margin-bottom: calc(globals.$spacing-unit * 2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   &__platform-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: calc(globals.$spacing-unit * 1);
+    gap: calc(globals.$spacing-unit * 1.5);
   }
 
   &__platform-button {
-    font-size: globals.$small-font-size;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
+    justify-content: center;
+    gap: 8px;
+    padding: calc(globals.$spacing-unit * 2) calc(globals.$spacing-unit * 3);
+    border-radius: 10px;
+    border: none;
+    background: #111;
+    color: #fff;
+    font-size: globals.$small-font-size;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.12s ease;
+    min-width: 120px;
+
+    &:hover {
+      background: #222;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    span {
+      white-space: nowrap;
+    }
+  }
+
+  &__platform-icon {
+    width: 28px;
+    height: 28px;
+    color: #fff;
+    flex-shrink: 0;
   }
 
   &__or-divider {
@@ -222,9 +254,9 @@
     margin-bottom: calc(globals.$spacing-unit * 2);
     color: var(--color-text-secondary);
     font-size: globals.$small-font-size;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    opacity: 0.6;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    opacity: 0.5;
   }
 
   &__badges {

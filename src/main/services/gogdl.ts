@@ -14,11 +14,14 @@ export const getGogdlInstallPath = (): string => {
 
 export const findGogdlBinary = (customPath?: string | null): string | null => {
   if (customPath && fs.existsSync(customPath)) return customPath;
-  // Check bundled binary first (extraResources/bin/)
-  const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
   const ext = process.platform === "win32" ? ".exe" : "";
-  const bundled = path.join(resourcesBin, `gogdl${ext}`);
-  if (fs.existsSync(bundled)) return bundled;
+  // Check bundled binary first; also check exe-adjacent resources for portable builds
+  const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
+  const execAdjacentBin = path.join(path.dirname(process.execPath ?? ""), "resources", "bin");
+  for (const dir of [resourcesBin, execAdjacentBin]) {
+    const candidate = path.join(dir, `gogdl${ext}`);
+    if (fs.existsSync(candidate)) return candidate;
+  }
   // Then user-downloaded binary
   const installPath = getGogdlInstallPath();
   if (fs.existsSync(installPath)) return installPath;
@@ -107,36 +110,69 @@ export function spawnGogdlInstall(
 
   const configDir = writeGogdlCredentials(accessToken, refreshToken, userId);
 
-  // gogdl download <gameId> --platform windows --path <downloadPath> --auth-config-path <configDir>
+  // heroic-gogdl: --auth-config-path MUST come before the subcommand
+  // Progress is output as JSON lines to stdout
   const child = spawn(binary, [
+    "--auth-config-path", configDir,
     "download",
     gameId,
     "--platform", "windows",
     "--path", downloadPath,
-    "--auth-config-path", configDir,
   ], {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  // gogdl outputs progress lines like:
-  // "Progress: 45.23% [1234.56 MiB / 2345.67 MiB] @ 50.00 MiB/s"
-  const progressRegex = /Progress:\s*(\d+\.?\d*)%.*?(\d+\.?\d*)\s*MiB\s*\/\s*(\d+\.?\d*)\s*MiB.*?(\d+\.?\d*)\s*MiB\/s/i;
-  const completeRegex = /Download\s+complete|Finished|Successfully/i;
+  // heroic-gogdl outputs JSON lines:
+  // {"status":"downloading","download_percent":45.2,"downloaded_size":900000000,"total_size":2000000000,"download_speed":52428800}
+  // {"status":"done"} or {"status":"finished"}
+  let completed = false;
 
   const handleLine = (line: string, isStderr = false) => {
     if (!line.trim()) return;
     logger.log(`[gogdl] ${line}`);
     onLog?.(line, isStderr);
-    const m = line.match(progressRegex);
+    if (completed) return;
+
+    // Try JSON parse first
+    try {
+      const json = JSON.parse(line.trim());
+      const status = json.status as string | undefined;
+
+      if (status === "done" || status === "finished" || status === "complete") {
+        completed = true;
+        onComplete();
+        return;
+      }
+
+      if (status === "error") {
+        onError(json.error ?? json.message ?? "gogdl error");
+        return;
+      }
+
+      if (typeof json.download_percent === "number" || typeof json.progress === "number") {
+        const pct = (json.download_percent ?? json.progress ?? 0) / 100;
+        // sizes may be in bytes
+        const toMB = (v: number) => v > 1_000_000 ? v / (1024 * 1024) : v;
+        const downloaded = toMB(json.downloaded_size ?? json.downloaded ?? 0);
+        const total = toMB(json.total_size ?? json.total ?? 0);
+        // speed in bytes/s
+        const speedMBs = (json.download_speed ?? json.speed ?? 0) / (1024 * 1024);
+        onProgress(pct, downloaded, total, speedMBs);
+        return;
+      }
+      return;
+    } catch {}
+
+    // Fallback: text progress patterns
+    // "Progress: 45.23% [1234.56 MiB / 2345.67 MiB] @ 50.00 MiB/s"
+    const textRegex = /(\d+\.?\d*)%.*?(\d+\.?\d*)\s*(?:MiB|MB)\s*\/\s*(\d+\.?\d*)\s*(?:MiB|MB).*?(\d+\.?\d*)\s*(?:MiB|MB)\/s/i;
+    const m = line.match(textRegex);
     if (m) {
-      const pct = parseFloat(m[1]) / 100;
-      const downloaded = parseFloat(m[2]);
-      const total = parseFloat(m[3]);
-      const speed = parseFloat(m[4]);
-      onProgress(pct, downloaded, total, speed);
+      onProgress(parseFloat(m[1]) / 100, parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4]));
       return;
     }
-    if (completeRegex.test(line)) {
+    if (/download\s+complete|finished|successfully/i.test(line)) {
+      completed = true;
       onComplete();
     }
   };

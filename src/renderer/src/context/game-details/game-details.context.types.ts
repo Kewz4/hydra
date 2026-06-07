@@ -21,6 +21,10 @@ export interface GameDetailsContext {
   shopDetails: ShopDetailsWithAssets | null;
   repacks: GameRepack[];
   shop: GameShop;
+  /** The canonical shop used for reviews/achievements/stats (Steam when falling back from GOG/Epic) */
+  canonicalShop: GameShop;
+  /** The canonical objectId used for reviews/achievements/stats */
+  canonicalObjectId: string | undefined;
   gameTitle: string;
   isGameRunning: boolean;
   isLoading: boolean;

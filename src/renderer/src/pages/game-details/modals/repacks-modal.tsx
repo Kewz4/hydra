@@ -18,6 +18,9 @@ import {
   TextField,
   CheckboxField,
 } from "@renderer/components";
+import SteamLogo from "@renderer/assets/steam-logo.svg?react";
+import EpicLogo from "@renderer/assets/epic-logo.svg?react";
+import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import type { DownloadSource, Game, GameRepack } from "@types";
 
 import { DownloadSettingsModal } from "./download-settings-modal";
@@ -467,43 +470,43 @@ export function RepacksModal({
               </p>
               <div className="repacks-modal__platform-buttons">
                 {isOwnedOnSteam && (
-                  <Button
-                    theme="outline"
-                    className="repacks-modal__platform-button"
+                  <button
+                    type="button"
+                    className="repacks-modal__platform-button repacks-modal__platform-button--steam"
                     onClick={() => {
                       window.electron.openGame(game.shop, game.objectId, `steam://install/${game.objectId}`, null);
                       onClose();
                     }}
                   >
-                    <img src="https://store.steampowered.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
-                    {"Download with Steam"}
-                  </Button>
+                    <SteamLogo className="repacks-modal__platform-icon" />
+                    <span>{"Download with Steam"}</span>
+                  </button>
                 )}
                 {isEpicGame && epicObjectId && (
-                  <Button
-                    theme="outline"
-                    className="repacks-modal__platform-button"
+                  <button
+                    type="button"
+                    className="repacks-modal__platform-button repacks-modal__platform-button--epic"
                     onClick={async () => {
                       setProcessModal({ launcher: "legendary", objectId: epicObjectId, title: game.title ?? epicObjectId });
                       window.electron.downloadViaLegendary(epicObjectId).catch(() => {});
                     }}
                   >
-                    <img src="https://store.epicgames.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
-                    {"Download with Epic Games"}
-                  </Button>
+                    <EpicLogo className="repacks-modal__platform-icon" />
+                    <span>{"Download with Epic Games"}</span>
+                  </button>
                 )}
                 {isGogGame && gogObjectId && (
-                  <Button
-                    theme="outline"
-                    className="repacks-modal__platform-button"
+                  <button
+                    type="button"
+                    className="repacks-modal__platform-button repacks-modal__platform-button--gog"
                     onClick={async () => {
                       setProcessModal({ launcher: "gogdl", objectId: gogObjectId, title: game.title ?? gogObjectId });
                       window.electron.downloadViaGogdl(gogObjectId).catch(() => {});
                     }}
                   >
-                    <img src="https://www.gog.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
-                    {"Download with GOG"}
-                  </Button>
+                    <GogLogo className="repacks-modal__platform-icon" />
+                    <span>{"Download with GOG"}</span>
+                  </button>
                 )}
               </div>
               <div className="repacks-modal__or-divider">
