@@ -24,10 +24,13 @@ export interface LegendaryStatus {
 const getPlatformSearchPaths = (): string[] => {
   const userData = SystemPath.getPath("userData");
   const binDir = path.join(userData, "bin");
+  // Check bundled binary first (packed into app's extraResources/bin/)
+  const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
 
   if (process.platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA ?? "";
     return [
+      path.join(resourcesBin, "legendary.exe"),
       path.join(binDir, "legendary.exe"),
       path.join(localAppData, "Programs", "legendary", "legendary.exe"),
       path.join(localAppData, "legendary", "legendary.exe"),
@@ -35,6 +38,7 @@ const getPlatformSearchPaths = (): string[] => {
   }
   if (process.platform === "darwin") {
     return [
+      path.join(resourcesBin, "legendary"),
       path.join(binDir, "legendary"),
       "/usr/local/bin/legendary",
       "/opt/homebrew/bin/legendary",
@@ -42,6 +46,7 @@ const getPlatformSearchPaths = (): string[] => {
     ];
   }
   return [
+    path.join(resourcesBin, "legendary"),
     path.join(binDir, "legendary"),
     path.join(SystemPath.getPath("home"), ".local", "bin", "legendary"),
     "/usr/bin/legendary",

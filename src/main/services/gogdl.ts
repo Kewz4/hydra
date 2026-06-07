@@ -14,6 +14,12 @@ export const getGogdlInstallPath = (): string => {
 
 export const findGogdlBinary = (customPath?: string | null): string | null => {
   if (customPath && fs.existsSync(customPath)) return customPath;
+  // Check bundled binary first (extraResources/bin/)
+  const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
+  const ext = process.platform === "win32" ? ".exe" : "";
+  const bundled = path.join(resourcesBin, `gogdl${ext}`);
+  if (fs.existsSync(bundled)) return bundled;
+  // Then user-downloaded binary
   const installPath = getGogdlInstallPath();
   if (fs.existsSync(installPath)) return installPath;
   // Check PATH

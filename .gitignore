@@ -23,3 +23,8 @@ Future-updates.md
 TO-DO.md
 .planning/
 .claude/
+binaries/bin/*.exe
+binaries/bin/legendary
+binaries/bin/legendary_*
+binaries/bin/gogdl
+binaries/bin/gogdl_*
