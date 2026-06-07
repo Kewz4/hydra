@@ -25,6 +25,7 @@
 import { gamesSublevel } from "@main/level";
 import { logger } from "@main/services";
 import type { Game } from "@types";
+import { normalizeGameTitle } from "./normalize-game-title";
 
 function canonicalScore(shop: Game["shop"]): number {
   switch (shop) {
@@ -38,11 +39,11 @@ function canonicalScore(shop: Game["shop"]): number {
 }
 
 export async function deduplicateTitle(title: string): Promise<string | null> {
-  const normalized = title.trim().toLowerCase();
+  const normalized = normalizeGameTitle(title);
   const matches: [string, Game][] = [];
 
   for await (const [key, game] of gamesSublevel.iterator()) {
-    if (!game.isDeleted && game.title.trim().toLowerCase() === normalized) {
+    if (!game.isDeleted && normalizeGameTitle(game.title) === normalized) {
       matches.push([key, game]);
     }
   }

@@ -5,6 +5,7 @@ import type { GameShop, CatalogueSearchResult } from "@types";
 import { HydraApi } from "@main/services";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
 import { deduplicateTitle } from "@main/helpers/deduplicate-title";
+import { normalizeGameTitle } from "@main/helpers/normalize-game-title";
 
 const addCustomGameToLibrary = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -29,11 +30,11 @@ const addCustomGameToLibrary = async (
     );
   }
 
-  // Check local library for a game with the same title first
-  const titleLower = title.toLowerCase();
+  // Check local library for a game with the same (edition-normalized) title first
+  const titleNorm = normalizeGameTitle(title);
   const existingByTitle = existingGames.find(
     ([_key, game]) =>
-      !game.isDeleted && game.title.toLowerCase() === titleLower
+      !game.isDeleted && normalizeGameTitle(game.title) === titleNorm
   );
 
   if (existingByTitle) {
@@ -80,7 +81,7 @@ const addCustomGameToLibrary = async (
     );
 
     const match = catalogueResponse?.edges?.find(
-      (r) => r.title.toLowerCase() === titleLower
+      (r) => normalizeGameTitle(r.title) === titleNorm
     );
 
     if (match) {

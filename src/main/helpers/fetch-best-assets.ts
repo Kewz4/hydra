@@ -12,6 +12,7 @@ import type { GameShop, ShopAssets, CatalogueSearchResult } from "@types";
 import { HydraApi } from "@main/services";
 import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
 import { logger } from "@main/services";
+import { normalizeGameTitle } from "./normalize-game-title";
 
 export interface BestAssets {
   iconUrl: string | null;
@@ -71,8 +72,8 @@ async function tryHydraCatalogueByTitle(title: string): Promise<BestAssets | nul
         needsAuth: false,
       }
     );
-    const titleLower = title.toLowerCase();
-    const match = resp?.edges?.find((r) => r.title.toLowerCase() === titleLower);
+    const titleNorm = normalizeGameTitle(title);
+    const match = resp?.edges?.find((r) => normalizeGameTitle(r.title) === titleNorm);
     if (!match) return null;
     return tryHydraAssets(match.shop, match.objectId);
   } catch {
