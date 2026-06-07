@@ -33,9 +33,20 @@ const updateUserPreferences = async (
   };
   const normalizedDownloadDirectoryPreferences =
     getDownloadDirectoryPreferences(mergedPreferences, defaultDownloadsPath);
+
+  // Preserve downloadsPath: normalization may return null if the path matches
+  // the system Downloads folder exactly, but we want to keep whatever the user
+  // explicitly saved (even if it equals the default — getDownloadsPath will
+  // fall back to the system default only when the value is null/undefined).
+  const preservedDownloadsPath =
+    normalizedDownloadDirectoryPreferences.downloadsPath
+    ?? mergedPreferences.downloadsPath
+    ?? null;
+
   const updatedPreferences = {
     ...mergedPreferences,
     ...normalizedDownloadDirectoryPreferences,
+    downloadsPath: preservedDownloadsPath,
   };
 
   await db.put<string, UserPreferences>(

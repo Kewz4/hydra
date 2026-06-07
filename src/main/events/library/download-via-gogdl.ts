@@ -54,6 +54,8 @@ const downloadViaGogdl = async (
     automaticallyExtract: false,
   };
   await downloadsSublevel.put(gameKey, initialRecord);
+  // Notify renderer to refresh library so the download appears in the downloads tab
+  WindowManager.sendToAppWindows("on-downloads-updated");
 
   let currentRecord = { ...initialRecord };
 
