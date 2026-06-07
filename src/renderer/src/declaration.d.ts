@@ -503,6 +503,12 @@ declare global {
     onPreflightProgress: (
       cb: (value: { status: string; detail: string | null }) => void
     ) => () => Electron.IpcRenderer;
+    onMetadataProgress: (
+      cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+    ) => () => Electron.IpcRenderer;
+    onDedupProgress: (
+      cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+    ) => () => Electron.IpcRenderer;
     resetCommonRedistPreflight: () => Promise<void>;
     saveTempFile: (fileName: string, fileData: Uint8Array) => Promise<string>;
     deleteTempFile: (filePath: string) => Promise<void>;

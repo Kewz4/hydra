@@ -1,7 +1,7 @@
 import { registerEvent } from "../register-event";
 import { gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
-import { logger } from "@main/services";
+import { logger, WindowManager } from "@main/services";
 
 const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
   const allGames = await gamesSublevel.values().all();
@@ -9,8 +9,14 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
 
   let updated = 0;
   let skipped = 0;
+  const total = games.length;
+  let current = 0;
+
+  WindowManager.sendToAppWindows("on-metadata-progress", { current, total, title: null });
 
   for (const game of games) {
+    current++;
+    WindowManager.sendToAppWindows("on-metadata-progress", { current, total, title: game.title });
     const cacheKey = levelKeys.game(game.shop, game.objectId);
     const assets = await gamesShopAssetsSublevel.get(cacheKey).catch(() => null);
 
@@ -49,6 +55,7 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
     }
   }
 
+  WindowManager.sendToAppWindows("on-metadata-progress", { current: total, total, title: null, done: true });
   logger.log(`generateMissingMetadata: ${updated} updated, ${skipped} skipped`);
   return { updated, skipped };
 };

@@ -1,13 +1,15 @@
-import { getSteamAppDetails, logger } from "@main/services";
+import { getSteamAppDetails, logger, HydraApi } from "@main/services";
 
-import type { ShopDetails, GameShop, ShopDetailsWithAssets } from "@types";
+import type { ShopDetails, GameShop, ShopDetailsWithAssets, CatalogueSearchResult, ShopAssets } from "@types";
 
 import { registerEvent } from "../register-event";
 import {
   gamesShopAssetsSublevel,
   gamesShopCacheSublevel,
+  gamesSublevel,
   levelKeys,
 } from "@main/level";
+import { normalizeGameTitle } from "@main/helpers/normalize-game-title";
 
 const getLocalizedSteamAppDetails = async (
   objectId: string,
@@ -27,6 +29,80 @@ const getGameShopDetails = async (
   language: string
 ): Promise<ShopDetailsWithAssets | null> => {
   if (shop === "custom") return null;
+
+  // For non-Steam games: find the canonical Steam equivalent via the catalogue
+  // so the game detail page can show descriptions, publisher info, etc.
+  if (shop !== "steam" && shop !== "custom") {
+    try {
+      // First, try the Hydra API assets for this exact game to get its title
+      const gameKey = levelKeys.game(shop, objectId);
+      const gameEntry = await gamesSublevel.get(gameKey).catch(() => null);
+      const gameAssets = await gamesShopAssetsSublevel.get(gameKey).catch(() => null);
+      const titleToSearch = gameAssets?.title ?? gameEntry?.title ?? objectId;
+
+      // Search the Hydra catalogue for a Steam match by title
+      const titleNorm = normalizeGameTitle(titleToSearch);
+      const catalogueResp = await HydraApi.post<{ edges: CatalogueSearchResult[]; count: number }>(
+        "/catalogue/search",
+        {
+          data: {
+            title: titleToSearch,
+            sortBy: "popularity",
+            sortOrder: "desc",
+            downloadSourceFingerprints: [],
+            tags: [],
+            publishers: [],
+            genres: [],
+            developers: [],
+            protondbSupportBadges: [],
+            deckCompatibility: [],
+            take: 5,
+            skip: 0,
+          },
+          needsAuth: false,
+        }
+      ).catch(() => null);
+
+      const steamMatch = catalogueResp?.edges?.find(
+        (r) => r.shop === "steam" && normalizeGameTitle(r.title) === titleNorm
+      ) ?? catalogueResp?.edges?.find((r) => r.shop === "steam");
+
+      if (steamMatch) {
+        const steamObjectId = steamMatch.objectId;
+        const cachedDetails = await gamesShopCacheSublevel
+          .get(levelKeys.gameShopCacheItem("steam", steamObjectId, language))
+          .catch(() => null);
+        const steamAssets = await gamesShopAssetsSublevel
+          .get(levelKeys.game("steam", steamObjectId))
+          .catch(() => null);
+
+        const details = cachedDetails
+          ? { ...cachedDetails, assets: steamAssets ?? gameAssets ?? null }
+          : await getSteamAppDetails(steamObjectId, language).then((r) => {
+              if (r) {
+                // Cache for next time
+                gamesShopCacheSublevel
+                  .put(levelKeys.gameShopCacheItem("steam", steamObjectId, language), r)
+                  .catch(() => {});
+                return { ...r, assets: steamAssets ?? gameAssets ?? null };
+              }
+              return null;
+            }).catch(() => null);
+
+        if (details) {
+          // Override the name with the actual game title from our library
+          (details as ShopDetails).name = gameAssets?.title ?? gameEntry?.title ?? details.name;
+          return {
+            ...details,
+            assets: steamAssets ?? gameAssets ?? null,
+          } as ShopDetailsWithAssets;
+        }
+      }
+    } catch (err) {
+      logger.warn(`getGameShopDetails: non-Steam fallback failed for ${shop}/${objectId}`, err);
+    }
+    return null;
+  }
 
   if (shop === "steam") {
     const [cachedData, cachedAssets] = await Promise.all([

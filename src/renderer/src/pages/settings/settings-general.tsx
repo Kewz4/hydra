@@ -53,6 +53,7 @@ export function SettingsGeneral() {
   const [canInstallCommonRedist, setCanInstallCommonRedist] = useState(false);
   const [installingCommonRedist, setInstallingCommonRedist] = useState(false);
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
+  const [metadataProgress, setMetadataProgress] = useState<{ current: number; total: number; title: string | null } | null>(null);
 
   const [form, setForm] = useState({
     downloadsPath: "",
@@ -466,15 +467,21 @@ export function SettingsGeneral() {
       <Button
         onClick={async () => {
           setGeneratingMetadata(true);
+          setMetadataProgress(null);
+          const unsub = window.electron.onMetadataProgress((p) => {
+            setMetadataProgress({ current: p.current, total: p.total, title: p.title });
+          });
           try {
             const result = await window.electron.generateMissingMetadata();
             showSuccessToast(
-              `Metadata updated for ${result.updated} game${result.updated !== 1 ? "s" : ""}.`
+              `Metadata updated for ${result.updated} game${result.updated !== 1 ? "s" : ""}, skipped ${result.skipped}.`
             );
           } catch {
             showErrorToast("Failed to generate metadata.");
           } finally {
+            unsub();
             setGeneratingMetadata(false);
+            setMetadataProgress(null);
           }
         }}
         className="settings-general__common-redist-button"
@@ -483,6 +490,28 @@ export function SettingsGeneral() {
         <DesktopDownloadIcon />
         {generatingMetadata ? "Generating metadata…" : "Generate missing metadata"}
       </Button>
+      {generatingMetadata && metadataProgress && (
+        <div style={{ fontSize: "0.8rem", opacity: 0.7, marginTop: 4, maxWidth: 400 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{
+              flex: 1, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden"
+            }}>
+              <div style={{
+                height: "100%",
+                width: `${metadataProgress.total > 0 ? Math.round((metadataProgress.current / metadataProgress.total) * 100) : 0}%`,
+                background: "var(--color-muted-purple, #7b68ee)",
+                transition: "width 0.2s",
+              }} />
+            </div>
+            <span style={{ whiteSpace: "nowrap" }}>{metadataProgress.current}/{metadataProgress.total}</span>
+          </div>
+          {metadataProgress.title && (
+            <p style={{ margin: "4px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {metadataProgress.title}
+            </p>
+          )}
+        </div>
+      )}
 
       <DownloadDirectoryReplacementModal
         visible={downloadDirectoryReplacement !== null}

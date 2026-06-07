@@ -1,40 +1,48 @@
 import { registerEvent } from "../register-event";
 import { gamesSublevel } from "@main/level";
-import { logger } from "@main/services";
+import { logger, WindowManager } from "@main/services";
 import { deduplicateTitle } from "@main/helpers/deduplicate-title";
+import { normalizeGameTitle } from "@main/helpers/normalize-game-title";
 
 const mergeDuplicateGames = async (_event: Electron.IpcMainInvokeEvent) => {
   const all = await gamesSublevel.values().all();
   const active = all.filter((g) => !g.isDeleted);
 
-  // Collect unique titles
-  const seenTitles = new Set<string>();
+  // Group by NORMALIZED title so fuzzy-matching catches edition variants
+  // (e.g. "The Witcher: Enhanced Edition" and "The Witcher: Enhanced Edition Director's Cut"
+  //  both normalize to the same base title and are treated as the same game)
+  const byNormalized = new Map<string, typeof active>();
   for (const game of active) {
-    seenTitles.add(game.title.trim().toLowerCase());
+    const key = normalizeGameTitle(game.title);
+    const bucket = byNormalized.get(key) ?? [];
+    bucket.push(game);
+    byNormalized.set(key, bucket);
   }
 
+  const duplicateBuckets = [...byNormalized.values()].filter((b) => b.length > 1);
+  const total = duplicateBuckets.length;
+  let current = 0;
   let merged = 0;
 
-  for (const normalizedTitle of seenTitles) {
-    // Find any title with duplicates by running deduplicateTitle on representative
-    const representativeTitle = active.find(
-      (g) => g.title.trim().toLowerCase() === normalizedTitle
-    )?.title;
-    if (!representativeTitle) continue;
+  WindowManager.sendToAppWindows("on-dedup-progress", { current, total, title: null });
 
-    const countBefore = active.filter(
-      (g) => g.title.trim().toLowerCase() === normalizedTitle
-    ).length;
+  for (const bucket of duplicateBuckets) {
+    current++;
+    const representativeTitle = bucket[0].title;
+    WindowManager.sendToAppWindows("on-dedup-progress", {
+      current,
+      total,
+      title: representativeTitle,
+    });
 
-    if (countBefore > 1) {
-      await deduplicateTitle(representativeTitle).catch((err) => {
-        logger.warn(`mergeDuplicateGames: dedup failed for "${representativeTitle}"`, err);
-      });
-      merged += countBefore - 1;
-      logger.log(`Merged ${countBefore - 1} duplicate(s) for "${representativeTitle}"`);
-    }
+    await deduplicateTitle(representativeTitle).catch((err) => {
+      logger.warn(`mergeDuplicateGames: dedup failed for "${representativeTitle}"`, err);
+    });
+    merged += bucket.length - 1;
+    logger.log(`Merged ${bucket.length - 1} duplicate(s) for "${representativeTitle}"`);
   }
 
+  WindowManager.sendToAppWindows("on-dedup-progress", { current: total, total, title: null, done: true });
   logger.log(`mergeDuplicateGames: ${merged} duplicates removed`);
   return { merged };
 };

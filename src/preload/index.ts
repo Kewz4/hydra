@@ -669,6 +669,26 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("preflight-progress", listener);
     return () => ipcRenderer.removeListener("preflight-progress", listener);
   },
+  onMetadataProgress: (
+    cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      value: { current: number; total: number; title: string | null; done?: boolean }
+    ) => cb(value);
+    ipcRenderer.on("on-metadata-progress", listener);
+    return () => ipcRenderer.removeListener("on-metadata-progress", listener);
+  },
+  onDedupProgress: (
+    cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      value: { current: number; total: number; title: string | null; done?: boolean }
+    ) => cb(value);
+    ipcRenderer.on("on-dedup-progress", listener);
+    return () => ipcRenderer.removeListener("on-dedup-progress", listener);
+  },
   resetCommonRedistPreflight: () =>
     ipcRenderer.invoke("resetCommonRedistPreflight"),
   checkForUpdates: () => ipcRenderer.invoke("checkForUpdates"),

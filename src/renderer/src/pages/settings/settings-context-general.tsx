@@ -57,6 +57,9 @@ export function SettingsContextGeneral({
 
   const { showSuccessToast, showErrorToast } = useToast();
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
+  const [metadataProgress, setMetadataProgress] = useState<{ current: number; total: number; title: string | null } | null>(null);
+  const [deduping, setDeduping] = useState(false);
+  const [dedupProgress, setDedupProgress] = useState<{ current: number; total: number; title: string | null } | null>(null);
 
   const [form, setForm] = useState({
     downloadsPath: "",
@@ -321,32 +324,100 @@ export function SettingsContextGeneral({
         <Button
           onClick={async () => {
             setGeneratingMetadata(true);
+            setMetadataProgress(null);
+            const unsub = window.electron.onMetadataProgress((p) => {
+              setMetadataProgress({ current: p.current, total: p.total, title: p.title });
+            });
             try {
               const result = await window.electron.generateMissingMetadata();
-              showSuccessToast(`Metadata updated for ${result.updated} game${result.updated !== 1 ? "s" : ""}.`);
+              showSuccessToast(`Metadata updated for ${result.updated} game${result.updated !== 1 ? "s" : ""}, skipped ${result.skipped}.`);
             } catch {
               showErrorToast("Failed to generate metadata.");
             } finally {
+              unsub();
               setGeneratingMetadata(false);
+              setMetadataProgress(null);
             }
           }}
           disabled={generatingMetadata}
         >
           {generatingMetadata ? "Generating…" : "Generate missing metadata"}
         </Button>
+        {generatingMetadata && metadataProgress && (
+          <div style={{ fontSize: "0.8rem", opacity: 0.7, marginTop: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                flex: 1, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden"
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: `${metadataProgress.total > 0 ? Math.round((metadataProgress.current / metadataProgress.total) * 100) : 0}%`,
+                  background: "var(--color-muted-purple, #7b68ee)",
+                  transition: "width 0.2s",
+                }} />
+              </div>
+              <span style={{ whiteSpace: "nowrap" }}>
+                {metadataProgress.current}/{metadataProgress.total}
+              </span>
+            </div>
+            {metadataProgress.title && (
+              <p style={{ margin: "4px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {metadataProgress.title}
+              </p>
+            )}
+          </div>
+        )}
         <Button
           theme="outline"
           onClick={async () => {
+            setDeduping(true);
+            setDedupProgress(null);
+            const unsub = window.electron.onDedupProgress((p) => {
+              setDedupProgress({ current: p.current, total: p.total, title: p.title });
+            });
             try {
               const result = await window.electron.mergeDuplicateGames();
-              showSuccessToast(`Merged ${result.merged} duplicate game${result.merged !== 1 ? "s" : ""}.`);
+              showSuccessToast(
+                result.merged > 0
+                  ? `Merged ${result.merged} duplicate game${result.merged !== 1 ? "s" : ""}.`
+                  : "No duplicates found."
+              );
             } catch {
               showErrorToast("Failed to merge duplicates.");
+            } finally {
+              unsub();
+              setDeduping(false);
+              setDedupProgress(null);
             }
           }}
+          disabled={deduping}
         >
-          Check for duplicates
+          {deduping ? "Checking…" : "Check for duplicates"}
         </Button>
+        {deduping && dedupProgress && (
+          <div style={{ fontSize: "0.8rem", opacity: 0.7, marginTop: 4 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                flex: 1, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden"
+              }}>
+                <div style={{
+                  height: "100%",
+                  width: `${dedupProgress.total > 0 ? Math.round((dedupProgress.current / dedupProgress.total) * 100) : 0}%`,
+                  background: "var(--color-muted-purple, #7b68ee)",
+                  transition: "width 0.2s",
+                }} />
+              </div>
+              <span style={{ whiteSpace: "nowrap" }}>
+                {dedupProgress.current}/{dedupProgress.total}
+              </span>
+            </div>
+            {dedupProgress.title && (
+              <p style={{ margin: "4px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                Checking: {dedupProgress.title}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <DownloadDirectoryReplacementModal
