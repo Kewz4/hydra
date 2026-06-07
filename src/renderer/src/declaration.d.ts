@@ -275,6 +275,7 @@ declare global {
     getLibrary: () => Promise<LibraryGame[]>;
     refreshLibraryAssets: () => Promise<void>;
     generateMissingMetadata: () => Promise<{ updated: number; skipped: number }>;
+    mergeDuplicateGames: () => Promise<{ merged: number }>;
     openGameInstaller: (shop: GameShop, objectId: string) => Promise<boolean>;
     getGameInstallerActionType: (
       shop: GameShop,

@@ -64,7 +64,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
               ...matchGame,
               alternativeShops: [
                 ...(matchGame.alternativeShops ?? []),
-                { shop: "gog", objectId, executablePath: `goggalaxy://openGame/${objectId}` },
+                { shop: "gog", objectId, executablePath: null },
               ],
             });
           }
@@ -109,7 +109,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
           lastTimePlayed: null,
           addedToLibraryAt: new Date(),
       automaticCloudSync: true,
-          executablePath: `goggalaxy://openGame/${objectId}`,
+          executablePath: null,
         };
 
         await gamesSublevel.put(gameKey, game);

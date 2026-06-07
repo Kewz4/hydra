@@ -11,7 +11,7 @@ import {
 } from "@renderer/components";
 import type { DownloadDirectoryPreference } from "@types";
 import { settingsContext } from "@renderer/context";
-import { useAppSelector } from "@renderer/hooks";
+import { useAppSelector, useToast } from "@renderer/hooks";
 import languageResources from "@locales";
 import {
   prepareDefaultDownloadPathSync,
@@ -54,6 +54,9 @@ export function SettingsContextGeneral({
   const [showRunAtStartup, setShowRunAtStartup] = useState(false);
   const [downloadDirectoryReplacement, setDownloadDirectoryReplacement] =
     useState<DownloadDirectoryReplacementState | null>(null);
+
+  const { showSuccessToast, showErrorToast } = useToast();
+  const [generatingMetadata, setGeneratingMetadata] = useState(false);
 
   const [form, setForm] = useState({
     downloadsPath: "",
@@ -308,6 +311,42 @@ export function SettingsContextGeneral({
       <div className="settings-context-panel__group">
         <h3>{t("appearance")}</h3>
         <SettingsAppearance appearance={appearance} />
+      </div>
+
+      <div className="settings-context-panel__group">
+        <h3>Library</h3>
+        <p style={{ margin: 0, opacity: 0.7, fontSize: "0.875rem" }}>
+          Fetch artwork and metadata from SteamGridDB for all library games missing cover images.
+        </p>
+        <Button
+          onClick={async () => {
+            setGeneratingMetadata(true);
+            try {
+              const result = await window.electron.generateMissingMetadata();
+              showSuccessToast(`Metadata updated for ${result.updated} game${result.updated !== 1 ? "s" : ""}.`);
+            } catch {
+              showErrorToast("Failed to generate metadata.");
+            } finally {
+              setGeneratingMetadata(false);
+            }
+          }}
+          disabled={generatingMetadata}
+        >
+          {generatingMetadata ? "Generating…" : "Generate missing metadata"}
+        </Button>
+        <Button
+          theme="outline"
+          onClick={async () => {
+            try {
+              const result = await window.electron.mergeDuplicateGames();
+              showSuccessToast(`Merged ${result.merged} duplicate game${result.merged !== 1 ? "s" : ""}.`);
+            } catch {
+              showErrorToast("Failed to merge duplicates.");
+            }
+          }}
+        >
+          Check for duplicates
+        </Button>
       </div>
 
       <DownloadDirectoryReplacementModal

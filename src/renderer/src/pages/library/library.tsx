@@ -99,6 +99,7 @@ export default function Library() {
   const [showDeleteCollectionModal, setShowDeleteCollectionModal] =
     useState(false);
   const [isDeletingCollection, setIsDeletingCollection] = useState(false);
+  const [storeFilter, setStoreFilter] = useState<string>("all");
 
   const searchQuery = useAppSelector((state) => state.library.searchQuery);
   const deferredSearchQuery = useDeferredValue(searchQuery);
@@ -468,6 +469,12 @@ export default function Library() {
     });
   }, [sortedLibrary, deferredSearchQuery, selectedCollectionId]);
 
+  const storeFilteredLibrary = useMemo(() => {
+    if (storeFilter === "all") return filteredLibrary;
+    if (storeFilter === "local") return filteredLibrary.filter(g => !g.executablePath || (!g.executablePath.includes("://") && !g.executablePath.startsWith("steam://") && !g.executablePath.startsWith("legendary://") && !g.executablePath.startsWith("goggalaxy://") && !g.executablePath.startsWith("msxbox://")));
+    return filteredLibrary.filter(g => g.shop === storeFilter);
+  }, [filteredLibrary, storeFilter]);
+
   const favoritesCount = useMemo(() => {
     return library.filter((game) => game.favorite).length;
   }, [library]);
@@ -484,7 +491,7 @@ export default function Library() {
   }, [collections, favoritesCount, t]);
 
   const hasGames = library.length > 0;
-  const hasNoFilteredGames = filteredLibrary.length === 0;
+  const hasNoFilteredGames = storeFilteredLibrary.length === 0;
   const isFavoritesCollectionSelected =
     selectedCollectionId === FAVORITES_COLLECTION_ID;
   const shouldShowFavoritesEmptyState =
@@ -511,6 +518,28 @@ export default function Library() {
                 onViewModeChange={handleViewModeChange}
               />
             </div>
+          </div>
+
+          <div className="library__store-filters" role="group" aria-label="Filter by store" style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "8px" }}>
+            {["all", "steam", "epic", "gog", "xbox", "custom"].map((store) => (
+              <button
+                key={store}
+                type="button"
+                onClick={() => setStoreFilter(store)}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: "12px",
+                  border: storeFilter === store ? "1px solid var(--color-primary, #8b5cf6)" : "1px solid rgba(255,255,255,0.2)",
+                  background: storeFilter === store ? "var(--color-primary, #8b5cf6)" : "transparent",
+                  color: "inherit",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                  opacity: storeFilter === store ? 1 : 0.7,
+                }}
+              >
+                {store.charAt(0).toUpperCase() + store.slice(1)}
+              </button>
+            ))}
           </div>
 
           <div
@@ -600,7 +629,7 @@ export default function Library() {
                 exit={{ opacity: 0, x: 10 }}
                 transition={{ duration: 0.2 }}
               >
-                {filteredLibrary.map((game) => (
+                {storeFilteredLibrary.map((game) => (
                   <LibraryGameCardLarge
                     key={`${game.shop}-${game.objectId}`}
                     game={game}
@@ -619,7 +648,7 @@ export default function Library() {
                 exit={{ opacity: 0, x: 10 }}
                 transition={{ duration: 0.2 }}
               >
-                {filteredLibrary.map((game) => (
+                {storeFilteredLibrary.map((game) => (
                   <li
                     key={`${game.shop}-${game.objectId}`}
                     style={{ listStyle: "none" }}

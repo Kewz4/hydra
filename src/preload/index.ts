@@ -327,6 +327,7 @@ contextBridge.exposeInMainWorld("electron", {
   getLibrary: () => ipcRenderer.invoke("getLibrary"),
   refreshLibraryAssets: () => ipcRenderer.invoke("refreshLibraryAssets"),
   generateMissingMetadata: () => ipcRenderer.invoke("generateMissingMetadata"),
+  mergeDuplicateGames: () => ipcRenderer.invoke("mergeDuplicateGames"),
   openGameInstaller: (shop: GameShop, objectId: string) =>
     ipcRenderer.invoke("openGameInstaller", shop, objectId),
   getGameInstallerActionType: (shop: GameShop, objectId: string) =>

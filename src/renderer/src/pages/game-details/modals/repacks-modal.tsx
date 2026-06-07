@@ -453,7 +453,9 @@ export function RepacksModal({
           const altShops = game.alternativeShops ?? [];
           const isGogGame = game.shop === "gog";
           const isEpicGame = game.shop === "epic";
-          const hasPlatformOptions = primaryProtocolUrl || isGogGame || isEpicGame || altShops.length > 0;
+          // Only show platform options if game has an executablePath (synced/owned) OR is GOG/Epic (always need download option)
+          const isOwnedOnPlatform = Boolean(game?.executablePath);
+          const hasPlatformOptions = (isOwnedOnPlatform && primaryProtocolUrl) || isGogGame || isEpicGame || (altShops.length > 0);
 
           if (!hasPlatformOptions) return null;
 
