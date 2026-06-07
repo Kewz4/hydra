@@ -51,8 +51,19 @@ export function SettingsSteamAccount() {
     setIsOpenIdPending(true);
     try {
       const detectedSteamId = await window.electron.startSteamOpenIdLogin();
+      // Save immediately so the linked-account panel renders
+      await updateUserPreferences({ steamId: detectedSteamId, steamApiKey: apiKey.trim() || null });
       setSteamId(detectedSteamId);
-      showSuccessToast(t("steam_id_detected", { steamId: detectedSteamId }));
+      // Fetch and display profile
+      const summary = await window.electron
+        .getSteamPlayerSummary(detectedSteamId, apiKey.trim() || undefined)
+        .catch(() => null);
+      if (summary) {
+        setLinkedAccount(summary);
+        showSuccessToast(t("steam_account_linked"));
+      } else {
+        showSuccessToast(t("steam_id_detected", { steamId: detectedSteamId }));
+      }
     } catch {
       showErrorToast(t("steam_openid_failed"));
     } finally {

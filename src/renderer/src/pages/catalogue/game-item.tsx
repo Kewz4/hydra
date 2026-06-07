@@ -1,13 +1,13 @@
 import { Badge } from "@renderer/components/badge/badge";
 import { buildGameDetailsPath } from "@renderer/helpers";
-import { useAppSelector, useLibrary } from "@renderer/hooks";
+import { useAppSelector, useLibrary, useToast } from "@renderer/hooks";
 import { lazy, Suspense, useMemo, useState, useEffect } from "react";
 import { Link } from "@renderer/components/link/link";
 
 import "./game-item.scss";
 import { useTranslation } from "react-i18next";
 import { CatalogueSearchResult } from "@types";
-import { QuestionIcon, PlusIcon, CheckIcon } from "@primer/octicons-react";
+import { QuestionIcon, PlusIcon, CheckIcon, ShareAndroidIcon } from "@primer/octicons-react";
 import cn from "classnames";
 
 const ProtonDBBadge = lazy(async () => {
@@ -31,6 +31,18 @@ export function GameItem({ game }: GameItemProps) {
   const [added, setAdded] = useState(false);
 
   const { library, updateLibrary } = useLibrary();
+  const { showSuccessToast, showErrorToast } = useToast();
+
+  const handleShareGame = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const link = `hydralauncher://game?shop=${encodeURIComponent(game.shop)}&objectId=${encodeURIComponent(game.objectId)}&title=${encodeURIComponent(game.title)}`;
+    navigator.clipboard.writeText(link).then(() => {
+      showSuccessToast(t("share_link_copied", { defaultValue: "Game link copied to clipboard!" }));
+    }).catch(() => {
+      showErrorToast(t("share_link_failed", { defaultValue: "Failed to copy link" }));
+    });
+  };
   const shouldShowProtonFeatures = window.electron.platform === "linux";
 
   useEffect(() => {
@@ -144,18 +156,29 @@ export function GameItem({ game }: GameItemProps) {
           </div>
         </div>
       </Link>
-      <button
-        type="button"
-        className={cn("game-item__plus-wrapper", {
-          "game-item__plus-wrapper--added": added,
-        })}
-        onClick={addGameToLibrary}
-        title={added ? t("already_in_library") : t("add_to_library")}
-        aria-label={added ? t("already_in_library") : t("add_to_library")}
-        disabled={added || isAddingToLibrary}
-      >
-        {added ? <CheckIcon size={16} /> : <PlusIcon size={16} />}
-      </button>
+      <div className="game-item__actions">
+        <button
+          type="button"
+          className={cn("game-item__plus-wrapper", {
+            "game-item__plus-wrapper--added": added,
+          })}
+          onClick={addGameToLibrary}
+          title={added ? t("already_in_library") : t("add_to_library")}
+          aria-label={added ? t("already_in_library") : t("add_to_library")}
+          disabled={added || isAddingToLibrary}
+        >
+          {added ? <CheckIcon size={16} /> : <PlusIcon size={16} />}
+        </button>
+        <button
+          type="button"
+          className="game-item__share-wrapper"
+          onClick={handleShareGame}
+          title={t("share_game", { defaultValue: "Share game" })}
+          aria-label={t("share_game", { defaultValue: "Share game" })}
+        >
+          <ShareAndroidIcon size={16} />
+        </button>
+      </div>
     </article>
   );
 }

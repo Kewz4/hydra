@@ -82,10 +82,45 @@ export async function deduplicateTitle(title: string): Promise<string | null> {
     });
   }
 
-  // Soft-delete all duplicates
+  // Collect alternativeShops from duplicates to merge into canonical
+  const canonicalAlts = [...(canonicalGame.alternativeShops ?? [])];
+
+  // Soft-delete all duplicates, folding their shop info into canonical's alternativeShops
   for (const [dupKey, dupGame] of duplicates) {
+    // Add the duplicate's own shop as an alternativeShop on the canonical entry
+    // (so "Download via GOG" / "Download via Epic" options are preserved)
+    const alreadyLinked = canonicalAlts.some(
+      (a) => a.shop === dupGame.shop && a.objectId === dupGame.objectId
+    );
+    if (!alreadyLinked && dupGame.shop !== "custom") {
+      canonicalAlts.push({
+        shop: dupGame.shop,
+        objectId: dupGame.objectId,
+        executablePath: dupGame.executablePath ?? null,
+      });
+    }
+    // Also carry over any alternativeShops that the duplicate itself had
+    for (const alt of dupGame.alternativeShops ?? []) {
+      const altAlreadyLinked = canonicalAlts.some(
+        (a) => a.shop === alt.shop && a.objectId === alt.objectId
+      );
+      if (!altAlreadyLinked) {
+        canonicalAlts.push(alt);
+      }
+    }
+
     await gamesSublevel.put(dupKey, { ...dupGame, isDeleted: true });
     logger.log(`deduplicateTitle: soft-deleted duplicate "${dupGame.title}" [${dupKey}] → kept [${canonicalKey}]`);
+  }
+
+  // Persist merged alternativeShops back onto the canonical entry
+  if (canonicalAlts.length !== (canonicalGame.alternativeShops?.length ?? 0)) {
+    await gamesSublevel.put(canonicalKey, {
+      ...canonicalGame,
+      executablePath: bestExePath,
+      launchOptions: bestLaunchOptions,
+      alternativeShops: canonicalAlts,
+    });
   }
 
   return canonicalKey;
