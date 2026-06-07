@@ -680,6 +680,7 @@ declare global {
     // Cancel for game transfers
     cancelGameTransfer: (shop: GameShop, objectId: string) => Promise<void>;
 
+    startSteamOpenIdLogin: () => Promise<string>;
     downloadViaLegendary: (objectId: string, downloadPath?: string) => Promise<{ ok: boolean }>;
     cancelLegendaryDownload: (objectId: string) => Promise<{ ok: boolean }>;
     downloadViaGogdl: (objectId: string, downloadPath?: string) => Promise<{ ok: boolean }>;

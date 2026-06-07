@@ -68,6 +68,8 @@ import "./download-via-legendary";
 import "./download-via-gogdl";
 import "./install-gogdl";
 
+import "./start-steam-openid-login";
+
 //UPDATEDD
 
 import "./transfer-game-files";

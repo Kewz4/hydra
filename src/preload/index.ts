@@ -756,6 +756,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("on-battlenet-install-progress", listener);
     return () => ipcRenderer.removeListener("on-battlenet-install-progress", listener);
   },
+  startSteamOpenIdLogin: (): Promise<string> =>
+    ipcRenderer.invoke("startSteamOpenIdLogin"),
   downloadViaLegendary: (objectId: string, downloadPath?: string) =>
     ipcRenderer.invoke("downloadViaLegendary", objectId, downloadPath),
   cancelLegendaryDownload: (objectId: string) =>

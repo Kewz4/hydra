@@ -3,7 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Button, Link, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
-import { LinkExternalIcon, SyncIcon, CheckCircleFillIcon } from "@primer/octicons-react";
+import { LinkExternalIcon, SyncIcon, CheckCircleFillIcon, MarkGithubIcon } from "@primer/octicons-react";
 
 const STEAM_API_KEY_URL = "https://steamcommunity.com/dev/apikey";
 
@@ -21,6 +21,7 @@ export function SettingsSteamAccount() {
     avatarfull: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isOpenIdPending, setIsOpenIdPending] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
 
@@ -46,6 +47,19 @@ export function SettingsSteamAccount() {
       setLinkedAccount(null);
     }
   }, [userPreferences?.steamId, userPreferences?.steamApiKey]);
+
+  const handleSteamOpenIdLogin = async () => {
+    setIsOpenIdPending(true);
+    try {
+      const detectedSteamId = await window.electron.startSteamOpenIdLogin();
+      setSteamId(detectedSteamId);
+      showSuccessToast(t("steam_id_detected", { steamId: detectedSteamId }));
+    } catch {
+      showErrorToast(t("steam_openid_failed"));
+    } finally {
+      setIsOpenIdPending(false);
+    }
+  };
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +169,23 @@ export function SettingsSteamAccount() {
   return (
     <form onSubmit={handleConnect} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <p style={{ margin: 0, opacity: 0.8 }}>{t("steam_account_description")}</p>
+
+      <div>
+        <Button
+          type="button"
+          onClick={handleSteamOpenIdLogin}
+          disabled={isOpenIdPending}
+          style={{ display: "flex", alignItems: "center", gap: "8px", background: "#1b2838", color: "#c7d5e0" }}
+        >
+          <MarkGithubIcon size={16} />
+          {isOpenIdPending ? t("waiting_for_steam") : t("login_with_steam")}
+        </Button>
+        <p style={{ margin: "8px 0 0", opacity: 0.55, fontSize: "0.8em" }}>
+          {t("login_with_steam_hint")}
+        </p>
+      </div>
+
+      <p style={{ margin: 0, opacity: 0.5, textAlign: "center" }}>{t("or")}</p>
 
       <TextField
         label={t("steam_id")}

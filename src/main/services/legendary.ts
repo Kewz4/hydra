@@ -152,20 +152,30 @@ export function spawnLegendaryInstall(
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  const progressRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB.*?(\d+\.?\d*)\s+MB\/s/;
-  const completeRegex = /Finished installation|Successfully installed/i;
+  // Progress line: "Progress: 12.34% (5678.90/45678.90 MiB), Running for ..."
+  const progressBytesRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB/;
+  // Speed line: "Download speed: 15.61 MiB/s" or "15.61 MB/s"
+  const speedRegex = /(\d+\.?\d*)\s+(?:MiB|MB)\/s/;
+  const completeRegex = /Finished installation|Successfully installed|Install completed/i;
+
+  let lastSpeedMBs = 0;
+  let completed = false;
 
   const handleLine = (line: string) => {
-    const progressMatch = line.match(progressRegex);
+    if (completed) return;
+    const speedMatch = line.match(speedRegex);
+    if (speedMatch) lastSpeedMBs = parseFloat(speedMatch[1]);
+
+    const progressMatch = line.match(progressBytesRegex);
     if (progressMatch) {
       const downloadedMB = parseFloat(progressMatch[1]);
       const totalMB = parseFloat(progressMatch[2]);
-      const speedMBs = parseFloat(progressMatch[3]);
       const progress = totalMB > 0 ? downloadedMB / totalMB : 0;
-      onProgress(progress, downloadedMB, totalMB, speedMBs);
+      onProgress(progress, downloadedMB, totalMB, lastSpeedMBs);
       return;
     }
     if (completeRegex.test(line)) {
+      completed = true;
       onComplete();
     }
   };
@@ -189,7 +199,7 @@ export function spawnLegendaryInstall(
   child.on("error", (err) => onError(err.message));
 
   child.on("close", (code) => {
-    if (code !== 0 && code !== null) {
+    if (!completed && code !== 0 && code !== null) {
       onError(`Legendary exited with code ${code}`);
     }
   });
