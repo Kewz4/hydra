@@ -44,7 +44,7 @@ function download(url, dest) {
   });
 }
 
-async function getLatestRelease(owner, repo) {
+function githubGet(url) {
   return new Promise((resolve, reject) => {
     const headers = {
       "User-Agent": "gamehub-build-script",
@@ -53,26 +53,33 @@ async function getLatestRelease(owner, repo) {
     if (process.env.GITHUB_TOKEN) {
       headers["Authorization"] = `Bearer ${process.env.GITHUB_TOKEN}`;
     }
-    const opts = {
-      hostname: "api.github.com",
-      path: `/repos/${owner}/${repo}/releases/latest`,
-      headers,
+    const get = (u) => {
+      const parsed = new URL(u);
+      const opts = { hostname: parsed.hostname, path: parsed.pathname + parsed.search, headers };
+      https.get(opts, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          res.resume();
+          get(res.headers.location);
+          return;
+        }
+        let data = "";
+        res.on("data", (c) => (data += c));
+        res.on("end", () => {
+          try { resolve(JSON.parse(data)); }
+          catch (e) { reject(e); }
+        });
+      }).on("error", reject);
     };
-    https.get(opts, (res) => {
-      let data = "";
-      res.on("data", (c) => (data += c));
-      res.on("end", () => {
-        try {
-          const parsed = JSON.parse(data);
-          if (!Array.isArray(parsed.assets)) {
-            reject(new Error(`GitHub API error for ${owner}/${repo}: ${parsed.message || JSON.stringify(parsed)}`));
-            return;
-          }
-          resolve(parsed);
-        } catch (e) { reject(e); }
-      });
-    }).on("error", reject);
+    get(url);
   });
+}
+
+async function getLatestRelease(owner, repo) {
+  const parsed = await githubGet(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+  if (!Array.isArray(parsed.assets)) {
+    throw new Error(`GitHub API error for ${owner}/${repo}: ${parsed.message || JSON.stringify(parsed)}`);
+  }
+  return parsed;
 }
 
 async function downloadLegendary(platform) {
