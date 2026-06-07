@@ -27,6 +27,15 @@ const searchCache = new Map<string, number | null>();
 // In-memory artwork cache: sgdb id → artwork
 const artworkCache = new Map<number, SgdbArtwork>();
 
+/** Loose similarity check: removes edition words and punctuation, then checks overlap. */
+function titlesSimilar(a: string, b: string): boolean {
+  const clean = (s: string) =>
+    s.toLowerCase().replace(/[:\-–—]/g, " ").replace(/\b(deluxe|ultimate|complete|definitive|enhanced|gold|goty|remastered|remake|edition)\b/g, "").replace(/\s+/g, " ").trim();
+  const ca = clean(a);
+  const cb = clean(b);
+  return ca === cb || ca.startsWith(cb) || cb.startsWith(ca);
+}
+
 async function findSgdbGameId(title: string): Promise<number | null> {
   const key = title.trim().toLowerCase();
   if (searchCache.has(key)) return searchCache.get(key)!;
@@ -36,8 +45,13 @@ async function findSgdbGameId(title: string): Promise<number | null> {
       `${SGDB_BASE}/search/autocomplete/${encodeURIComponent(title.trim())}`,
       { headers, timeout: 10_000 }
     );
-    const first = res.data.data?.[0] ?? null;
-    const id = first?.id ?? null;
+    const results = res.data.data ?? [];
+    // Prefer exact (or near-exact) title match over blind first result
+    const match =
+      results.find((g) => g.name.toLowerCase() === key) ??
+      results.find((g) => titlesSimilar(g.name, title)) ??
+      null;
+    const id = match?.id ?? null;
     searchCache.set(key, id);
     return id;
   } catch (err) {

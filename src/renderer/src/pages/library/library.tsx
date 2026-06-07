@@ -631,7 +631,7 @@ export default function Library() {
               >
                 {storeFilteredLibrary.map((game) => (
                   <LibraryGameCardLarge
-                    key={`${game.shop}-${game.objectId}`}
+                    key={game.id}
                     game={game}
                     onContextMenu={handleOpenContextMenu}
                   />
@@ -650,7 +650,7 @@ export default function Library() {
               >
                 {storeFilteredLibrary.map((game) => (
                   <li
-                    key={`${game.shop}-${game.objectId}`}
+                    key={game.id}
                     style={{ listStyle: "none" }}
                   >
                     <LibraryGameCard

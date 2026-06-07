@@ -72,15 +72,26 @@ const getLibrary = async (): Promise<LibraryGame[]> => {
 
             return {
               id: key,
+              // Spread gameAssets first (image URLs, downloadSources, etc.)
+              ...gameAssets,
+              // Game record always wins for identity/navigation fields
               ...game,
+              // Ensure id is always the LevelDB key, never overridden
+              id: key,
+              objectId: game.objectId,
+              shop: game.shop,
+              title: game.title,
               installerSizeInBytes,
               installedSizeInBytes,
               download: download ?? null,
               unlockedAchievementCount,
               achievementCount: game.achievementCount ?? 0,
-              // Spread gameAssets last to ensure all image URLs are properly set
-              ...gameAssets,
-              // Preserve custom image URLs from game if they exist
+              // Image URLs: prefer custom overrides, then fresh assets, then game record
+              iconUrl: game.customIconUrl || gameAssets?.iconUrl || game.iconUrl || null,
+              libraryHeroImageUrl: game.customHeroImageUrl || gameAssets?.libraryHeroImageUrl || game.libraryHeroImageUrl || null,
+              logoImageUrl: game.customLogoImageUrl || gameAssets?.logoImageUrl || game.logoImageUrl || null,
+              libraryImageUrl: gameAssets?.libraryImageUrl || null,
+              coverImageUrl: gameAssets?.coverImageUrl || null,
               customIconUrl: game.customIconUrl,
               customLogoImageUrl: game.customLogoImageUrl,
               customHeroImageUrl: game.customHeroImageUrl,
