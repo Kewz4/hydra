@@ -211,9 +211,9 @@ contextBridge.exposeInMainWorld("electron", {
   isWinetricksAvailable: () => ipcRenderer.invoke("isWinetricksAvailable"),
   addGameToLibrary: (shop: GameShop, objectId: string, title: string) =>
     ipcRenderer.invoke("addGameToLibrary", shop, objectId, title),
-  getSteamPlayerSummary: (steamId: string, apiKey: string) =>
+  getSteamPlayerSummary: (steamId: string, apiKey?: string) =>
     ipcRenderer.invoke("getSteamPlayerSummary", steamId, apiKey),
-  syncSteamLibrary: (steamId: string, apiKey: string) =>
+  syncSteamLibrary: (steamId: string, apiKey?: string) =>
     ipcRenderer.invoke("syncSteamLibrary", steamId, apiKey),
   getLegendaryStatus: () => ipcRenderer.invoke("getLegendaryStatus"),
   installLegendary: () => ipcRenderer.invoke("installLegendary"),

@@ -156,11 +156,11 @@ declare global {
     ) => Promise<void>;
     getSteamPlayerSummary: (
       steamId: string,
-      apiKey: string
+      apiKey?: string
     ) => Promise<{ steamid: string; personaname: string; avatarfull: string } | null>;
     syncSteamLibrary: (
       steamId: string,
-      apiKey: string
+      apiKey?: string
     ) => Promise<{ total: number; added: number }>;
     getLegendaryStatus: () => Promise<{
       binaryFound: boolean;

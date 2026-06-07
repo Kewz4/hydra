@@ -10,7 +10,7 @@ import { deduplicateTitle } from "@main/helpers/deduplicate-title";
 const syncSteamLibrary = async (
   _event: Electron.IpcMainInvokeEvent,
   steamId: string,
-  apiKey: string
+  apiKey?: string
 ) => {
   const ownedGames = await getSteamOwnedGames(steamId, apiKey);
 

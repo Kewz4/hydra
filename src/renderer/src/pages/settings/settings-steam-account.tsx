@@ -34,11 +34,10 @@ export function SettingsSteamAccount() {
 
   useEffect(() => {
     const savedSteamId = userPreferences?.steamId;
-    const savedApiKey = userPreferences?.steamApiKey;
 
-    if (savedSteamId && savedApiKey) {
+    if (savedSteamId) {
       window.electron
-        .getSteamPlayerSummary(savedSteamId, savedApiKey)
+        .getSteamPlayerSummary(savedSteamId, userPreferences?.steamApiKey)
         .then((summary) => {
           if (summary) setLinkedAccount(summary);
         })
@@ -63,18 +62,18 @@ export function SettingsSteamAccount() {
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!steamId.trim() || !apiKey.trim()) return;
+    if (!steamId.trim()) return;
 
     setIsSaving(true);
     try {
-      const summary = await window.electron.getSteamPlayerSummary(steamId.trim(), apiKey.trim());
+      const summary = await window.electron.getSteamPlayerSummary(steamId.trim(), apiKey.trim() || undefined);
 
       if (!summary) {
         showErrorToast(t("steam_account_not_found"));
         return;
       }
 
-      await updateUserPreferences({ steamId: steamId.trim(), steamApiKey: apiKey.trim() });
+      await updateUserPreferences({ steamId: steamId.trim(), steamApiKey: apiKey.trim() || null });
       setLinkedAccount(summary);
       showSuccessToast(t("steam_account_linked"));
     } catch {
@@ -95,13 +94,12 @@ export function SettingsSteamAccount() {
 
   const handleSync = async () => {
     const savedSteamId = userPreferences?.steamId;
-    const savedApiKey = userPreferences?.steamApiKey;
-    if (!savedSteamId || !savedApiKey) return;
+    if (!savedSteamId) return;
 
     setIsSyncing(true);
     setSyncResult(null);
     try {
-      const result = await window.electron.syncSteamLibrary(savedSteamId, savedApiKey);
+      const result = await window.electron.syncSteamLibrary(savedSteamId, userPreferences?.steamApiKey ?? undefined);
       setSyncResult(result);
       showSuccessToast(t("steam_library_synced", { added: result.added, total: result.total }));
     } catch {
@@ -211,7 +209,7 @@ export function SettingsSteamAccount() {
       />
 
       <div>
-        <Button type="submit" disabled={!steamId.trim() || !apiKey.trim() || isSaving}>
+        <Button type="submit" disabled={!steamId.trim() || isSaving}>
           {isSaving ? t("connecting") : t("connect_steam_account")}
         </Button>
       </div>

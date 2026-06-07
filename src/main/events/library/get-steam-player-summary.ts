@@ -6,7 +6,7 @@ import { getSteamPlayerSummary } from "@main/services/steam-account";
 const getSteamPlayerSummaryHandler = async (
   _event: Electron.IpcMainInvokeEvent,
   steamId: string,
-  apiKey: string
+  apiKey?: string
 ) => {
   return getSteamPlayerSummary(steamId, apiKey);
 };
@@ -20,7 +20,7 @@ export const getSteamPlayerSummaryForCurrentUser = async () => {
     })
     .catch(() => null);
 
-  if (!prefs?.steamId || !prefs?.steamApiKey) return null;
+  if (!prefs?.steamId) return null;
 
   return getSteamPlayerSummary(prefs.steamId, prefs.steamApiKey).catch(
     () => null
