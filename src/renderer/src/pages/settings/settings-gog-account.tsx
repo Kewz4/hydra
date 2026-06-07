@@ -1,9 +1,9 @@
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
-import { CheckCircleFillIcon, SyncIcon } from "@primer/octicons-react";
+import { AlertIcon, CheckCircleFillIcon, DownloadIcon, SyncIcon } from "@primer/octicons-react";
 import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
 export function SettingsGogAccount() {
@@ -17,6 +17,10 @@ export function SettingsGogAccount() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
   const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
+  const [gogdlFound, setGogdlFound] = useState<boolean | null>(null);
+  const [isInstallingGogdl, setIsInstallingGogdl] = useState(false);
+  const [gogdlInstallProgress, setGogdlInstallProgress] = useState(0);
+  const gogdlProgressUnsub = useRef<(() => void) | null>(null);
 
   const fetchUserInfo = useCallback(async () => {
     if (!userPreferences?.gogRefreshToken) {
@@ -30,6 +34,27 @@ export function SettingsGogAccount() {
   useEffect(() => {
     fetchUserInfo();
   }, [fetchUserInfo]);
+
+  useEffect(() => {
+    window.electron.getGogdlStatus().then((s) => setGogdlFound(s.binaryFound)).catch(() => setGogdlFound(false));
+  }, []);
+
+  const handleInstallGogdl = async () => {
+    setIsInstallingGogdl(true);
+    setGogdlInstallProgress(0);
+    gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(setGogdlInstallProgress);
+    try {
+      await window.electron.installGogdl();
+      setGogdlFound(true);
+      showSuccessToast("gogdl installed successfully");
+    } catch {
+      showErrorToast("Failed to install gogdl");
+    } finally {
+      gogdlProgressUnsub.current?.();
+      setIsInstallingGogdl(false);
+      setGogdlInstallProgress(0);
+    }
+  };
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -70,7 +95,12 @@ export function SettingsGogAccount() {
         summary: result.added > 0
           ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
           : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
-        results: [],
+        results: (result.addedGames ?? []).map((g) => ({
+          title: g.title,
+          coverUrl: g.coverUrl,
+          what: "Added from GOG",
+          isNew: true,
+        })),
       });
     } catch {
       showErrorToast(t("gog_sync_failed"));
@@ -104,6 +134,33 @@ export function SettingsGogAccount() {
             {t("disconnect")}
           </Button>
         </div>
+
+        {gogdlFound === false && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)" }}>
+            <AlertIcon size={16} />
+            <span style={{ flex: 1, fontSize: "0.9rem" }}>gogdl not found — required to download GOG games</span>
+            <Button
+              type="button"
+              onClick={handleInstallGogdl}
+              disabled={isInstallingGogdl}
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <DownloadIcon size={14} />
+              {isInstallingGogdl
+                ? gogdlInstallProgress > 0
+                  ? `Downloading ${gogdlInstallProgress}%`
+                  : "Downloading…"
+                : "Install gogdl"}
+            </Button>
+          </div>
+        )}
+
+        {gogdlFound === true && (
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 10px", borderRadius: "6px", background: "rgba(255,255,255,0.04)", fontSize: "0.85rem" }}>
+            <CheckCircleFillIcon size={13} />
+            <span style={{ opacity: 0.7 }}>gogdl ready</span>
+          </div>
+        )}
 
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Button

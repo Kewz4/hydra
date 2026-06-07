@@ -59,7 +59,7 @@ const downloadViaLegendary = async (
     downloadPath,
     prefs?.legendaryBinaryPath,
     async (progress, downloadedMB, totalMB, speedMBs) => {
-      sendLog(objectId, `Progress: ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`);
+      sendLog(objectId, `↓ ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`);
       currentRecord = {
         ...currentRecord,
         progress,
@@ -113,7 +113,8 @@ const downloadViaLegendary = async (
       activeLegendaryDownloads.delete(gameKey);
       logger.error("Legendary download failed", { objectId, err });
       await downloadsSublevel.del(gameKey).catch(() => {});
-    }
+    },
+    (line, isError) => sendLog(objectId, line, isError)
   );
 
   activeLegendaryDownloads.set(gameKey, cancel);

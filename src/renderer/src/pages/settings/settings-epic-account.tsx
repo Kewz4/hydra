@@ -113,11 +113,16 @@ export function SettingsEpicAccount() {
       const dedupResult = await window.electron.mergeDuplicateGames().catch(() => ({ merged: 0, mergedTitles: [] }));
 
       setSyncModal({
-        heading: t("epic_library_synced_heading", { defaultValue: "Epic Library Synced" }),
+        heading: "Epic Library Synced",
         summary: result.added > 0
           ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
           : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
-        results: [],
+        results: (result.addedGames ?? []).map((g) => ({
+          title: g.title,
+          coverUrl: g.coverUrl,
+          what: "Added from Epic Games",
+          isNew: true,
+        })),
       });
     } catch (err: any) {
       showErrorToast(err?.message ?? t("epic_sync_failed"));

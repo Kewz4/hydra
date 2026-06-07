@@ -107,10 +107,37 @@ export function GameDetailsContextProvider({
   );
 
   const updateGame = useCallback(async () => {
-    return window.electron
-      .getGameByObjectId(shop, objectId)
-      .then((result) => setGame(result));
-  }, [shop, objectId]);
+    const result = await window.electron.getGameByObjectId(shop, objectId);
+
+    if (result) {
+      setGame(result);
+      return;
+    }
+
+    // Catalogue entry not in library — check if the user has it under a different shop
+    // (e.g. viewing a Steam catalogue entry but the user owns it on Epic/GOG)
+    if (gameTitle && shop === "steam") {
+      const libraryMatch = await window.electron.findLibraryGameByTitle(gameTitle).catch(() => null);
+      if (libraryMatch && (libraryMatch.shop === "epic" || libraryMatch.shop === "gog")) {
+        // Synthesize a game object so the repacks modal shows the platform download button
+        const synthetic = {
+          ...libraryMatch,
+          // Keep steam shop/objectId so repacks are fetched from the right source
+          shop: "steam" as const,
+          objectId,
+          alternativeShops: [
+            ...(libraryMatch.alternativeShops ?? []),
+            // Surface the actual library entry so Legendary/GOG button shows
+            { shop: libraryMatch.shop, objectId: libraryMatch.objectId, executablePath: libraryMatch.executablePath },
+          ],
+        };
+        setGame(synthetic as any);
+        return;
+      }
+    }
+
+    setGame(result);
+  }, [shop, objectId, gameTitle]);
 
   const isGameDownloading =
     lastPacket?.gameId === game?.id && game?.download?.status === "active";

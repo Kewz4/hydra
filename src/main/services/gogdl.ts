@@ -86,7 +86,8 @@ export function spawnGogdlInstall(
   binaryPath: string | null | undefined,
   onProgress: (progress: number, downloadedMB: number, totalMB: number, speedMBs: number) => void,
   onComplete: () => void,
-  onError: (err: string) => void
+  onError: (err: string) => void,
+  onLog?: (line: string, isError: boolean) => void
 ): () => void {
   const binary = findGogdlBinary(binaryPath);
   if (!binary) {
@@ -112,8 +113,10 @@ export function spawnGogdlInstall(
   const progressRegex = /Progress:\s*(\d+\.?\d*)%.*?(\d+\.?\d*)\s*MiB\s*\/\s*(\d+\.?\d*)\s*MiB.*?(\d+\.?\d*)\s*MiB\/s/i;
   const completeRegex = /Download\s+complete|Finished|Successfully/i;
 
-  const handleLine = (line: string) => {
+  const handleLine = (line: string, isStderr = false) => {
+    if (!line.trim()) return;
     logger.log(`[gogdl] ${line}`);
+    onLog?.(line, isStderr);
     const m = line.match(progressRegex);
     if (m) {
       const pct = parseFloat(m[1]) / 100;
@@ -133,7 +136,7 @@ export function spawnGogdlInstall(
     stdoutBuf += chunk.toString();
     const lines = stdoutBuf.split("\n");
     stdoutBuf = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    for (const line of lines) handleLine(line, false);
   });
 
   let stderrBuf = "";
@@ -141,13 +144,13 @@ export function spawnGogdlInstall(
     stderrBuf += chunk.toString();
     const lines = stderrBuf.split("\n");
     stderrBuf = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    for (const line of lines) handleLine(line, true);
   });
 
   child.on("error", (err) => onError(err.message));
   child.on("close", (code) => {
-    if (stderrBuf) handleLine(stderrBuf);
-    if (stdoutBuf) handleLine(stdoutBuf);
+    if (stderrBuf.trim()) handleLine(stderrBuf, true);
+    if (stdoutBuf.trim()) handleLine(stdoutBuf, false);
     if (code !== 0 && code !== null) onError(`gogdl exited with code ${code}`);
   });
 

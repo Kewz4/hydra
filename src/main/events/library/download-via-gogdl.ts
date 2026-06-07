@@ -57,7 +57,7 @@ const downloadViaGogdl = async (
 
   let currentRecord = { ...initialRecord };
 
-  const binary = findGogdlBinary(prefs?.gogdlBinaryPath ?? null);
+  const binary = findGogdlBinary(null);
   sendLog(objectId, `Starting gogdl download for game ID ${objectId}…`);
   sendLog(objectId, `Binary: ${binary ?? "(not found)"}`);
   sendLog(objectId, `Download path: ${downloadPath}`);
@@ -123,7 +123,8 @@ const downloadViaGogdl = async (
       activeGogdlDownloads.delete(gameKey);
       logger.error("gogdl download failed", { objectId, err });
       await downloadsSublevel.del(gameKey).catch(() => {});
-    }
+    },
+    (line, isError) => sendLog(objectId, line, isError)
   );
 
   activeGogdlDownloads.set(gameKey, cancel);

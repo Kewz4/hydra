@@ -35,6 +35,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const ownedIds = await getGogOwnedGameIds(tokens.access_token);
 
   let added = 0;
+  const addedGames: Array<{ title: string; coverUrl: string | null }> = [];
 
   // Process in batches of 20 to avoid hammering the API
   for (let i = 0; i < ownedIds.length; i += 20) {
@@ -51,10 +52,8 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
         const details = await getGogGameDetails(productId);
         if (!details) return;
 
-        // Skip DLCs, packs, and non-game products
         if (details.game_type && details.game_type !== "game") return;
 
-        // Check for same game from another shop — attach as alternativeShop instead of duplicating
         const titleMatch = await findGameByTitle(details.title);
         if (titleMatch) {
           const [matchKey, matchGame] = titleMatch;
@@ -68,7 +67,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
               ],
             });
           }
-          return; // Don't create a duplicate entry
+          return;
         }
 
         const gogIconUrl = details.images?.logo2x ? `https:${details.images.logo2x}` : null;
@@ -92,7 +91,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
           playTimeInMilliseconds: 0,
           lastTimePlayed: null,
           addedToLibraryAt: new Date(),
-      automaticCloudSync: true,
+          automaticCloudSync: true,
           executablePath: null,
         };
 
@@ -100,12 +99,13 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
         await createGame(game).catch(() => {});
         await deduplicateTitle(details.title).catch(() => {});
         added++;
+        addedGames.push({ title: details.title, coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl });
       })
     );
   }
 
   logger.log(`GOG library sync complete: ${added} games added`);
-  return { total: ownedIds.length, added };
+  return { total: ownedIds.length, added, addedGames };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logger.error("GOG library sync failed", err);

@@ -16,7 +16,8 @@ export interface SteamPlayerSummary {
 
 // Simple tag extractor for Steam's predictable XML — strips CDATA wrappers
 function extractXmlTag(xml: string, tag: string): string {
-  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  // Use (?=[ >]) lookahead so <steamID> does NOT match <steamID64>
+  const match = xml.match(new RegExp(`<${tag}(?=[ >])[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
   if (!match) return "";
   let value = match[1].trim();
   // Strip CDATA: <![CDATA[text]]> → text

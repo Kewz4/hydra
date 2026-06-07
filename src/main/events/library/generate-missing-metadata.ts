@@ -31,8 +31,8 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent): Pro
     const cacheKey = levelKeys.game(game.shop, game.objectId);
     const assets = await gamesShopAssetsSublevel.get(cacheKey).catch(() => null);
 
-    const hasCover =
-      assets?.coverImageUrl || assets?.libraryHeroImageUrl || assets?.iconUrl;
+    // Only skip if we have an actual cover or hero image — icon alone is not sufficient
+    const hasCover = assets?.coverImageUrl || assets?.libraryHeroImageUrl;
 
     if (hasCover) {
       skipped++;

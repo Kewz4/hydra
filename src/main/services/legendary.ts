@@ -140,7 +140,8 @@ export function spawnLegendaryInstall(
   binaryPath: string | null | undefined,
   onProgress: (progress: number, downloadedMB: number, totalMB: number, speedMBs: number) => void,
   onComplete: () => void,
-  onError: (err: string) => void
+  onError: (err: string) => void,
+  onLog?: (line: string, isError: boolean) => void
 ): () => void {
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) {
@@ -148,25 +149,33 @@ export function spawnLegendaryInstall(
     return () => {};
   }
 
-  const child = spawn(binary, ["install", appName, "--base-path", downloadPath, "--yes"], {
+  const child = spawn(binary, ["install", appName, "--base-path", downloadPath, "--yes", "--skip-sdl"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  // Progress line: "Progress: 12.34% (5678.90/45678.90 MiB), Running for ..."
-  const progressBytesRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB/;
-  // Speed line: "Download speed: 15.61 MiB/s" or "15.61 MB/s"
+  // Legendary progress formats (varies by version):
+  //   "Progress: 12.34% (5678.90/45678.90 MiB), Running for ..."
+  //   "Running for 00:00:05, downloaded 123.45 MiB of 4567.89 MiB at 12.34 MiB/s"
+  const progressSlashRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB/;
+  const progressOfRegex = /downloaded?\s+(\d+\.?\d*)\s+MiB\s+of\s+(\d+\.?\d*)\s+MiB/i;
   const speedRegex = /(\d+\.?\d*)\s+(?:MiB|MB)\/s/;
-  const completeRegex = /Finished installation|Successfully installed|Install completed/i;
+  const completeRegex = /Finished installation|Successfully installed|Install completed|Download completed/i;
 
   let lastSpeedMBs = 0;
   let completed = false;
 
-  const handleLine = (line: string) => {
+  const handleLine = (line: string, isStderr: boolean) => {
+    if (!line.trim()) return;
+    onLog?.(line, isStderr);
     if (completed) return;
+
     const speedMatch = line.match(speedRegex);
     if (speedMatch) lastSpeedMBs = parseFloat(speedMatch[1]);
 
-    const progressMatch = line.match(progressBytesRegex);
+    const slashMatch = line.match(progressSlashRegex);
+    const ofMatch = slashMatch ? null : line.match(progressOfRegex);
+    const progressMatch = slashMatch ?? ofMatch;
+
     if (progressMatch) {
       const downloadedMB = parseFloat(progressMatch[1]);
       const totalMB = parseFloat(progressMatch[2]);
@@ -185,7 +194,7 @@ export function spawnLegendaryInstall(
     stdoutBuffer += chunk.toString();
     const lines = stdoutBuffer.split("\n");
     stdoutBuffer = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    for (const line of lines) handleLine(line, false);
   });
 
   let stderrBuffer = "";
@@ -193,12 +202,14 @@ export function spawnLegendaryInstall(
     stderrBuffer += chunk.toString();
     const lines = stderrBuffer.split("\n");
     stderrBuffer = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    for (const line of lines) handleLine(line, true);
   });
 
   child.on("error", (err) => onError(err.message));
 
   child.on("close", (code) => {
+    if (stderrBuffer.trim()) handleLine(stderrBuffer, true);
+    if (stdoutBuffer.trim()) handleLine(stdoutBuffer, false);
     if (!completed && code !== 0 && code !== null) {
       onError(`Legendary exited with code ${code}`);
     }

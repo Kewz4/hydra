@@ -170,12 +170,12 @@ declare global {
     }>;
     installLegendary: () => Promise<{ path: string }>;
     openLegendaryAuthWindow: () => Promise<{ success: boolean; account?: string }>;
-    syncEpicLibrary: () => Promise<{ total: number; added: number }>;
+    syncEpicLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null }> }>;
     installBattleNet: () => Promise<{ path: string }>;
     onLegendaryInstallProgress: (cb: (pct: number) => void) => () => void;
     onBattleNetInstallProgress: (cb: (pct: number) => void) => () => void;
     openGogAuthWindow: () => Promise<{ refresh_token: string; username: string } | null>;
-    syncGogLibrary: () => Promise<{ total: number; added: number }>;
+    syncGogLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null }> }>;
     getGogUserInfo: () => Promise<{ userId: string; username: string } | null>;
     getBattleNetGames: () => Promise<{
       installed: boolean;
@@ -276,6 +276,8 @@ declare global {
     refreshLibraryAssets: () => Promise<void>;
     generateMissingMetadata: () => Promise<{ updated: number; skipped: number; results: Array<{ title: string; coverUrl: string | null; what: string }> }>;
     mergeDuplicateGames: () => Promise<{ merged: number; mergedTitles: string[] }>;
+    findLibraryGameByTitle: (title: string) => Promise<import("@types").Game | null>;
+    getGogdlStatus: () => Promise<{ binaryFound: boolean; binaryPath: string | null }>;
     openGameInstaller: (shop: GameShop, objectId: string) => Promise<boolean>;
     getGameInstallerActionType: (
       shop: GameShop,

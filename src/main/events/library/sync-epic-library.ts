@@ -21,6 +21,7 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const games = await getLegendaryGames(prefs?.legendaryBinaryPath);
 
   let added = 0;
+  const addedGames: Array<{ title: string; coverUrl: string | null }> = [];
 
   for (const epicGame of games) {
     const objectId = epicGame.app_name;
@@ -47,10 +48,7 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     }
 
     const coverUrl = getLegendaryGameCoverUrl(epicGame);
-    // Only set executablePath when locally installed — uninstalled games show Download
-    const executablePath = epicGame.is_installed
-      ? `legendary://run/${objectId}`
-      : null;
+    const executablePath = epicGame.is_installed ? `legendary://run/${objectId}` : null;
 
     const assets = await fetchBestAssets("epic", objectId, epicGame.app_title, {
       iconUrl: coverUrl,
@@ -79,10 +77,11 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     await deduplicateTitle(epicGame.app_title).catch(() => {});
 
     added++;
+    addedGames.push({ title: epicGame.app_title, coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl ?? coverUrl });
   }
 
   logger.log(`Epic library sync complete: ${added} games added`);
-  return { total: games.length, added };
+  return { total: games.length, added, addedGames };
 };
 
 registerEvent("syncEpicLibrary", syncEpicLibrary);
