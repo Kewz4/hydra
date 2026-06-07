@@ -2,10 +2,18 @@
  * Ensures there is exactly one library entry for a given game title.
  *
  * Canonical priority (highest wins):
- *   1. Steam entry   — richest metadata from Hydra API
- *   2. Any non-custom entry (epic / gog / xbox)
- *   3. Custom entry  — least metadata
- *   4. Among equals, the earliest addedToLibraryAt
+ *
+ *   TIER 1 — Hydra catalogue entries (any shop with a known catalogue objectId):
+ *     steam   → score 20  (richest metadata: hero images, achievements, stats)
+ *     epic    → score 18
+ *     gog     → score 18
+ *     xbox    → score 18
+ *     battlenet → score 16
+ *
+ *   TIER 2 — Custom entries (no catalogue match, local exe only):
+ *     custom  → score 1
+ *
+ *   Within the same score, the earliest addedToLibraryAt wins as a tiebreaker.
  *
  * The surviving entry inherits executablePath / launchOptions from any
  * duplicate that has one, so the user never loses their exe path.
@@ -20,12 +28,12 @@ import type { Game } from "@types";
 
 function canonicalScore(shop: Game["shop"]): number {
   switch (shop) {
-    case "steam": return 4;
-    case "epic":  return 3;
-    case "gog":   return 3;
-    case "xbox":  return 3;
-    case "battlenet": return 2;
-    default:      return 1; // custom
+    case "steam":     return 20; // Catalogue, richest Hydra API assets
+    case "epic":      return 18; // Catalogue
+    case "gog":       return 18; // Catalogue
+    case "xbox":      return 18; // Catalogue
+    case "battlenet": return 16; // Catalogue (partial)
+    default:          return 1;  // custom — no catalogue match
   }
 }
 
