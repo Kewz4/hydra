@@ -186,16 +186,19 @@
   }
 
   &__platform-options {
-    margin-bottom: calc(globals.$spacing-unit * 3);
-    padding-bottom: calc(globals.$spacing-unit * 3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 0;
+    padding: calc(globals.$spacing-unit * 2) calc(globals.$spacing-unit * 2.5);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   &__platform-options-label {
     font-size: globals.$small-font-size;
-    font-weight: 600;
-    color: var(--color-text-secondary);
+    font-weight: 700;
+    color: var(--color-text);
     margin-bottom: calc(globals.$spacing-unit * 1.5);
+    letter-spacing: 0.02em;
   }
 
   &__platform-buttons {
@@ -206,6 +209,22 @@
 
   &__platform-button {
     font-size: globals.$small-font-size;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__or-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: calc(globals.$spacing-unit * 3);
+    margin-bottom: calc(globals.$spacing-unit * 2);
+    color: var(--color-text-secondary);
+    font-size: globals.$small-font-size;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    opacity: 0.6;
   }
 
   &__badges {

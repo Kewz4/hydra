@@ -29,7 +29,7 @@ const downloadViaGogdl = async (
 
   // Refresh token to get a fresh access token
   const tokens = await refreshGogToken(gogRefreshToken);
-  const { access_token: accessToken, refresh_token: newRefreshToken } = tokens;
+  const { access_token: accessToken, refresh_token: newRefreshToken, user_id: userId } = tokens;
 
   const downloadPath = customDownloadPath ?? await getDownloadsPath();
   const gameKey = levelKeys.game("gog", objectId);
@@ -82,6 +82,7 @@ const downloadViaGogdl = async (
     downloadPath,
     accessToken,
     newRefreshToken,
+    userId,
     binary,
     async (progress, downloadedMB, totalMB, speedMBs) => {
       sendLog(objectId, `Progress: ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`);

@@ -63,14 +63,17 @@ export const downloadGogdl = async (onProgress?: (pct: number) => void): Promise
   return destPath;
 };
 
-// Write GOG credentials to a temp file for gogdl to use
-export const writeGogdlCredentials = (accessToken: string, refreshToken: string): string => {
+// Write GOG credentials to auth.json — heroic-gogdl expects this exact filename and fields
+export const writeGogdlCredentials = (accessToken: string, refreshToken: string, userId: string): string => {
   const configDir = path.join(SystemPath.getPath("userData"), "gogdl-config");
   fs.mkdirSync(configDir, { recursive: true });
-  const credPath = path.join(configDir, "credentials.json");
+  // heroic-gogdl reads "auth.json" (NOT credentials.json) with user_id + access_token_created_at
+  const credPath = path.join(configDir, "auth.json");
   const creds = {
     access_token: accessToken,
     refresh_token: refreshToken,
+    user_id: userId,
+    access_token_created_at: Math.floor(Date.now() / 1000),
     expires_in: 3600,
     token_type: "Bearer",
   };
@@ -83,6 +86,7 @@ export function spawnGogdlInstall(
   downloadPath: string,
   accessToken: string,
   refreshToken: string,
+  userId: string,
   binaryPath: string | null | undefined,
   onProgress: (progress: number, downloadedMB: number, totalMB: number, speedMBs: number) => void,
   onComplete: () => void,
@@ -95,7 +99,7 @@ export function spawnGogdlInstall(
     return () => {};
   }
 
-  const configDir = writeGogdlCredentials(accessToken, refreshToken);
+  const configDir = writeGogdlCredentials(accessToken, refreshToken, userId);
 
   // gogdl download <gameId> --platform windows --path <downloadPath> --auth-config-path <configDir>
   const child = spawn(binary, [
@@ -131,19 +135,25 @@ export function spawnGogdlInstall(
     }
   };
 
+  const splitLines = (buf: string): [string[], string] => {
+    const parts = buf.split(/\r\n|\r|\n/);
+    const remaining = parts.pop() ?? "";
+    return [parts, remaining];
+  };
+
   let stdoutBuf = "";
   child.stdout?.on("data", (chunk: Buffer) => {
     stdoutBuf += chunk.toString();
-    const lines = stdoutBuf.split("\n");
-    stdoutBuf = lines.pop() ?? "";
+    const [lines, rest] = splitLines(stdoutBuf);
+    stdoutBuf = rest;
     for (const line of lines) handleLine(line, false);
   });
 
   let stderrBuf = "";
   child.stderr?.on("data", (chunk: Buffer) => {
     stderrBuf += chunk.toString();
-    const lines = stderrBuf.split("\n");
-    stderrBuf = lines.pop() ?? "";
+    const [lines, rest] = splitLines(stderrBuf);
+    stderrBuf = rest;
     for (const line of lines) handleLine(line, true);
   });
 

@@ -1,5 +1,5 @@
 import { registerEvent } from "../register-event";
-import { db, gamesSublevel, levelKeys } from "@main/level";
+import { db, gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import {
   getLegendaryGames,
@@ -73,6 +73,18 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     };
 
     await gamesSublevel.put(gameKey, game);
+    await gamesShopAssetsSublevel.put(gameKey, {
+      objectId,
+      shop: "epic" as const,
+      title: epicGame.app_title,
+      iconUrl: assets.iconUrl,
+      coverImageUrl: assets.coverImageUrl,
+      libraryImageUrl: assets.libraryImageUrl,
+      libraryHeroImageUrl: assets.libraryHeroImageUrl,
+      logoImageUrl: assets.logoImageUrl,
+      logoPosition: assets.logoPosition,
+      downloadSources: assets.downloadSources ?? [],
+    }).catch(() => {});
     await createGame(game).catch(() => {});
     await deduplicateTitle(epicGame.app_title).catch(() => {});
 

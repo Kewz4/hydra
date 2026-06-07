@@ -448,123 +448,66 @@ export function RepacksModal({
         </div>
 
         {game && (() => {
-          const shopLabel: Record<string, string> = {
-            epic: "Epic Games (Legendary)",
-            gog: "GOG Galaxy",
-            xbox: "Xbox",
-            steam: "Steam",
-            battlenet: "Battle.net",
-          };
           const hasSteamConnected = Boolean(userPreferences?.steamId);
-          const shopPlatformOption: Record<string, { url: string; label: string }> = {
-            ...(hasSteamConnected ? {
-              steam: {
-                url: `steam://install/${game.objectId}`,
-                label: "Download via Steam",
-              },
-            } : {}),
-            xbox: {
-              url: `msxbox://game/?productId=${game.objectId}`,
-              label: "Download via Xbox",
-            },
-            battlenet: {
-              url: `battlenet://${game.objectId}`,
-              label: "Download via Battle.net",
-            },
-          };
-          const primaryPlatform = shopPlatformOption[game.shop];
-          const primaryProtocolUrl = primaryPlatform?.url;
           const altShops = game.alternativeShops ?? [];
-          const isGogGame = game.shop === "gog";
-          const isEpicGame = game.shop === "epic";
-          // Show "Download via Steam" for owned Steam library games.
-          // Synthesized games (Epic/GOG-owned catalogue entries) are excluded via _synthesized flag.
-          const isOwnedOnSteam = game.shop === "steam" && hasSteamConnected &&
-            !(game as any)._synthesized;
-          const hasPlatformOptions = isOwnedOnSteam || isGogGame || isEpicGame || (altShops.length > 0);
+          const isGogGame = game.shop === "gog" || altShops.some(s => s.shop === "gog");
+          const isEpicGame = game.shop === "epic" || altShops.some(s => s.shop === "epic");
+          const isOwnedOnSteam = game.shop === "steam" && hasSteamConnected && !(game as any)._synthesized;
+          const hasPlatformOptions = isOwnedOnSteam || isGogGame || isEpicGame;
 
           if (!hasPlatformOptions) return null;
+
+          const epicObjectId = game.shop === "epic" ? game.objectId : altShops.find(s => s.shop === "epic")?.objectId;
+          const gogObjectId = game.shop === "gog" ? game.objectId : altShops.find(s => s.shop === "gog")?.objectId;
 
           return (
             <div className="repacks-modal__platform-options">
               <p className="repacks-modal__platform-options-label">
-                {t("platform_options", { defaultValue: "Download via platform" })}
+                {t("own_this_game", { defaultValue: "You own this game — download officially" })}
               </p>
               <div className="repacks-modal__platform-buttons">
-                {isOwnedOnSteam && primaryProtocolUrl && (
+                {isOwnedOnSteam && (
                   <Button
                     theme="outline"
                     className="repacks-modal__platform-button"
                     onClick={() => {
-                      window.electron.openGame(game.shop, game.objectId, primaryProtocolUrl, null);
+                      window.electron.openGame(game.shop, game.objectId, `steam://install/${game.objectId}`, null);
                       onClose();
                     }}
                   >
-                    {primaryPlatform?.label ?? `Download via ${shopLabel[game.shop] ?? game.shop}`}
+                    <img src="https://store.steampowered.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
+                    {"Download with Steam"}
                   </Button>
                 )}
-                {isEpicGame && (
+                {isEpicGame && epicObjectId && (
                   <Button
                     theme="outline"
                     className="repacks-modal__platform-button"
                     onClick={async () => {
-                      setProcessModal({ launcher: "legendary", objectId: game.objectId, title: game.title ?? game.objectId });
-                      window.electron.downloadViaLegendary(game.objectId).catch(() => {});
+                      setProcessModal({ launcher: "legendary", objectId: epicObjectId, title: game.title ?? epicObjectId });
+                      window.electron.downloadViaLegendary(epicObjectId).catch(() => {});
                     }}
                   >
-                    {"Download via Epic (Legendary)"}
+                    <img src="https://store.epicgames.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
+                    {"Download with Epic Games"}
                   </Button>
                 )}
-                {isGogGame && (
-                  <>
-                    <Button
-                      theme="outline"
-                      className="repacks-modal__platform-button"
-                      onClick={async () => {
-                        setProcessModal({ launcher: "gogdl", objectId: game.objectId, title: game.title ?? game.objectId });
-                        window.electron.downloadViaGogdl(game.objectId).catch(() => {});
-                      }}
-                    >
-                      {"Download via gogdl"}
-                    </Button>
-                    <Button
-                      theme="outline"
-                      className="repacks-modal__platform-button"
-                      onClick={() => {
-                        window.electron.openGame(game.shop, game.objectId, `goggalaxy://openGame/${game.objectId}`, null);
-                        onClose();
-                      }}
-                    >
-                      {"Open in GOG Galaxy"}
-                    </Button>
-                  </>
+                {isGogGame && gogObjectId && (
+                  <Button
+                    theme="outline"
+                    className="repacks-modal__platform-button"
+                    onClick={async () => {
+                      setProcessModal({ launcher: "gogdl", objectId: gogObjectId, title: game.title ?? gogObjectId });
+                      window.electron.downloadViaGogdl(gogObjectId).catch(() => {});
+                    }}
+                  >
+                    <img src="https://www.gog.com/favicon.ico" alt="" style={{ width: 16, height: 16 }} />
+                    {"Download with GOG"}
+                  </Button>
                 )}
-                {altShops.map((alt) => {
-                  const altLabel = alt.executablePath
-                    ? `Launch via ${shopLabel[alt.shop] ?? alt.shop}`
-                    : `Download via ${shopLabel[alt.shop] ?? alt.shop}`;
-                  return (
-                    <Button
-                      key={`${alt.shop}:${alt.objectId}`}
-                      theme="outline"
-                      className="repacks-modal__platform-button"
-                      onClick={() => {
-                        if (alt.executablePath) {
-                          window.electron.openGame(alt.shop, alt.objectId, alt.executablePath, undefined);
-                          onClose();
-                        } else if (alt.shop === "epic") {
-                          setProcessModal({ launcher: "legendary", objectId: alt.objectId, title: game.title ?? alt.objectId });
-                          window.electron.downloadViaLegendary(alt.objectId).catch(() => {});
-                        } else if (alt.shop === "gog") {
-                          setProcessModal({ launcher: "gogdl", objectId: alt.objectId, title: game.title ?? alt.objectId });
-                          window.electron.downloadViaGogdl(alt.objectId).catch(() => {});
-                        }
-                      }}
-                    >
-                      {altLabel}
-                    </Button>
-                  );
-                })}
+              </div>
+              <div className="repacks-modal__or-divider">
+                <span>— OR —</span>
               </div>
             </div>
           );

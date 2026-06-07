@@ -45,22 +45,20 @@ const getGameShopDetails = async (
       const catalogueResp = await HydraApi.post<{ edges: CatalogueSearchResult[]; count: number }>(
         "/catalogue/search",
         {
-          data: {
-            title: titleToSearch,
-            sortBy: "popularity",
-            sortOrder: "desc",
-            downloadSourceFingerprints: [],
-            tags: [],
-            publishers: [],
-            genres: [],
-            developers: [],
-            protondbSupportBadges: [],
-            deckCompatibility: [],
-            take: 5,
-            skip: 0,
-          },
-          needsAuth: false,
-        }
+          title: titleToSearch,
+          sortBy: "popularity",
+          sortOrder: "desc",
+          downloadSourceFingerprints: [],
+          tags: [],
+          publishers: [],
+          genres: [],
+          developers: [],
+          protondbSupportBadges: [],
+          deckCompatibility: [],
+          take: 5,
+          skip: 0,
+        },
+        { needsAuth: false }
       ).catch(() => null);
 
       const steamMatch = catalogueResp?.edges?.find(
