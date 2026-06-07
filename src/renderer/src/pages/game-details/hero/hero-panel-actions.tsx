@@ -7,6 +7,7 @@ import {
   PinSlashIcon,
   PlayIcon,
   PlusCircleIcon,
+  ShareAndroidIcon,
 } from "@primer/octicons-react";
 import { Button } from "@renderer/components";
 import { XCircle } from "lucide-react";
@@ -53,7 +54,7 @@ export function HeroPanelActions() {
 
   const { updateLibrary } = useLibrary();
 
-  const { showSuccessToast } = useToast();
+  const { showSuccessToast, showErrorToast } = useToast();
 
   const { t } = useTranslation("game_details");
 
@@ -188,6 +189,19 @@ export function HeroPanelActions() {
 
   const closeGame = () => {
     if (game) window.electron.closeGame(game.shop, game.objectId);
+  };
+
+  const handleShareGame = () => {
+    const targetShop = shop;
+    const targetObjectId = objectId;
+    const targetTitle = gameTitle;
+    if (!targetShop || !targetObjectId) return;
+    const link = `hydralauncher://game?shop=${encodeURIComponent(targetShop)}&objectId=${encodeURIComponent(targetObjectId)}&title=${encodeURIComponent(targetTitle)}`;
+    navigator.clipboard.writeText(link).then(() => {
+      showSuccessToast(t("share_link_copied", { defaultValue: "Game link copied to clipboard!" }));
+    }).catch(() => {
+      showErrorToast(t("share_link_failed", { defaultValue: "Failed to copy link" }));
+    });
   };
 
   const deleting = game ? isGameDeleting(game?.id) : false;
@@ -345,6 +359,16 @@ export function HeroPanelActions() {
         )}
 
         <Button
+          onClick={handleShareGame}
+          theme="outline"
+          disabled={!objectId}
+          className="hero-panel-actions__action"
+          title={t("share_game", { defaultValue: "Share game" })}
+        >
+          <ShareAndroidIcon />
+        </Button>
+
+        <Button
           onClick={() => {
             setGameOptionsInitialCategory("general");
             setShowGameOptionsModal(true);
@@ -357,6 +381,23 @@ export function HeroPanelActions() {
           {t("options")}
         </Button>
       </div>
+    );
+  }
+
+  // Even without a library entry, show share if we have an objectId
+  if (objectId) {
+    return (
+      <>
+        {addGameToLibraryButton}
+        <Button
+          onClick={handleShareGame}
+          theme="outline"
+          className="hero-panel-actions__action"
+          title={t("share_game", { defaultValue: "Share game" })}
+        >
+          <ShareAndroidIcon />
+        </Button>
+      </>
     );
   }
 

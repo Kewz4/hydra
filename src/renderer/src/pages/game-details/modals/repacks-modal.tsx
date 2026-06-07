@@ -49,12 +49,14 @@ export interface RepacksModalProps {
     signal?: AbortSignal
   ) => Promise<{ ok: boolean; error?: string }>;
   onClose: () => void;
+  sharedLink?: boolean;
 }
 
 export function RepacksModal({
   visible,
   startDownload,
   onClose,
+  sharedLink = false,
 }: Readonly<RepacksModalProps>) {
   const [filteredRepacks, setFilteredRepacks] = useState<GameRepack[]>([]);
   const [repack, setRepack] = useState<GameRepack | null>(null);
@@ -364,7 +366,11 @@ export function RepacksModal({
       <Modal
         visible={visible}
         title={t("download_options_title")}
-        description={t("repacks_modal_description")}
+        description={
+          sharedLink
+            ? t("shared_link_description", { defaultValue: "📤 Shared by a friend — pick a download source below" })
+            : t("repacks_modal_description")
+        }
         onClose={onClose}
       >
         <div

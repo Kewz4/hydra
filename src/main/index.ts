@@ -245,6 +245,17 @@ const handleDeepLinkPath = (uri?: string) => {
         );
       }
     }
+
+    if (url.host === "game") {
+      const shop = url.searchParams.get("shop");
+      const objectId = url.searchParams.get("objectId");
+      const title = url.searchParams.get("title") ?? "";
+      if (shop && objectId) {
+        WindowManager.redirect(
+          `game/${shop}/${objectId}?title=${encodeURIComponent(title)}&openRepacks=1&sharedLink=1`
+        );
+      }
+    }
   } catch (error) {
     logger.error("Error handling deep link", uri, error);
   }
