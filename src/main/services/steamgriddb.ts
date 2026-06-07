@@ -16,9 +16,10 @@ interface SgdbAsset {
 }
 
 export interface SgdbArtwork {
-  gridUrl: string | null;   // vertical cover (600x900)
-  heroUrl: string | null;   // horizontal banner
-  logoUrl: string | null;   // transparent logo
+  gridUrl: string | null;      // vertical cover 600x900 → coverImageUrl / iconUrl
+  wideGridUrl: string | null;  // horizontal grid 460x215 → libraryImageUrl
+  heroUrl: string | null;      // hero banner → libraryHeroImageUrl
+  logoUrl: string | null;      // transparent logo → logoImageUrl
 }
 
 // In-memory search cache: title → SGDB game id (null = no match)
@@ -61,13 +62,14 @@ async function fetchOne(url: string): Promise<string | null> {
 async function getSgdbArtwork(gameId: number): Promise<SgdbArtwork> {
   if (artworkCache.has(gameId)) return artworkCache.get(gameId)!;
 
-  const [gridUrl, heroUrl, logoUrl] = await Promise.all([
+  const [gridUrl, wideGridUrl, heroUrl, logoUrl] = await Promise.all([
     fetchOne(`${SGDB_BASE}/grids/game/${gameId}?dimensions=600x900&limit=1`),
+    fetchOne(`${SGDB_BASE}/grids/game/${gameId}?dimensions=460x215&limit=1`),
     fetchOne(`${SGDB_BASE}/heroes/game/${gameId}?limit=1`),
     fetchOne(`${SGDB_BASE}/logos/game/${gameId}?limit=1`),
   ]);
 
-  const artwork: SgdbArtwork = { gridUrl, heroUrl, logoUrl };
+  const artwork: SgdbArtwork = { gridUrl, wideGridUrl, heroUrl, logoUrl };
   artworkCache.set(gameId, artwork);
   logger.log(`SteamGridDB: artwork for game ${gameId}`, artwork);
   return artwork;

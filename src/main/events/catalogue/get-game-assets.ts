@@ -53,7 +53,7 @@ export const getGameAssets = async (objectId: string, shop: GameShop, title?: st
     iconUrl: sgdb.gridUrl ?? cachedAssets?.iconUrl ?? null,
     coverImageUrl: sgdb.gridUrl ?? cachedAssets?.coverImageUrl ?? null,
     libraryHeroImageUrl: sgdb.heroUrl ?? cachedAssets?.libraryHeroImageUrl ?? null,
-    libraryImageUrl: cachedAssets?.libraryImageUrl ?? null,
+    libraryImageUrl: sgdb.wideGridUrl ?? cachedAssets?.libraryImageUrl ?? null,
     logoImageUrl: sgdb.logoUrl ?? cachedAssets?.logoImageUrl ?? null,
     logoPosition: cachedAssets?.logoPosition ?? null,
     downloadSources: cachedAssets?.downloadSources ?? [],

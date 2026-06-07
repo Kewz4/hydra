@@ -3,6 +3,7 @@ import { gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
 import { randomUUID } from "node:crypto";
 import type { GameShop, CatalogueSearchResult } from "@types";
 import { HydraApi } from "@main/services";
+import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
 
 const addCustomGameToLibrary = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -136,26 +137,33 @@ const addCustomGameToLibrary = async (
     // Catalogue search failed — fall through to custom entry creation
   }
 
+  // For truly custom (no catalogue match): try to enrich with SGDB artwork
+  const bestAssets = await fetchBestAssets("custom", objectId, title, {
+    iconUrl: iconUrl || null,
+    libraryHeroImageUrl: libraryHeroImageUrl || null,
+    logoImageUrl: logoImageUrl || null,
+  });
+
   const assets = {
     updatedAt: Date.now(),
     objectId,
     shop,
     title,
-    iconUrl: iconUrl || null,
-    libraryHeroImageUrl: libraryHeroImageUrl || "",
-    libraryImageUrl: iconUrl || "",
-    logoImageUrl: logoImageUrl || "",
+    iconUrl: bestAssets.iconUrl,
+    libraryHeroImageUrl: bestAssets.libraryHeroImageUrl,
+    libraryImageUrl: bestAssets.libraryImageUrl,
+    logoImageUrl: bestAssets.logoImageUrl,
     logoPosition: null,
-    coverImageUrl: iconUrl || "",
+    coverImageUrl: bestAssets.coverImageUrl,
     downloadSources: [],
   };
   await gamesShopAssetsSublevel.put(gameKey, assets);
 
   const game = {
     title,
-    iconUrl: iconUrl || null,
-    logoImageUrl: logoImageUrl || null,
-    libraryHeroImageUrl: libraryHeroImageUrl || null,
+    iconUrl: bestAssets.iconUrl,
+    logoImageUrl: bestAssets.logoImageUrl,
+    libraryHeroImageUrl: bestAssets.libraryHeroImageUrl,
     objectId,
     shop,
     remoteId: null,

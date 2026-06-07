@@ -1,6 +1,6 @@
 import { registerEvent } from "../register-event";
 import { gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
-import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
+import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
 import { logger } from "@main/services";
 
 const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
@@ -23,24 +23,22 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
     }
 
     try {
-      const sgdb = await getSteamGridDbArtwork(game.title).catch(() => null);
-      if (!sgdb) {
-        skipped++;
-        continue;
-      }
+      const best = await fetchBestAssets(game.shop, game.objectId, game.title, {
+        iconUrl: assets?.iconUrl ?? null,
+        coverImageUrl: assets?.coverImageUrl ?? null,
+        libraryImageUrl: assets?.libraryImageUrl ?? null,
+        libraryHeroImageUrl: assets?.libraryHeroImageUrl ?? null,
+        logoImageUrl: assets?.logoImageUrl ?? null,
+        logoPosition: assets?.logoPosition ?? null,
+        downloadSources: assets?.downloadSources ?? [],
+      });
 
       await gamesShopAssetsSublevel.put(cacheKey, {
         ...(assets ?? {}),
         objectId: game.objectId,
         shop: game.shop,
         title: game.title,
-        iconUrl: sgdb.gridUrl ?? assets?.iconUrl ?? null,
-        coverImageUrl: sgdb.gridUrl ?? assets?.coverImageUrl ?? null,
-        libraryHeroImageUrl: sgdb.heroUrl ?? assets?.libraryHeroImageUrl ?? null,
-        libraryImageUrl: assets?.libraryImageUrl ?? null,
-        logoImageUrl: sgdb.logoUrl ?? assets?.logoImageUrl ?? null,
-        logoPosition: assets?.logoPosition ?? null,
-        downloadSources: assets?.downloadSources ?? [],
+        ...best,
         updatedAt: Date.now(),
       });
 

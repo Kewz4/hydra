@@ -3,7 +3,7 @@ import { gamesShopAssetsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import { getSteamOwnedGames } from "@main/services/steam-account";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
-import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
+import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
 
 
 const syncSteamLibrary = async (
@@ -28,15 +28,39 @@ const syncSteamLibrary = async (
       .catch(() => null);
 
     const executablePath = `steam://run/${objectId}`;
+    const steamIconUrl = ownedGame.img_icon_url
+      ? `https://media.steampowered.com/steamcommunity/public/images/apps/${objectId}/${ownedGame.img_icon_url}.jpg`
+      : null;
+    const steamHeroUrl = `https://cdn.akamai.steamstatic.com/steam/apps/${objectId}/library_hero.jpg`;
+
+    // Fetch best assets in background so sync is not blocked
+    setImmediate(async () => {
+      try {
+        const assets = await fetchBestAssets("steam", objectId, ownedGame.name, {
+          iconUrl: steamIconUrl,
+          libraryHeroImageUrl: gameAssets?.libraryHeroImageUrl ?? steamHeroUrl,
+          libraryImageUrl: gameAssets?.libraryImageUrl ?? null,
+          coverImageUrl: gameAssets?.coverImageUrl ?? steamIconUrl,
+          logoImageUrl: gameAssets?.logoImageUrl ?? null,
+          logoPosition: gameAssets?.logoPosition ?? null,
+          downloadSources: gameAssets?.downloadSources ?? [],
+        });
+        await gamesShopAssetsSublevel.put(gameKey, {
+          objectId,
+          shop: "steam" as const,
+          title: ownedGame.name,
+          ...assets,
+          updatedAt: Date.now(),
+        });
+      } catch {
+        // Non-fatal
+      }
+    });
 
     const game = {
       title: ownedGame.name,
-      iconUrl: ownedGame.img_icon_url
-        ? `https://media.steampowered.com/steamcommunity/public/images/apps/${objectId}/${ownedGame.img_icon_url}.jpg`
-        : (gameAssets?.iconUrl ?? null),
-      libraryHeroImageUrl:
-        gameAssets?.libraryHeroImageUrl ??
-        `https://cdn.akamai.steamstatic.com/steam/apps/${objectId}/library_hero.jpg`,
+      iconUrl: steamIconUrl ?? (gameAssets?.iconUrl ?? null),
+      libraryHeroImageUrl: gameAssets?.libraryHeroImageUrl ?? steamHeroUrl,
       logoImageUrl: gameAssets?.logoImageUrl ?? null,
       objectId,
       shop: "steam" as const,
@@ -51,34 +75,6 @@ const syncSteamLibrary = async (
 
     await gamesSublevel.put(gameKey, game);
     await createGame(game).catch(() => {});
-
-    // Fetch SGDB artwork in background for new games that don't have a hero yet
-    setImmediate(async () => {
-      try {
-        const hasHero = gameAssets?.libraryHeroImageUrl || gameAssets?.coverImageUrl;
-        if (!hasHero) {
-          const sgdb = await getSteamGridDbArtwork(ownedGame.name).catch(() => null);
-          if (sgdb) {
-            await gamesShopAssetsSublevel.put(gameKey, {
-              ...(gameAssets ?? {}),
-              objectId,
-              shop: "steam" as const,
-              title: ownedGame.name,
-              iconUrl: gameAssets?.iconUrl ?? null,
-              coverImageUrl: sgdb.gridUrl ?? gameAssets?.coverImageUrl ?? null,
-              libraryHeroImageUrl: sgdb.heroUrl ?? gameAssets?.libraryHeroImageUrl ?? null,
-              libraryImageUrl: gameAssets?.libraryImageUrl ?? null,
-              logoImageUrl: sgdb.logoUrl ?? gameAssets?.logoImageUrl ?? null,
-              logoPosition: gameAssets?.logoPosition ?? null,
-              downloadSources: gameAssets?.downloadSources ?? [],
-              updatedAt: Date.now(),
-            });
-          }
-        }
-      } catch {
-        // Non-fatal
-      }
-    });
 
     added++;
   }
