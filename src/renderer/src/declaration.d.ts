@@ -274,8 +274,8 @@ declare global {
     verifyExecutablePathInUse: (executablePath: string) => Promise<Game>;
     getLibrary: () => Promise<LibraryGame[]>;
     refreshLibraryAssets: () => Promise<void>;
-    generateMissingMetadata: () => Promise<{ updated: number; skipped: number }>;
-    mergeDuplicateGames: () => Promise<{ merged: number }>;
+    generateMissingMetadata: () => Promise<{ updated: number; skipped: number; results: Array<{ title: string; coverUrl: string | null; what: string }> }>;
+    mergeDuplicateGames: () => Promise<{ merged: number; mergedTitles: string[] }>;
     openGameInstaller: (shop: GameShop, objectId: string) => Promise<boolean>;
     getGameInstallerActionType: (
       shop: GameShop,
@@ -502,6 +502,12 @@ declare global {
     ) => () => Electron.IpcRenderer;
     onPreflightProgress: (
       cb: (value: { status: string; detail: string | null }) => void
+    ) => () => Electron.IpcRenderer;
+    onLegendaryProcessLog: (
+      cb: (value: { objectId: string; line: string; isError: boolean }) => void
+    ) => () => Electron.IpcRenderer;
+    onGogdlProcessLog: (
+      cb: (value: { objectId: string; line: string; isError: boolean }) => void
     ) => () => Electron.IpcRenderer;
     onMetadataProgress: (
       cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void

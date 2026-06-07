@@ -1,4 +1,4 @@
-import { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useState, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
@@ -21,6 +21,7 @@ import {
 import type { DownloadSource, Game, GameRepack } from "@types";
 
 import { DownloadSettingsModal } from "./download-settings-modal";
+import { DownloadProcessModal } from "./download-process-modal";
 import { gameDetailsContext } from "@renderer/context";
 import { Downloader } from "@shared";
 import { orderBy } from "lodash-es";
@@ -284,6 +285,11 @@ export function RepacksModal({
 
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showHyperVisorModal, setShowHyperVisorModal] = useState(false);
+  const [processModal, setProcessModal] = useState<{
+    launcher: "legendary" | "gogdl";
+    objectId: string;
+    title: string;
+  } | null>(null);
 
   const ACHIEVEMENT_CRACKERS = useMemo(
     () => [
@@ -364,6 +370,16 @@ export function RepacksModal({
         startDownload={startDownload}
         repack={repack}
       />
+
+      {processModal && (
+        <DownloadProcessModal
+          visible={true}
+          title={processModal.title}
+          objectId={processModal.objectId}
+          launcher={processModal.launcher}
+          onClose={() => setProcessModal(null)}
+        />
+      )}
 
       <Modal
         visible={visible}
@@ -462,8 +478,11 @@ export function RepacksModal({
           const isGogGame = game.shop === "gog";
           const isEpicGame = game.shop === "epic";
           // Show Steam download whenever Steam is connected AND game is a Steam game (owned games in library)
-          const isSteamGame = game.shop === "steam" && hasSteamConnected;
-          const hasPlatformOptions = isSteamGame || isGogGame || isEpicGame || (altShops.length > 0);
+          // Only show "Download via Steam" for games the user actually OWNS on Steam
+          // (synced games always get executablePath = "steam://run/{id}")
+          const isOwnedOnSteam = game.shop === "steam" && hasSteamConnected &&
+            Boolean(game.executablePath?.startsWith("steam://run/"));
+          const hasPlatformOptions = isOwnedOnSteam || isGogGame || isEpicGame || (altShops.length > 0);
 
           if (!hasPlatformOptions) return null;
 
@@ -473,7 +492,7 @@ export function RepacksModal({
                 {t("platform_options", { defaultValue: "Download via platform" })}
               </p>
               <div className="repacks-modal__platform-buttons">
-                {primaryProtocolUrl && (
+                {isOwnedOnSteam && primaryProtocolUrl && (
                   <Button
                     theme="outline"
                     className="repacks-modal__platform-button"
@@ -490,14 +509,8 @@ export function RepacksModal({
                     theme="outline"
                     className="repacks-modal__platform-button"
                     onClick={async () => {
-                      try {
-                        await window.electron.downloadViaLegendary(game.objectId);
-                        showSuccessToast("Epic download started via Legendary.");
-                        onClose();
-                      } catch (err: unknown) {
-                        const msg = err instanceof Error ? err.message : String(err);
-                        showErrorToast(`Legendary download failed: ${msg}`);
-                      }
+                      setProcessModal({ launcher: "legendary", objectId: game.objectId, title: game.title ?? game.objectId });
+                      window.electron.downloadViaLegendary(game.objectId).catch(() => {});
                     }}
                   >
                     {"Download via Epic (Legendary)"}
@@ -509,14 +522,8 @@ export function RepacksModal({
                       theme="outline"
                       className="repacks-modal__platform-button"
                       onClick={async () => {
-                        try {
-                          await window.electron.downloadViaGogdl(game.objectId);
-                          showSuccessToast("GOG download started via gogdl.");
-                          onClose();
-                        } catch (err: unknown) {
-                          const msg = err instanceof Error ? err.message : String(err);
-                          showErrorToast(`gogdl download failed: ${msg}`);
-                        }
+                        setProcessModal({ launcher: "gogdl", objectId: game.objectId, title: game.title ?? game.objectId });
+                        window.electron.downloadViaGogdl(game.objectId).catch(() => {});
                       }}
                     >
                       {"Download via gogdl"}
@@ -542,23 +549,16 @@ export function RepacksModal({
                       key={`${alt.shop}:${alt.objectId}`}
                       theme="outline"
                       className="repacks-modal__platform-button"
-                      onClick={async () => {
-                        try {
-                          if (alt.executablePath) {
-                            window.electron.openGame(alt.shop, alt.objectId, alt.executablePath, undefined);
-                            onClose();
-                          } else if (alt.shop === "epic") {
-                            await window.electron.downloadViaLegendary(alt.objectId);
-                            showSuccessToast("Epic download started via Legendary.");
-                            onClose();
-                          } else if (alt.shop === "gog") {
-                            await window.electron.downloadViaGogdl(alt.objectId);
-                            showSuccessToast("GOG download started via gogdl.");
-                            onClose();
-                          }
-                        } catch (err: unknown) {
-                          const msg = err instanceof Error ? err.message : String(err);
-                          showErrorToast(`Download failed: ${msg}`);
+                      onClick={() => {
+                        if (alt.executablePath) {
+                          window.electron.openGame(alt.shop, alt.objectId, alt.executablePath, undefined);
+                          onClose();
+                        } else if (alt.shop === "epic") {
+                          setProcessModal({ launcher: "legendary", objectId: alt.objectId, title: game.title ?? alt.objectId });
+                          window.electron.downloadViaLegendary(alt.objectId).catch(() => {});
+                        } else if (alt.shop === "gog") {
+                          setProcessModal({ launcher: "gogdl", objectId: alt.objectId, title: game.title ?? alt.objectId });
+                          window.electron.downloadViaGogdl(alt.objectId).catch(() => {});
                         }
                       }}
                     >

@@ -669,6 +669,20 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("preflight-progress", listener);
     return () => ipcRenderer.removeListener("preflight-progress", listener);
   },
+  onLegendaryProcessLog: (
+    cb: (value: { objectId: string; line: string; isError: boolean }) => void
+  ) => {
+    const listener = (_event: Electron.IpcRendererEvent, value: { objectId: string; line: string; isError: boolean }) => cb(value);
+    ipcRenderer.on("on-legendary-process-log", listener);
+    return () => ipcRenderer.removeListener("on-legendary-process-log", listener);
+  },
+  onGogdlProcessLog: (
+    cb: (value: { objectId: string; line: string; isError: boolean }) => void
+  ) => {
+    const listener = (_event: Electron.IpcRendererEvent, value: { objectId: string; line: string; isError: boolean }) => cb(value);
+    ipcRenderer.on("on-gogdl-process-log", listener);
+    return () => ipcRenderer.removeListener("on-gogdl-process-log", listener);
+  },
   onMetadataProgress: (
     cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
   ) => {

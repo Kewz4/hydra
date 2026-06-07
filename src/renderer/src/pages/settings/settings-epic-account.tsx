@@ -10,6 +10,7 @@ import {
   PersonIcon,
   SyncIcon,
 } from "@primer/octicons-react";
+import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
 type Step = "idle" | "installing" | "signing_in" | "syncing";
 
@@ -29,6 +30,7 @@ export function SettingsEpicAccount() {
   const [step, setStep] = useState<Step>("idle");
   const [installProgress, setInstallProgress] = useState(0);
   const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
+  const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
   const unsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -106,9 +108,17 @@ export function SettingsEpicAccount() {
     try {
       const result = await window.electron.syncEpicLibrary();
       setSyncResult(result);
-      showSuccessToast(
-        t("epic_library_synced", { added: result.added, total: result.total })
-      );
+
+      // Auto-run dedup after sync
+      const dedupResult = await window.electron.mergeDuplicateGames().catch(() => ({ merged: 0, mergedTitles: [] }));
+
+      setSyncModal({
+        heading: t("epic_library_synced_heading", { defaultValue: "Epic Library Synced" }),
+        summary: result.added > 0
+          ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
+          : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
+        results: [],
+      });
     } catch (err: any) {
       showErrorToast(err?.message ?? t("epic_sync_failed"));
     } finally {
@@ -121,6 +131,7 @@ export function SettingsEpicAccount() {
   const isAuthenticated = status?.authenticated ?? false;
 
   return (
+    <>
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <p style={{ margin: 0, opacity: 0.8 }}>{t("epic_account_description")}</p>
 
@@ -231,5 +242,16 @@ export function SettingsEpicAccount() {
         </div>
       )}
     </div>
+
+      {syncModal && (
+        <LibrarySyncModal
+          visible={true}
+          heading={syncModal.heading}
+          summary={syncModal.summary}
+          results={syncModal.results}
+          onClose={() => setSyncModal(null)}
+        />
+      )}
+    </>
   );
 }

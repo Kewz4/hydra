@@ -389,15 +389,63 @@ export function GameDetailsContextProvider({
           downloadSourceIds: sources.map((source) => source.id),
         };
 
-        const downloads = await window.electron.hydraApi.get<GameRepack[]>(
+        let downloads = await window.electron.hydraApi.get<GameRepack[]>(
           `/games/${shop}/${objectId}/download-sources`,
-          {
-            params,
-            needsAuth: false,
-          }
-        );
+          { params, needsAuth: false }
+        ).catch(() => [] as GameRepack[]);
 
-        setRepacks(downloads);
+        // For non-Steam games with no repacks, search the Hydra catalogue
+        // by title to find the Steam equivalent and fetch its repacks
+        if ((!downloads || downloads.length === 0) && shop !== "steam" && shop !== "custom") {
+          try {
+            const steamId = await window.electron.hydraApi
+              .post<{ edges: Array<{ shop: string; objectId: string; title: string }> }>(
+                "/catalogue/search",
+                {
+                  data: {
+                    title: gameTitle,
+                    sortBy: "popularity",
+                    sortOrder: "desc",
+                    downloadSourceFingerprints: [],
+                    tags: [],
+                    publishers: [],
+                    genres: [],
+                    developers: [],
+                    protondbSupportBadges: [],
+                    deckCompatibility: [],
+                    take: 5,
+                    skip: 0,
+                  },
+                  needsAuth: false,
+                }
+              )
+              .then((resp) => {
+                const normalizedTitle = gameTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const match =
+                  resp?.edges?.find(
+                    (r) =>
+                      r.shop === "steam" &&
+                      r.title.toLowerCase().replace(/[^a-z0-9]/g, "") === normalizedTitle
+                  ) ?? resp?.edges?.find((r) => r.shop === "steam");
+                return match?.objectId ?? null;
+              })
+              .catch(() => null);
+
+            if (steamId) {
+              const steamRepacks = await window.electron.hydraApi
+                .get<GameRepack[]>(`/games/steam/${steamId}/download-sources`, {
+                  params,
+                  needsAuth: false,
+                })
+                .catch(() => [] as GameRepack[]);
+              if (steamRepacks?.length) downloads = steamRepacks;
+            }
+          } catch (_e) {
+            // silent fallback
+          }
+        }
+
+        setRepacks(downloads ?? []);
       } catch (error) {
         console.error("Failed to fetch download sources:", error);
       }

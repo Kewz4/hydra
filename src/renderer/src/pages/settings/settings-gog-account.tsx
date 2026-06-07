@@ -4,6 +4,7 @@ import { Button } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
 import { CheckCircleFillIcon, SyncIcon } from "@primer/octicons-react";
+import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
 export function SettingsGogAccount() {
   const { t } = useTranslation("settings");
@@ -15,6 +16,7 @@ export function SettingsGogAccount() {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
+  const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
 
   const fetchUserInfo = useCallback(async () => {
     if (!userPreferences?.gogRefreshToken) {
@@ -60,9 +62,16 @@ export function SettingsGogAccount() {
     try {
       const result = await window.electron.syncGogLibrary();
       setSyncResult(result);
-      showSuccessToast(
-        t("gog_library_synced", { added: result.added, total: result.total })
-      );
+
+      const dedupResult = await window.electron.mergeDuplicateGames().catch(() => ({ merged: 0, mergedTitles: [] }));
+
+      setSyncModal({
+        heading: "GOG Library Synced",
+        summary: result.added > 0
+          ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
+          : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
+        results: [],
+      });
     } catch {
       showErrorToast(t("gog_sync_failed"));
     } finally {
@@ -72,6 +81,7 @@ export function SettingsGogAccount() {
 
   if (userInfo) {
     return (
+      <>
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         <div
           style={{
@@ -116,6 +126,17 @@ export function SettingsGogAccount() {
           {t("gog_library_description")}
         </p>
       </div>
+
+      {syncModal && (
+        <LibrarySyncModal
+          visible={true}
+          heading={syncModal.heading}
+          summary={syncModal.summary}
+          results={syncModal.results}
+          onClose={() => setSyncModal(null)}
+        />
+      )}
+      </>
     );
   }
 

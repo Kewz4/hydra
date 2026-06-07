@@ -6,6 +6,10 @@ import { spawnLegendaryInstall, findLegendaryBinary } from "@main/services/legen
 import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { Downloader } from "@shared";
 
+function sendLog(objectId: string, line: string, isError = false) {
+  WindowManager.sendToAppWindows("on-legendary-process-log", { objectId, line, isError });
+}
+
 // Track active legendary downloads by gameId
 const activeLegendaryDownloads = new Map<string, () => void>();
 
@@ -46,11 +50,16 @@ const downloadViaLegendary = async (
   // Keep a mutable reference for progress updates
   let currentRecord = { ...initialRecord };
 
+  sendLog(objectId, `Starting Legendary install for ${objectId}…`);
+  sendLog(objectId, `Binary: ${binary}`);
+  sendLog(objectId, `Download path: ${downloadPath}`);
+
   const cancel = spawnLegendaryInstall(
     objectId,
     downloadPath,
     prefs?.legendaryBinaryPath,
     async (progress, downloadedMB, totalMB, speedMBs) => {
+      sendLog(objectId, `Progress: ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`);
       currentRecord = {
         ...currentRecord,
         progress,
@@ -72,6 +81,7 @@ const downloadViaLegendary = async (
       });
     },
     async () => {
+      sendLog(objectId, "✓ Download complete!");
       // On complete: update game executablePath and set status to complete
       activeLegendaryDownloads.delete(gameKey);
       const game = await gamesSublevel.get(gameKey).catch(() => null);
@@ -99,6 +109,7 @@ const downloadViaLegendary = async (
       });
     },
     async (err) => {
+      sendLog(objectId, `✗ Error: ${err}`, true);
       activeLegendaryDownloads.delete(gameKey);
       logger.error("Legendary download failed", { objectId, err });
       await downloadsSublevel.del(gameKey).catch(() => {});

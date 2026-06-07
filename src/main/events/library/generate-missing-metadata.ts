@@ -3,7 +3,17 @@ import { gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
 import { logger, WindowManager } from "@main/services";
 
-const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
+export interface MetadataGameResult {
+  title: string;
+  coverUrl: string | null;
+  what: string;
+}
+
+const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent): Promise<{
+  updated: number;
+  skipped: number;
+  results: MetadataGameResult[];
+}> => {
   const allGames = await gamesSublevel.values().all();
   const games = allGames.filter((g) => !g.isDeleted);
 
@@ -11,6 +21,7 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
   let skipped = 0;
   const total = games.length;
   let current = 0;
+  const results: MetadataGameResult[] = [];
 
   WindowManager.sendToAppWindows("on-metadata-progress", { current, total, title: null });
 
@@ -48,6 +59,19 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
         updatedAt: Date.now(),
       });
 
+      const coverUrl = best.coverImageUrl ?? best.libraryHeroImageUrl ?? best.iconUrl ?? null;
+      const found: string[] = [];
+      if (best.coverImageUrl) found.push("cover");
+      if (best.libraryHeroImageUrl) found.push("hero image");
+      if (best.iconUrl) found.push("icon");
+      if (best.logoImageUrl) found.push("logo");
+
+      results.push({
+        title: game.title,
+        coverUrl,
+        what: found.length > 0 ? `Found: ${found.join(", ")}` : "Updated metadata",
+      });
+
       updated++;
     } catch (err) {
       logger.warn(`generateMissingMetadata: failed for "${game.title}"`, err);
@@ -57,7 +81,7 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent) => {
 
   WindowManager.sendToAppWindows("on-metadata-progress", { current: total, total, title: null, done: true });
   logger.log(`generateMissingMetadata: ${updated} updated, ${skipped} skipped`);
-  return { updated, skipped };
+  return { updated, skipped, results };
 };
 
 registerEvent("generateMissingMetadata", generateMissingMetadata);
