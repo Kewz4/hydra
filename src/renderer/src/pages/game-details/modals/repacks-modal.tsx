@@ -477,11 +477,10 @@ export function RepacksModal({
           const altShops = game.alternativeShops ?? [];
           const isGogGame = game.shop === "gog";
           const isEpicGame = game.shop === "epic";
-          // Show Steam download whenever Steam is connected AND game is a Steam game (owned games in library)
-          // Only show "Download via Steam" for games the user actually OWNS on Steam
-          // (synced games always get executablePath = "steam://run/{id}")
+          // Show "Download via Steam" for owned Steam library games.
+          // Synthesized games (Epic/GOG-owned catalogue entries) are excluded via _synthesized flag.
           const isOwnedOnSteam = game.shop === "steam" && hasSteamConnected &&
-            Boolean(game.executablePath?.startsWith("steam://run/"));
+            !(game as any)._synthesized;
           const hasPlatformOptions = isOwnedOnSteam || isGogGame || isEpicGame || (altShops.length > 0);
 
           if (!hasPlatformOptions) return null;

@@ -2,7 +2,7 @@ import { registerEvent } from "../register-event";
 import { WindowManager, logger } from "@main/services";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
-import { spawnGogdlInstall, findGogdlBinary } from "@main/services/gogdl";
+import { spawnGogdlInstall, findGogdlBinary, downloadGogdl } from "@main/services/gogdl";
 import { refreshGogToken } from "@main/services/gog-account";
 import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { Downloader } from "@shared";
@@ -57,9 +57,24 @@ const downloadViaGogdl = async (
 
   let currentRecord = { ...initialRecord };
 
-  const binary = findGogdlBinary(null);
+  let binary = findGogdlBinary(null);
   sendLog(objectId, `Starting gogdl download for game ID ${objectId}…`);
-  sendLog(objectId, `Binary: ${binary ?? "(not found)"}`);
+
+  if (!binary) {
+    sendLog(objectId, "gogdl not found — downloading automatically…");
+    try {
+      binary = await downloadGogdl((pct) => {
+        sendLog(objectId, `Downloading gogdl: ${pct}%`);
+      });
+      sendLog(objectId, `✓ gogdl installed at ${binary}`);
+    } catch (err: any) {
+      sendLog(objectId, `✗ Failed to auto-install gogdl: ${err?.message ?? err}`, true);
+      await downloadsSublevel.del(gameKey).catch(() => {});
+      throw new Error("gogdl auto-install failed");
+    }
+  }
+
+  sendLog(objectId, `Binary: ${binary}`);
   sendLog(objectId, `Download path: ${downloadPath}`);
 
   const cancel = spawnGogdlInstall(
@@ -67,7 +82,7 @@ const downloadViaGogdl = async (
     downloadPath,
     accessToken,
     newRefreshToken,
-    null,
+    binary,
     async (progress, downloadedMB, totalMB, speedMBs) => {
       sendLog(objectId, `Progress: ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`);
       currentRecord = {

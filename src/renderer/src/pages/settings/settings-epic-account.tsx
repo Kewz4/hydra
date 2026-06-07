@@ -120,7 +120,7 @@ export function SettingsEpicAccount() {
         results: (result.addedGames ?? []).map((g) => ({
           title: g.title,
           coverUrl: g.coverUrl,
-          what: "Added from Epic Games",
+          what: g.what,
           isNew: true,
         })),
       });

@@ -98,7 +98,7 @@ export function SettingsGogAccount() {
         results: (result.addedGames ?? []).map((g) => ({
           title: g.title,
           coverUrl: g.coverUrl,
-          what: "Added from GOG",
+          what: g.what,
           isNew: true,
         })),
       });

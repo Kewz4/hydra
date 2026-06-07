@@ -170,12 +170,12 @@ declare global {
     }>;
     installLegendary: () => Promise<{ path: string }>;
     openLegendaryAuthWindow: () => Promise<{ success: boolean; account?: string }>;
-    syncEpicLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null }> }>;
+    syncEpicLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null; what: string }> }>;
     installBattleNet: () => Promise<{ path: string }>;
     onLegendaryInstallProgress: (cb: (pct: number) => void) => () => void;
     onBattleNetInstallProgress: (cb: (pct: number) => void) => () => void;
     openGogAuthWindow: () => Promise<{ refresh_token: string; username: string } | null>;
-    syncGogLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null }> }>;
+    syncGogLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null; what: string }> }>;
     getGogUserInfo: () => Promise<{ userId: string; username: string } | null>;
     getBattleNetGames: () => Promise<{
       installed: boolean;

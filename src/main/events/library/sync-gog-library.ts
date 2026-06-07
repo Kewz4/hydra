@@ -35,7 +35,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const ownedIds = await getGogOwnedGameIds(tokens.access_token);
 
   let added = 0;
-  const addedGames: Array<{ title: string; coverUrl: string | null }> = [];
+  const addedGames: Array<{ title: string; coverUrl: string | null; what: string }> = [];
 
   // Process in batches of 20 to avoid hammering the API
   for (let i = 0; i < ownedIds.length; i += 20) {
@@ -99,7 +99,12 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
         await createGame(game).catch(() => {});
         await deduplicateTitle(details.title).catch(() => {});
         added++;
-        addedGames.push({ title: details.title, coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl });
+        const gotHydraAssets = Boolean(assets.coverImageUrl || assets.libraryHeroImageUrl);
+        addedGames.push({
+          title: details.title,
+          coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl ?? null,
+          what: gotHydraAssets ? "Cover fetched from Hydra API (Steam catalogue)" : "Added — no Hydra API match found",
+        });
       })
     );
   }

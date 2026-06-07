@@ -21,7 +21,7 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const games = await getLegendaryGames(prefs?.legendaryBinaryPath);
 
   let added = 0;
-  const addedGames: Array<{ title: string; coverUrl: string | null }> = [];
+  const addedGames: Array<{ title: string; coverUrl: string | null; what: string }> = [];
 
   for (const epicGame of games) {
     const objectId = epicGame.app_name;
@@ -77,7 +77,12 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     await deduplicateTitle(epicGame.app_title).catch(() => {});
 
     added++;
-    addedGames.push({ title: epicGame.app_title, coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl ?? coverUrl });
+    const gotHydraAssets = Boolean(assets.coverImageUrl || assets.libraryHeroImageUrl);
+    addedGames.push({
+      title: epicGame.app_title,
+      coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl ?? coverUrl,
+      what: gotHydraAssets ? "Cover fetched from Hydra API (Steam catalogue)" : "Added — no Hydra API match found",
+    });
   }
 
   logger.log(`Epic library sync complete: ${added} games added`);

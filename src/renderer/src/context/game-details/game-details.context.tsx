@@ -119,15 +119,15 @@ export function GameDetailsContextProvider({
     if (gameTitle && shop === "steam") {
       const libraryMatch = await window.electron.findLibraryGameByTitle(gameTitle).catch(() => null);
       if (libraryMatch && (libraryMatch.shop === "epic" || libraryMatch.shop === "gog")) {
-        // Synthesize a game object so the repacks modal shows the platform download button
+        // Synthesize a game object so the repacks modal shows the platform download button.
+        // _synthesized flag prevents this from triggering the "Download via Steam" path.
         const synthetic = {
           ...libraryMatch,
-          // Keep steam shop/objectId so repacks are fetched from the right source
           shop: "steam" as const,
           objectId,
+          _synthesized: true,
           alternativeShops: [
             ...(libraryMatch.alternativeShops ?? []),
-            // Surface the actual library entry so Legendary/GOG button shows
             { shop: libraryMatch.shop, objectId: libraryMatch.objectId, executablePath: libraryMatch.executablePath },
           ],
         };
