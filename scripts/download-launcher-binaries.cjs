@@ -46,17 +46,30 @@ function download(url, dest) {
 
 async function getLatestRelease(owner, repo) {
   return new Promise((resolve, reject) => {
+    const headers = {
+      "User-Agent": "gamehub-build-script",
+      Accept: "application/vnd.github+json",
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers["Authorization"] = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
     const opts = {
       hostname: "api.github.com",
       path: `/repos/${owner}/${repo}/releases/latest`,
-      headers: { "User-Agent": "gamehub-build-script", Accept: "application/vnd.github+json" },
+      headers,
     };
     https.get(opts, (res) => {
       let data = "";
       res.on("data", (c) => (data += c));
       res.on("end", () => {
-        try { resolve(JSON.parse(data)); }
-        catch (e) { reject(e); }
+        try {
+          const parsed = JSON.parse(data);
+          if (!Array.isArray(parsed.assets)) {
+            reject(new Error(`GitHub API error for ${owner}/${repo}: ${parsed.message || JSON.stringify(parsed)}`));
+            return;
+          }
+          resolve(parsed);
+        } catch (e) { reject(e); }
       });
     }).on("error", reject);
   });
