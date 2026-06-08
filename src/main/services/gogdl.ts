@@ -111,15 +111,20 @@ export function spawnGogdlInstall(
   const configDir = writeGogdlCredentials(accessToken, refreshToken, userId);
 
   // heroic-gogdl: --auth-config-path MUST come before the subcommand
-  // Progress is output as JSON lines to stdout
-  const child = spawn(binary, [
+  // Progress is output as JSON lines to stdout; PYTHONUNBUFFERED=1 prevents stdout buffering
+  const args = [
     "--auth-config-path", configDir,
     "download",
     gameId,
     "--platform", "windows",
     "--path", downloadPath,
-  ], {
+  ];
+  logger.log(`[gogdl] spawning: ${binary} ${args.join(" ")}`);
+  onLog?.(`Command: ${binary} ${args.join(" ")}`, false);
+
+  const child = spawn(binary, args, {
     stdio: ["ignore", "pipe", "pipe"],
+    env: { ...process.env, PYTHONUNBUFFERED: "1" },
   });
 
   // heroic-gogdl outputs JSON lines:
@@ -199,11 +204,22 @@ export function spawnGogdlInstall(
     for (const line of lines) handleLine(line, true);
   });
 
-  child.on("error", (err) => onError(err.message));
+  child.on("error", (err) => {
+    logger.error("[gogdl] spawn error", err);
+    onError(err.message);
+  });
   child.on("close", (code) => {
     if (stderrBuf.trim()) handleLine(stderrBuf, true);
     if (stdoutBuf.trim()) handleLine(stdoutBuf, false);
-    if (code !== 0 && code !== null) onError(`gogdl exited with code ${code}`);
+    logger.log(`[gogdl] exited with code ${code}`);
+    onLog?.(`Process exited with code ${code}`, code !== 0);
+    if (!completed) {
+      if (code === 0) {
+        onComplete();
+      } else {
+        onError(`gogdl exited with code ${code}`);
+      }
+    }
   });
 
   return () => { try { child.kill(); } catch {} };

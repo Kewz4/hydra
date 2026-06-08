@@ -97,7 +97,7 @@ export const getLegendaryStatus = async (
   if (!binary) return { account: null, authenticated: false };
 
   try {
-    const output = await runLegendary(binary, [...legendaryBaseArgs(), "status", "--json"]);
+    const output = await runLegendary(binary, ["status", "--json"]);
     const data = JSON.parse(output);
     return {
       account: data.account ?? null,
@@ -115,7 +115,7 @@ export const getLegendaryGames = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  const output = await runLegendary(binary, [...legendaryBaseArgs(), "list", "--json"]);
+  const output = await runLegendary(binary, ["list", "--json"]);
   const data = JSON.parse(output);
 
   if (!Array.isArray(data)) throw new Error("Unexpected legendary output format");
@@ -129,8 +129,6 @@ export const getLegendaryConfigPath = (): string => {
   return configPath;
 };
 
-const legendaryBaseArgs = (): string[] => ["--config-path", getLegendaryConfigPath()];
-
 export const authenticateLegendary = async (
   code: string,
   binaryPath?: string | null
@@ -138,7 +136,19 @@ export const authenticateLegendary = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  await execFileAsync(binary, [...legendaryBaseArgs(), "auth", "--code", code.trim()], { timeout: 30_000 });
+  logger.log(`[legendary] running: ${binary} auth --code <redacted>`);
+  try {
+    const { stdout, stderr } = await execFileAsync(
+      binary,
+      ["auth", "--code", code.trim()],
+      { timeout: 30_000 }
+    );
+    if (stdout) logger.log(`[legendary auth] stdout: ${stdout.slice(0, 500)}`);
+    if (stderr) logger.log(`[legendary auth] stderr: ${stderr.slice(0, 500)}`);
+  } catch (err: any) {
+    logger.error(`[legendary auth] failed: stdout=${err.stdout ?? ""} stderr=${err.stderr ?? ""}`);
+    throw err;
+  }
 };
 
 export const getLegendaryGameCoverUrl = (game: LegendaryGame): string | null => {
@@ -166,7 +176,7 @@ export function spawnLegendaryInstall(
     return () => {};
   }
 
-  const child = spawn(binary, [...legendaryBaseArgs(), "install", appName, "--base-path", downloadPath, "--yes", "--skip-sdl"], {
+  const child = spawn(binary, ["install", appName, "--base-path", downloadPath, "--yes", "--skip-sdl"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
