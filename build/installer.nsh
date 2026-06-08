@@ -33,11 +33,7 @@
 !macro customInit
   StrCpy $GH_PortableMode "0"
 
-  MessageBox MB_YESNO|MB_ICONQUESTION \
-    "How would you like to use GameHub?$\r$\n$\r$\
-Yes  →  Install$\t(Program Files, Start Menu, uninstaller)$\r$\n$\
-No   →  Portable$\t(choose any folder, no shortcuts)" \
-    IDYES GH_InstallMode
+  MessageBox MB_YESNO|MB_ICONQUESTION "How would you like to use GameHub?$\r$\n$\r$\nYes = Install  (Program Files, Start Menu, uninstaller)$\r$\nNo  = Portable (choose any folder, no shortcuts)" IDYES GH_InstallMode
 
   ; ── Portable branch ──
   nsDialogs::SelectFolderDialog \
