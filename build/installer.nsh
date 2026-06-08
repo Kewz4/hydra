@@ -23,8 +23,10 @@
   !define /redef MUI_ABORTWARNING
   !define /redef MUI_ABORTWARNING_TEXT       "Are you sure you want to quit the GameHub installer?"
 
-  ; ── Global state ──
-  Var /GLOBAL GH_PortableMode   ; "0" = install, "1" = portable
+  ; ── Global state (installer pass only; uninstaller pass has no customInit) ──
+  !ifndef BUILD_UNINSTALLER
+    Var /GLOBAL GH_PortableMode   ; "0" = install, "1" = portable
+  !endif
 !macroend
 
 ; ── Mode selection runs in .onInit, before any pages ──
