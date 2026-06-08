@@ -29,7 +29,6 @@ win:
     - from: binaries/7z.dll
   target:
     - nsis
-    - portable
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -38,8 +37,6 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   include: installer.nsh
-portable:
-  artifactName: ${name}-${version}-portable.${ext}
 mac:
   entitlementsInherit: build/entitlements.mac.plist
   extraResources:
