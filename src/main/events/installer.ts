@@ -1,4 +1,5 @@
-import { ipcMain } from "electron";
+import { app, ipcMain } from "electron";
+import path from "node:path";
 import { WindowManager } from "@main/services";
 import {
   getInstallerDefaults,
@@ -22,6 +23,17 @@ ipcMain.handle(
 
     if (mode === "portable") {
       setupPortable();
+      // Redirect data paths for this session immediately — subsequent launches
+      // will detect the portable marker at startup, but the first launch needs
+      // it too since the marker didn't exist when app.setPath was first called.
+      const exeDir = path.dirname(process.execPath);
+      const dataDir = path.join(exeDir, "data");
+      try {
+        app.setPath("userData", dataDir);
+        app.setPath("logs", path.join(dataDir, "logs"));
+        app.setPath("sessionData", path.join(dataDir, "session"));
+        app.setPath("crashDumps", path.join(dataDir, "crashes"));
+      } catch { /* setPath may fail after ready on some platforms; ignore */ }
       win?.webContents.send("installer:progress", 100, "Done");
       return { ok: true };
     }

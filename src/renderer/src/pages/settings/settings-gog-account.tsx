@@ -67,6 +67,21 @@ export function SettingsGogAccount() {
       await updateUserPreferences({ gogRefreshToken: result.refresh_token });
       showSuccessToast(t("gog_account_linked", { username: result.username }));
       await fetchUserInfo();
+
+      // Auto-install gogdl if not present
+      const status = await window.electron.getGogdlStatus().catch(() => ({ binaryFound: false }));
+      if (!status.binaryFound) {
+        setIsInstallingGogdl(true);
+        gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(setGogdlInstallProgress);
+        window.electron.installGogdl()
+          .then(() => setGogdlFound(true))
+          .catch(() => {})
+          .finally(() => {
+            gogdlProgressUnsub.current?.();
+            setIsInstallingGogdl(false);
+            setGogdlInstallProgress(0);
+          });
+      }
     } catch {
       showErrorToast(t("gog_auth_failed"));
     } finally {

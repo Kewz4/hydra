@@ -47,6 +47,22 @@ $hero-height: 350px;
     }
   }
 
+  &__in-library-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    background-color: rgba(34, 197, 94, 0.2);
+    color: rgb(187, 247, 208);
+    border: 1px solid rgba(34, 197, 94, 0.5);
+    align-self: flex-end;
+    margin-bottom: 4px;
+  }
+
   &__hero-buttons {
     display: flex;
     gap: globals.$spacing-unit;

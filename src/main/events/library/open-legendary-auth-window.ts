@@ -1,6 +1,6 @@
 import { BrowserWindow } from "electron";
 import { registerEvent } from "../register-event";
-import { authenticateLegendary, findLegendaryBinary } from "@main/services/legendary";
+import { authenticateLegendary, findLegendaryBinary, downloadLegendary, getLegendaryStatus } from "@main/services/legendary";
 import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import { logger } from "@main/services";
@@ -61,9 +61,15 @@ const openLegendaryAuthWindow = async (
       win.close();
 
       try {
-        await authenticateLegendary(code, prefs?.legendaryBinaryPath);
-        const { getLegendaryStatus } = await import("@main/services/legendary");
-        const status = await getLegendaryStatus(prefs?.legendaryBinaryPath);
+        // Auto-install legendary if not present before attempting auth
+        let binary = findLegendaryBinary(prefs?.legendaryBinaryPath);
+        if (!binary) {
+          logger.log("legendary not found — downloading before auth...");
+          binary = await downloadLegendary();
+        }
+
+        await authenticateLegendary(code, binary);
+        const status = await getLegendaryStatus(binary);
         resolve({ success: true, account: status.account ?? undefined });
       } catch (err) {
         logger.error("legendary auth --code failed", err);

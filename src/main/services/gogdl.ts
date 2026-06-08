@@ -120,6 +120,7 @@ export function spawnGogdlInstall(
     "--path", downloadPath,
   ], {
     stdio: ["ignore", "pipe", "pipe"],
+    env: { ...process.env, PYTHONUNBUFFERED: "1" },
   });
 
   // heroic-gogdl outputs JSON lines:

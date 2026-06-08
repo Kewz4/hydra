@@ -205,6 +205,7 @@
   &__platform-buttons {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: calc(globals.$spacing-unit * 1.5);
   }
 
