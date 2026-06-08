@@ -159,6 +159,9 @@ export function spawnGogdlInstall(
       "windows",
       "--path",
       downloadPath,
+      "--skip-dlcs",
+      "--max-workers",
+      "4",
     ],
     {
       stdio: ["ignore", "pipe", "pipe"],

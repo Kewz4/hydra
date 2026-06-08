@@ -75,6 +75,7 @@ const downloadViaGogdl = async (
     timestamp: Date.now(),
     extracting: false,
     automaticallyExtract: false,
+    automaticallyDeleteArchiveFiles: false,
   };
   await downloadsSublevel.put(gameKey, initialRecord);
   // Notify renderer to refresh library so the download appears in the downloads tab
@@ -136,7 +137,7 @@ const downloadViaGogdl = async (
         numSeeds: 0,
         isDownloadingMetadata: false,
         isCheckingFiles: false,
-        download: { shop: "gog", objectId, downloadPath, status: "active" },
+        download: currentRecord,
       });
     },
     async () => {
@@ -166,7 +167,7 @@ const downloadViaGogdl = async (
         numSeeds: 0,
         isDownloadingMetadata: false,
         isCheckingFiles: false,
-        download: { shop: "gog", objectId, downloadPath, status: "complete" },
+        download: { ...currentRecord, progress: 1, status: "complete" },
       });
     },
     async (err) => {

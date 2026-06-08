@@ -58,6 +58,7 @@ const downloadViaLegendary = async (
     timestamp: Date.now(),
     extracting: false,
     automaticallyExtract: false,
+    automaticallyDeleteArchiveFiles: false,
   };
   await downloadsSublevel.put(gameKey, initialRecord);
   // Notify renderer to refresh library so the download appears in the downloads tab
@@ -97,7 +98,7 @@ const downloadViaLegendary = async (
         numSeeds: 0,
         isDownloadingMetadata: false,
         isCheckingFiles: false,
-        download: { shop: "epic", objectId, downloadPath, status: "active" },
+        download: currentRecord,
       });
     },
     async () => {
@@ -127,7 +128,7 @@ const downloadViaLegendary = async (
         numSeeds: 0,
         isDownloadingMetadata: false,
         isCheckingFiles: false,
-        download: { shop: "epic", objectId, downloadPath, status: "complete" },
+        download: { ...currentRecord, progress: 1, status: "complete" },
       });
     },
     async (err) => {

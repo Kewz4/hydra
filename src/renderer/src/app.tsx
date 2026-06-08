@@ -147,7 +147,14 @@ export function App() {
 
     const activeGame = library.find((game) => game.id === lastPacket.gameId);
 
-    if (!activeGame || activeGame.download?.status !== "active") {
+    if (!activeGame) {
+      clearDownload();
+      return;
+    }
+
+    // If download is null the library may not have caught up with the new download
+    // record yet — don't clear in that case to avoid a race condition at download start.
+    if (activeGame.download && activeGame.download.status !== "active") {
       clearDownload();
     }
   }, [clearDownload, lastPacket?.gameId, library]);
