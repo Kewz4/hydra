@@ -67,9 +67,14 @@ export const downloadGogdl = async (
 
   const asset =
     assets.find((a) => a.name === assetName) ??
-    assets.find((a) => a.name.startsWith("gogdl_windows") && a.name.endsWith(".exe")) ??
     assets.find(
-      (a) => a.name.startsWith("gogdl") && !a.name.endsWith(".tar.gz") && !a.name.endsWith(".zip")
+      (a) => a.name.startsWith("gogdl_windows") && a.name.endsWith(".exe")
+    ) ??
+    assets.find(
+      (a) =>
+        a.name.startsWith("gogdl") &&
+        !a.name.endsWith(".tar.gz") &&
+        !a.name.endsWith(".zip")
     );
   if (!asset) throw new Error(`No gogdl binary found for ${process.platform}`);
 
