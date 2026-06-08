@@ -19,11 +19,8 @@ import {
   type LibraryGame,
   type SeedingStatus,
 } from "../../../../types";
-import { Downloader } from "@shared";
 import { orderBy } from "lodash-es";
 import { ArrowDownIcon } from "@primer/octicons-react";
-
-type SourceFilter = "all" | "official" | "retigga";
 
 export default function Downloads() {
   const { library, updateLibrary } = useLibrary();
@@ -36,7 +33,6 @@ export default function Downloads() {
 
   const [showBinaryNotFoundModal, setShowBinaryNotFoundModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
 
   const { removeGameInstaller, pauseSeeding } = useDownload();
 
@@ -79,16 +75,6 @@ export default function Downloads() {
     setShowDeleteModal(true);
   };
 
-  const filteredLibrary = useMemo(() => {
-    if (sourceFilter === "all") return library;
-    return library.filter((game) => {
-      const d = game.download?.downloader;
-      if (d === undefined || d === null) return false;
-      const isOfficial = d === Downloader.Legendary || d === Downloader.Gogdl;
-      return sourceFilter === "official" ? isOfficial : !isOfficial;
-    });
-  }, [library, sourceFilter]);
-
   const libraryGroup: Record<string, LibraryGame[]> = useMemo(() => {
     const initialValue: Record<string, LibraryGame[]> = {
       downloading: [],
@@ -103,7 +89,7 @@ export default function Downloads() {
       pausedOrder.map((id, index) => [id, index])
     );
 
-    const result = filteredLibrary.reduce((prev, next) => {
+    const result = library.reduce((prev, next) => {
       if (!next.download) return prev;
 
       const bucket = getRendererDownloadBucket(next.download, {
@@ -157,7 +143,7 @@ export default function Downloads() {
       queued,
       complete,
     };
-  }, [extraction?.visibleId, lastPacket?.gameId, layoutState, filteredLibrary]);
+  }, [extraction?.visibleId, lastPacket?.gameId, layoutState, library]);
 
   const queuedGameIds = useMemo(
     () => libraryGroup.queued.map((game) => game.id),
@@ -198,47 +184,6 @@ export default function Downloads() {
         onClose={() => setShowDeleteModal(false)}
         deleteGame={handleDeleteGame}
       />
-
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          padding: "12px 16px 0",
-          flexWrap: "wrap",
-        }}
-      >
-        {(
-          [
-            { value: "all", label: "All" },
-            { value: "official", label: "Official" },
-            { value: "retigga", label: "Retigga" },
-          ] as { value: SourceFilter; label: string }[]
-        ).map(({ value, label }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setSourceFilter(value)}
-            style={{
-              padding: "4px 12px",
-              borderRadius: "12px",
-              border:
-                sourceFilter === value
-                  ? "1px solid var(--color-primary, #8b5cf6)"
-                  : "1px solid rgba(255,255,255,0.2)",
-              background:
-                sourceFilter === value
-                  ? "var(--color-primary, #8b5cf6)"
-                  : "transparent",
-              color: "inherit",
-              cursor: "pointer",
-              fontSize: "0.8rem",
-              opacity: sourceFilter === value ? 1 : 0.7,
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
 
       {hasItemsInLibrary ? (
         <section className="downloads__container">
