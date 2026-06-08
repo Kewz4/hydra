@@ -554,8 +554,7 @@ export function RepacksModal({
                           e.currentTarget as HTMLElement
                         ).getBoundingClientRect();
                         setFlyingThumb({
-                          src:
-                            game.libraryHeroImageUrl ?? game.iconUrl ?? "",
+                          src: game.libraryHeroImageUrl ?? game.iconUrl ?? "",
                           fromRect: rect,
                         });
                         setTimeout(() => {
@@ -581,8 +580,7 @@ export function RepacksModal({
                           e.currentTarget as HTMLElement
                         ).getBoundingClientRect();
                         setFlyingThumb({
-                          src:
-                            game.libraryHeroImageUrl ?? game.iconUrl ?? "",
+                          src: game.libraryHeroImageUrl ?? game.iconUrl ?? "",
                           fromRect: rect,
                         });
                         setTimeout(() => {
