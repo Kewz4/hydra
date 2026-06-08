@@ -606,6 +606,8 @@ export function DownloadGroup({
   const [gameToCancelObjectId, setGameToCancelObjectId] = useState<
     string | null
   >(null);
+  const [gameToCancelDownloader, setGameToCancelDownloader] =
+    useState<string | null>(null);
   const [gameActionTypes, setGameActionTypes] = useState<
     Record<string, "install" | "open-folder">
   >({});
@@ -747,25 +749,45 @@ export function DownloadGroup({
     [updateLibrary]
   );
 
-  const handleCancelClick = useCallback((shop: GameShop, objectId: string) => {
-    setGameToCancelShop(shop);
-    setGameToCancelObjectId(objectId);
-    setCancelModalVisible(true);
-  }, []);
+  const handleCancelClick = useCallback(
+    (shop: GameShop, objectId: string, downloader?: string) => {
+      setGameToCancelShop(shop);
+      setGameToCancelObjectId(objectId);
+      setGameToCancelDownloader(downloader ?? null);
+      setCancelModalVisible(true);
+    },
+    []
+  );
 
   const handleConfirmCancel = useCallback(async () => {
     if (gameToCancelShop && gameToCancelObjectId) {
-      await cancelDownload(gameToCancelShop, gameToCancelObjectId);
+      if (gameToCancelDownloader === Downloader.Legendary) {
+        await window.electron.cancelLegendaryDownload(gameToCancelObjectId);
+        updateLibrary();
+      } else if (gameToCancelDownloader === Downloader.Gogdl) {
+        await window.electron.cancelGogdlDownload(gameToCancelObjectId);
+        updateLibrary();
+      } else {
+        await cancelDownload(gameToCancelShop, gameToCancelObjectId);
+      }
     }
     setCancelModalVisible(false);
     setGameToCancelShop(null);
     setGameToCancelObjectId(null);
-  }, [gameToCancelShop, gameToCancelObjectId, cancelDownload]);
+    setGameToCancelDownloader(null);
+  }, [
+    gameToCancelShop,
+    gameToCancelObjectId,
+    gameToCancelDownloader,
+    cancelDownload,
+    updateLibrary,
+  ]);
 
   const handleCancelModalClose = useCallback(() => {
     setCancelModalVisible(false);
     setGameToCancelShop(null);
     setGameToCancelObjectId(null);
+    setGameToCancelDownloader(null);
   }, []);
 
   const handleMoveInQueue = useCallback(
@@ -842,7 +864,7 @@ export function DownloadGroup({
         {
           label: t("cancel"),
           onClick: () => {
-            handleCancelClick(game.shop, game.objectId);
+            handleCancelClick(game.shop, game.objectId, game.download?.downloader);
           },
           icon: <XCircleIcon />,
         },

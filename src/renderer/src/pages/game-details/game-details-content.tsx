@@ -14,7 +14,7 @@ import { AuthPage } from "@shared";
 import { cloudSyncContext, gameDetailsContext } from "@renderer/context";
 
 import cloudIconAnimated from "@renderer/assets/icons/cloud-animated.gif";
-import { useUserDetails, useLibrary } from "@renderer/hooks";
+import { useUserDetails } from "@renderer/hooks";
 import "./game-details.scss";
 import "./hero.scss";
 
@@ -70,7 +70,6 @@ export function GameDetailsContent() {
   } = useContext(gameDetailsContext);
 
   const { userDetails, hasActiveSubscription } = useUserDetails();
-  const { library } = useLibrary();
 
   const { getGameArtifacts } = useContext(cloudSyncContext);
 
@@ -98,13 +97,11 @@ export function GameDetailsContent() {
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [hasUserReviewed, setHasUserReviewed] = useState(false);
 
-  // Check if the current game is in the user's library
-  const isGameInLibrary = useMemo(() => {
-    if (!library || !shop || !objectId) return false;
-    return library.some(
-      (libItem) => libItem.shop === shop && libItem.objectId === objectId
-    );
-  }, [library, shop, objectId]);
+  // game !== null means the game is in the user's library
+  const isGameInLibrary = game !== null;
+  // Only show the "In Library" badge when NOT navigating from the library page
+  const fromLibrary = searchParams.get("fromLibrary") === "1";
+  const showInLibraryBadge = isGameInLibrary && !fromLibrary;
 
   useEffect(() => {
     setBackdropOpacity(1);
@@ -174,7 +171,7 @@ export function GameDetailsContent() {
               <GameLogo game={game} shopDetails={shopDetails} />
 
               <div className="game-details__hero-buttons game-details__hero-buttons--right">
-                {isGameInLibrary && (
+                {showInLibraryBadge && (
                   <span className="game-details__in-library-badge">
                     {t("already_in_library")}
                   </span>
