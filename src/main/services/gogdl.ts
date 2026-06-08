@@ -14,6 +14,15 @@ export const getGogdlInstallPath = (): string => {
 
 export const findGogdlBinary = (customPath?: string | null): string | null => {
   if (customPath && fs.existsSync(customPath)) return customPath;
+  const ext = process.platform === "win32" ? ".exe" : "";
+  // Check bundled binary first; also check exe-adjacent resources for portable builds
+  const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
+  const execAdjacentBin = path.join(path.dirname(process.execPath ?? ""), "resources", "bin");
+  for (const dir of [resourcesBin, execAdjacentBin]) {
+    const candidate = path.join(dir, `gogdl${ext}`);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  // Then user-downloaded binary
   const installPath = getGogdlInstallPath();
   if (fs.existsSync(installPath)) return installPath;
   // Check PATH
@@ -63,14 +72,17 @@ export const downloadGogdl = async (onProgress?: (pct: number) => void): Promise
   return destPath;
 };
 
-// Write GOG credentials to a temp file for gogdl to use
-export const writeGogdlCredentials = (accessToken: string, refreshToken: string): string => {
+// Write GOG credentials to auth.json — heroic-gogdl expects this exact filename and fields
+export const writeGogdlCredentials = (accessToken: string, refreshToken: string, userId: string): string => {
   const configDir = path.join(SystemPath.getPath("userData"), "gogdl-config");
   fs.mkdirSync(configDir, { recursive: true });
-  const credPath = path.join(configDir, "credentials.json");
+  // heroic-gogdl reads "auth.json" (NOT credentials.json) with user_id + access_token_created_at
+  const credPath = path.join(configDir, "auth.json");
   const creds = {
     access_token: accessToken,
     refresh_token: refreshToken,
+    user_id: userId,
+    access_token_created_at: Math.floor(Date.now() / 1000),
     expires_in: 3600,
     token_type: "Bearer",
   };
@@ -83,10 +95,12 @@ export function spawnGogdlInstall(
   downloadPath: string,
   accessToken: string,
   refreshToken: string,
+  userId: string,
   binaryPath: string | null | undefined,
   onProgress: (progress: number, downloadedMB: number, totalMB: number, speedMBs: number) => void,
   onComplete: () => void,
-  onError: (err: string) => void
+  onError: (err: string) => void,
+  onLog?: (line: string, isError: boolean) => void
 ): () => void {
   const binary = findGogdlBinary(binaryPath);
   if (!binary) {
@@ -94,60 +108,101 @@ export function spawnGogdlInstall(
     return () => {};
   }
 
-  const configDir = writeGogdlCredentials(accessToken, refreshToken);
+  const configDir = writeGogdlCredentials(accessToken, refreshToken, userId);
 
-  // gogdl download <gameId> --platform windows --path <downloadPath> --auth-config-path <configDir>
+  // heroic-gogdl: --auth-config-path MUST come before the subcommand
+  // Progress is output as JSON lines to stdout
   const child = spawn(binary, [
+    "--auth-config-path", configDir,
     "download",
     gameId,
     "--platform", "windows",
     "--path", downloadPath,
-    "--auth-config-path", configDir,
   ], {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  // gogdl outputs progress lines like:
-  // "Progress: 45.23% [1234.56 MiB / 2345.67 MiB] @ 50.00 MiB/s"
-  const progressRegex = /Progress:\s*(\d+\.?\d*)%.*?(\d+\.?\d*)\s*MiB\s*\/\s*(\d+\.?\d*)\s*MiB.*?(\d+\.?\d*)\s*MiB\/s/i;
-  const completeRegex = /Download\s+complete|Finished|Successfully/i;
+  // heroic-gogdl outputs JSON lines:
+  // {"status":"downloading","download_percent":45.2,"downloaded_size":900000000,"total_size":2000000000,"download_speed":52428800}
+  // {"status":"done"} or {"status":"finished"}
+  let completed = false;
 
-  const handleLine = (line: string) => {
+  const handleLine = (line: string, isStderr = false) => {
+    if (!line.trim()) return;
     logger.log(`[gogdl] ${line}`);
-    const m = line.match(progressRegex);
+    onLog?.(line, isStderr);
+    if (completed) return;
+
+    // Try JSON parse first
+    try {
+      const json = JSON.parse(line.trim());
+      const status = json.status as string | undefined;
+
+      if (status === "done" || status === "finished" || status === "complete") {
+        completed = true;
+        onComplete();
+        return;
+      }
+
+      if (status === "error") {
+        onError(json.error ?? json.message ?? "gogdl error");
+        return;
+      }
+
+      if (typeof json.download_percent === "number" || typeof json.progress === "number") {
+        const pct = (json.download_percent ?? json.progress ?? 0) / 100;
+        // sizes may be in bytes
+        const toMB = (v: number) => v > 1_000_000 ? v / (1024 * 1024) : v;
+        const downloaded = toMB(json.downloaded_size ?? json.downloaded ?? 0);
+        const total = toMB(json.total_size ?? json.total ?? 0);
+        // speed in bytes/s
+        const speedMBs = (json.download_speed ?? json.speed ?? 0) / (1024 * 1024);
+        onProgress(pct, downloaded, total, speedMBs);
+        return;
+      }
+      return;
+    } catch {}
+
+    // Fallback: text progress patterns
+    // "Progress: 45.23% [1234.56 MiB / 2345.67 MiB] @ 50.00 MiB/s"
+    const textRegex = /(\d+\.?\d*)%.*?(\d+\.?\d*)\s*(?:MiB|MB)\s*\/\s*(\d+\.?\d*)\s*(?:MiB|MB).*?(\d+\.?\d*)\s*(?:MiB|MB)\/s/i;
+    const m = line.match(textRegex);
     if (m) {
-      const pct = parseFloat(m[1]) / 100;
-      const downloaded = parseFloat(m[2]);
-      const total = parseFloat(m[3]);
-      const speed = parseFloat(m[4]);
-      onProgress(pct, downloaded, total, speed);
+      onProgress(parseFloat(m[1]) / 100, parseFloat(m[2]), parseFloat(m[3]), parseFloat(m[4]));
       return;
     }
-    if (completeRegex.test(line)) {
+    if (/download\s+complete|finished|successfully/i.test(line)) {
+      completed = true;
       onComplete();
     }
+  };
+
+  const splitLines = (buf: string): [string[], string] => {
+    const parts = buf.split(/\r\n|\r|\n/);
+    const remaining = parts.pop() ?? "";
+    return [parts, remaining];
   };
 
   let stdoutBuf = "";
   child.stdout?.on("data", (chunk: Buffer) => {
     stdoutBuf += chunk.toString();
-    const lines = stdoutBuf.split("\n");
-    stdoutBuf = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    const [lines, rest] = splitLines(stdoutBuf);
+    stdoutBuf = rest;
+    for (const line of lines) handleLine(line, false);
   });
 
   let stderrBuf = "";
   child.stderr?.on("data", (chunk: Buffer) => {
     stderrBuf += chunk.toString();
-    const lines = stderrBuf.split("\n");
-    stderrBuf = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    const [lines, rest] = splitLines(stderrBuf);
+    stderrBuf = rest;
+    for (const line of lines) handleLine(line, true);
   });
 
   child.on("error", (err) => onError(err.message));
   child.on("close", (code) => {
-    if (stderrBuf) handleLine(stderrBuf);
-    if (stdoutBuf) handleLine(stdoutBuf);
+    if (stderrBuf.trim()) handleLine(stderrBuf, true);
+    if (stdoutBuf.trim()) handleLine(stdoutBuf, false);
     if (code !== 0 && code !== null) onError(`gogdl exited with code ${code}`);
   });
 

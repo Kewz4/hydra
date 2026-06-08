@@ -1,5 +1,5 @@
 import { registerEvent } from "../register-event";
-import { db, gamesSublevel, levelKeys } from "@main/level";
+import { db, gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import {
   refreshGogToken,
@@ -35,6 +35,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const ownedIds = await getGogOwnedGameIds(tokens.access_token);
 
   let added = 0;
+  const addedGames: Array<{ title: string; coverUrl: string | null; what: string }> = [];
 
   // Process in batches of 20 to avoid hammering the API
   for (let i = 0; i < ownedIds.length; i += 20) {
@@ -51,10 +52,8 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
         const details = await getGogGameDetails(productId);
         if (!details) return;
 
-        // Skip DLCs, packs, and non-game products
         if (details.game_type && details.game_type !== "game") return;
 
-        // Check for same game from another shop — attach as alternativeShop instead of duplicating
         const titleMatch = await findGameByTitle(details.title);
         if (titleMatch) {
           const [matchKey, matchGame] = titleMatch;
@@ -68,7 +67,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
               ],
             });
           }
-          return; // Don't create a duplicate entry
+          return;
         }
 
         const gogIconUrl = details.images?.logo2x ? `https:${details.images.logo2x}` : null;
@@ -92,20 +91,38 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
           playTimeInMilliseconds: 0,
           lastTimePlayed: null,
           addedToLibraryAt: new Date(),
-      automaticCloudSync: true,
+          automaticCloudSync: true,
           executablePath: null,
         };
 
         await gamesSublevel.put(gameKey, game);
+        await gamesShopAssetsSublevel.put(gameKey, {
+          objectId,
+          shop: "gog" as const,
+          title: details.title,
+          iconUrl: assets.iconUrl,
+          coverImageUrl: assets.coverImageUrl,
+          libraryImageUrl: assets.libraryImageUrl,
+          libraryHeroImageUrl: assets.libraryHeroImageUrl,
+          logoImageUrl: assets.logoImageUrl,
+          logoPosition: assets.logoPosition,
+          downloadSources: assets.downloadSources ?? [],
+        }).catch(() => {});
         await createGame(game).catch(() => {});
         await deduplicateTitle(details.title).catch(() => {});
         added++;
+        const gotHydraAssets = Boolean(assets.coverImageUrl || assets.libraryHeroImageUrl);
+        addedGames.push({
+          title: details.title,
+          coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl ?? null,
+          what: gotHydraAssets ? "Cover fetched from Hydra API (Steam catalogue)" : "Added — no Hydra API match found",
+        });
       })
     );
   }
 
   logger.log(`GOG library sync complete: ${added} games added`);
-  return { total: ownedIds.length, added };
+  return { total: ownedIds.length, added, addedGames };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
     logger.error("GOG library sync failed", err);

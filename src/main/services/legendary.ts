@@ -24,10 +24,15 @@ export interface LegendaryStatus {
 const getPlatformSearchPaths = (): string[] => {
   const userData = SystemPath.getPath("userData");
   const binDir = path.join(userData, "bin");
+  // Bundled: try both resourcesPath and exe-adjacent resources (for portable builds)
+  const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
+  const execAdjacentBin = path.join(path.dirname(process.execPath ?? ""), "resources", "bin");
 
   if (process.platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA ?? "";
     return [
+      path.join(resourcesBin, "legendary.exe"),
+      path.join(execAdjacentBin, "legendary.exe"),
       path.join(binDir, "legendary.exe"),
       path.join(localAppData, "Programs", "legendary", "legendary.exe"),
       path.join(localAppData, "legendary", "legendary.exe"),
@@ -35,6 +40,8 @@ const getPlatformSearchPaths = (): string[] => {
   }
   if (process.platform === "darwin") {
     return [
+      path.join(resourcesBin, "legendary"),
+      path.join(execAdjacentBin, "legendary"),
       path.join(binDir, "legendary"),
       "/usr/local/bin/legendary",
       "/opt/homebrew/bin/legendary",
@@ -42,6 +49,8 @@ const getPlatformSearchPaths = (): string[] => {
     ];
   }
   return [
+    path.join(resourcesBin, "legendary"),
+    path.join(execAdjacentBin, "legendary"),
     path.join(binDir, "legendary"),
     path.join(SystemPath.getPath("home"), ".local", "bin", "legendary"),
     "/usr/bin/legendary",
@@ -88,7 +97,7 @@ export const getLegendaryStatus = async (
   if (!binary) return { account: null, authenticated: false };
 
   try {
-    const output = await runLegendary(binary, ["status", "--json"]);
+    const output = await runLegendary(binary, [...legendaryBaseArgs(), "status", "--json"]);
     const data = JSON.parse(output);
     return {
       account: data.account ?? null,
@@ -106,13 +115,21 @@ export const getLegendaryGames = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  const output = await runLegendary(binary, ["list", "--json"]);
+  const output = await runLegendary(binary, [...legendaryBaseArgs(), "list", "--json"]);
   const data = JSON.parse(output);
 
   if (!Array.isArray(data)) throw new Error("Unexpected legendary output format");
 
   return data as LegendaryGame[];
 };
+
+export const getLegendaryConfigPath = (): string => {
+  const configPath = path.join(SystemPath.getPath("userData"), "legendary-config");
+  fs.mkdirSync(configPath, { recursive: true });
+  return configPath;
+};
+
+const legendaryBaseArgs = (): string[] => ["--config-path", getLegendaryConfigPath()];
 
 export const authenticateLegendary = async (
   code: string,
@@ -121,7 +138,7 @@ export const authenticateLegendary = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  await execFileAsync(binary, ["auth", "--code", code.trim()], { timeout: 30_000 });
+  await execFileAsync(binary, [...legendaryBaseArgs(), "auth", "--code", code.trim()], { timeout: 30_000 });
 };
 
 export const getLegendaryGameCoverUrl = (game: LegendaryGame): string | null => {
@@ -140,7 +157,8 @@ export function spawnLegendaryInstall(
   binaryPath: string | null | undefined,
   onProgress: (progress: number, downloadedMB: number, totalMB: number, speedMBs: number) => void,
   onComplete: () => void,
-  onError: (err: string) => void
+  onError: (err: string) => void,
+  onLog?: (line: string, isError: boolean) => void
 ): () => void {
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) {
@@ -148,25 +166,33 @@ export function spawnLegendaryInstall(
     return () => {};
   }
 
-  const child = spawn(binary, ["install", appName, "--base-path", downloadPath, "--yes"], {
+  const child = spawn(binary, [...legendaryBaseArgs(), "install", appName, "--base-path", downloadPath, "--yes", "--skip-sdl"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  // Progress line: "Progress: 12.34% (5678.90/45678.90 MiB), Running for ..."
-  const progressBytesRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB/;
-  // Speed line: "Download speed: 15.61 MiB/s" or "15.61 MB/s"
+  // Legendary progress formats (varies by version):
+  //   "Progress: 12.34% (5678.90/45678.90 MiB), Running for ..."
+  //   "Running for 00:00:05, downloaded 123.45 MiB of 4567.89 MiB at 12.34 MiB/s"
+  const progressSlashRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB/;
+  const progressOfRegex = /downloaded?\s+(\d+\.?\d*)\s+MiB\s+of\s+(\d+\.?\d*)\s+MiB/i;
   const speedRegex = /(\d+\.?\d*)\s+(?:MiB|MB)\/s/;
-  const completeRegex = /Finished installation|Successfully installed|Install completed/i;
+  const completeRegex = /Finished installation|Successfully installed|Install completed|Download completed/i;
 
   let lastSpeedMBs = 0;
   let completed = false;
 
-  const handleLine = (line: string) => {
+  const handleLine = (line: string, isStderr: boolean) => {
+    if (!line.trim()) return;
+    onLog?.(line, isStderr);
     if (completed) return;
+
     const speedMatch = line.match(speedRegex);
     if (speedMatch) lastSpeedMBs = parseFloat(speedMatch[1]);
 
-    const progressMatch = line.match(progressBytesRegex);
+    const slashMatch = line.match(progressSlashRegex);
+    const ofMatch = slashMatch ? null : line.match(progressOfRegex);
+    const progressMatch = slashMatch ?? ofMatch;
+
     if (progressMatch) {
       const downloadedMB = parseFloat(progressMatch[1]);
       const totalMB = parseFloat(progressMatch[2]);
@@ -185,7 +211,7 @@ export function spawnLegendaryInstall(
     stdoutBuffer += chunk.toString();
     const lines = stdoutBuffer.split("\n");
     stdoutBuffer = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    for (const line of lines) handleLine(line, false);
   });
 
   let stderrBuffer = "";
@@ -193,12 +219,14 @@ export function spawnLegendaryInstall(
     stderrBuffer += chunk.toString();
     const lines = stderrBuffer.split("\n");
     stderrBuffer = lines.pop() ?? "";
-    for (const line of lines) handleLine(line);
+    for (const line of lines) handleLine(line, true);
   });
 
   child.on("error", (err) => onError(err.message));
 
   child.on("close", (code) => {
+    if (stderrBuffer.trim()) handleLine(stderrBuffer, true);
+    if (stdoutBuffer.trim()) handleLine(stdoutBuffer, false);
     if (!completed && code !== 0 && code !== null) {
       onError(`Legendary exited with code ${code}`);
     }

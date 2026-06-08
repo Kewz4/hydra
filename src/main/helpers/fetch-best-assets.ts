@@ -43,7 +43,10 @@ async function tryHydraAssets(shop: GameShop, objectId: string): Promise<BestAss
       null,
       { needsAuth: false }
     );
-    if (assets) return shopAssetsToResult(assets);
+    // Only treat as a hit if at least one image field is populated
+    if (assets && (assets.coverImageUrl || assets.iconUrl || assets.libraryHeroImageUrl || assets.libraryImageUrl)) {
+      return shopAssetsToResult(assets);
+    }
   } catch {
     // not in API
   }
@@ -55,22 +58,20 @@ async function tryHydraCatalogueByTitle(title: string): Promise<BestAssets | nul
     const resp = await HydraApi.post<{ edges: CatalogueSearchResult[]; count: number }>(
       "/catalogue/search",
       {
-        data: {
-          title,
-          sortBy: "popularity",
-          sortOrder: "desc",
-          downloadSourceFingerprints: [],
-          tags: [],
-          publishers: [],
-          genres: [],
-          developers: [],
-          protondbSupportBadges: [],
-          deckCompatibility: [],
-          take: 5,
-          skip: 0,
-        },
-        needsAuth: false,
-      }
+        title,
+        sortBy: "popularity",
+        sortOrder: "desc",
+        downloadSourceFingerprints: [],
+        tags: [],
+        publishers: [],
+        genres: [],
+        developers: [],
+        protondbSupportBadges: [],
+        deckCompatibility: [],
+        take: 5,
+        skip: 0,
+      },
+      { needsAuth: false }
     );
     const titleNorm = normalizeGameTitle(title);
     const match = resp?.edges?.find((r) => normalizeGameTitle(r.title) === titleNorm);

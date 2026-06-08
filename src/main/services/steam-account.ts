@@ -14,10 +14,16 @@ export interface SteamPlayerSummary {
   avatarfull: string;
 }
 
-// Simple tag extractor for Steam's predictable XML
+// Simple tag extractor for Steam's predictable XML — strips CDATA wrappers
 function extractXmlTag(xml: string, tag: string): string {
-  const match = xml.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
-  return match ? match[1].trim() : "";
+  // Use (?=[ >]) lookahead so <steamID> does NOT match <steamID64>
+  const match = xml.match(new RegExp(`<${tag}(?=[ >])[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  if (!match) return "";
+  let value = match[1].trim();
+  // Strip CDATA: <![CDATA[text]]> → text
+  const cdataMatch = value.match(/^<!\[CDATA\[([\s\S]*?)\]\]>$/);
+  if (cdataMatch) value = cdataMatch[1].trim();
+  return value;
 }
 
 function extractAllXmlBlocks(xml: string, tag: string): string[] {

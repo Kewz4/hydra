@@ -62,22 +62,20 @@ const addCustomGameToLibrary = async (
     }>(
       "/catalogue/search",
       {
-        data: {
-          title,
-          sortBy: "popularity",
-          sortOrder: "desc",
-          downloadSourceFingerprints: [],
-          tags: [],
-          publishers: [],
-          genres: [],
-          developers: [],
-          protondbSupportBadges: [],
-          deckCompatibility: [],
-          take: 5,
-          skip: 0,
-        },
-        needsAuth: false,
-      }
+        title,
+        sortBy: "popularity",
+        sortOrder: "desc",
+        downloadSourceFingerprints: [],
+        tags: [],
+        publishers: [],
+        genres: [],
+        developers: [],
+        protondbSupportBadges: [],
+        deckCompatibility: [],
+        take: 5,
+        skip: 0,
+      },
+      { needsAuth: false }
     );
 
     const match = catalogueResponse?.edges?.find(
