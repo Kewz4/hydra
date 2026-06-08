@@ -23,10 +23,16 @@ const _portableExeDir =
 
 if (_portableExeDir) {
   const dataDir = path.join(_portableExeDir, "data");
+  // Redirect every path Electron might write to so nothing lands in %APPDATA%.
   app.setPath("userData", dataDir);
   app.setPath("logs", path.join(dataDir, "logs"));
   app.setPath("sessionData", path.join(dataDir, "session"));
   app.setPath("crashDumps", path.join(dataDir, "crashes"));
+  // On Windows, appData defaults to %APPDATA% which is roaming — redirect it
+  // so Electron's own Chromium layer (GPU cache, etc.) stays local to the exe.
+  if (process.platform === "win32") {
+    app.setPath("appData", dataDir);
+  }
 }
 import { electronApp, optimizer } from "@electron-toolkit/utils";
 import {

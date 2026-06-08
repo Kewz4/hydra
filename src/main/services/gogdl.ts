@@ -126,6 +126,19 @@ export const writeGogdlAuthConfig = (
   return authPath;
 };
 
+function parseEtaToMs(eta: string): number {
+  const parts = eta.split(":").map(Number);
+  if (parts.length === 3) {
+    const [h, m, s] = parts;
+    return (h * 3600 + m * 60 + s) * 1000;
+  }
+  if (parts.length === 2) {
+    const [m, s] = parts;
+    return (m * 60 + s) * 1000;
+  }
+  return 0;
+}
+
 export function spawnGogdlInstall(
   gameId: string,
   downloadPath: string,
@@ -136,7 +149,8 @@ export function spawnGogdlInstall(
     progress: number,
     downloadedMB: number,
     totalMB: number,
-    speedMBs: number
+    speedMBs: number,
+    etaMs: number
   ) => void,
   onComplete: () => void,
   onError: (err: string) => void,
@@ -171,16 +185,20 @@ export function spawnGogdlInstall(
     }
   );
 
-  // heroic-gogdl emits human-readable progress lines on stderr, for example:
-  //   [PROGRESS] INFO: = Progress: 45.50% /900000000//2000000000, Running for: 00:05:30, ETA: 00:03:15
-  //   [PROGRESS] INFO:  + Download	- 5.25 MiB/s (raw) / 8.75 MiB/s (decompressed)
-  //   [PROGRESS] INFO: = Downloaded: 450.00 MiB, Written: 425.50 MiB
+  // heroic-gogdl emits human-readable progress lines, for example:
+  //   [PROGRESS] INFO: = Progress: 0.61 52428800/8550960053, Running for: 00:00:13, ETA: 00:36:14
+  //   [PROGRESS] INFO: = Downloaded: 24.80 MiB, Written: 50.00 MiB
+  //   [PROGRESS] INFO:  + Download	- 4.19 MiB/s (raw) / 9.92 MiB/s (decompressed)
+  //   [PROGRESS] INFO:  + Disk	- 7.63 MiB/s (write) / 0.00 MiB/s (read)
+  // Note: the percentage is a decimal like "0.61" (= 0.61%), bytes are written/total.
   // Completion is signalled by a clean exit (code 0).
 
   let completed = false;
   let lastSpeedMBs = 0;
-  let lastTotalMB = 0;
-  let lastDownloadedMB = 0;
+  let lastEtaMs = 0;
+  let lastPct = 0;
+  let lastWrittenBytes = 0;
+  let lastTotalBytes = 0;
 
   const handleLine = (line: string, isStderr = false) => {
     if (!line.trim()) return;
@@ -188,37 +206,36 @@ export function spawnGogdlInstall(
     onLog?.(line, isStderr);
     if (completed) return;
 
-    // Progress line: "Progress: 45.50% /900000000//2000000000, ..."
-    // The bytes fields are written_total // total (bytes)
+    // Progress line: "Progress: 0.61 52428800/8550960053, Running for: 00:00:13, ETA: 00:36:14"
+    // pct is a percentage value (0.61 = 0.61%), followed by writtenBytes/totalBytes
     const progressMatch = line.match(
-      /Progress:\s+(\d+\.?\d*)%\s+\/(\d+)\/\/(\d+)/
+      /Progress:\s+(\d+\.?\d*)\s+(\d+)\/(\d+),.*ETA:\s+([\d:]+)/
     );
     if (progressMatch) {
-      const pct = parseFloat(progressMatch[1]) / 100;
-      const writtenBytes = parseFloat(progressMatch[2]);
-      const totalBytes = parseFloat(progressMatch[3]);
-      lastDownloadedMB = writtenBytes / (1024 * 1024);
-      lastTotalMB = totalBytes / (1024 * 1024);
-      onProgress(pct, lastDownloadedMB, lastTotalMB, lastSpeedMBs);
+      lastPct = parseFloat(progressMatch[1]) / 100;
+      lastWrittenBytes = parseFloat(progressMatch[2]);
+      lastTotalBytes = parseFloat(progressMatch[3]);
+      lastEtaMs = parseEtaToMs(progressMatch[4]);
+      const writtenMB = lastWrittenBytes / (1024 * 1024);
+      const totalMB = lastTotalBytes / (1024 * 1024);
+      onProgress(lastPct, writtenMB, totalMB, lastSpeedMBs, lastEtaMs);
       return;
     }
 
-    // Speed line: "Download	- 5.25 MiB/s (raw) / ..."
+    // Speed line: "Download	- 4.19 MiB/s (raw) / ..."
     const speedMatch = line.match(/Download\s+-\s+(\d+\.?\d*)\s+MiB\/s/);
     if (speedMatch) {
       lastSpeedMBs = parseFloat(speedMatch[1]);
-      // Re-emit progress with updated speed if we already have totals
-      if (lastTotalMB > 0) {
-        const pct = lastTotalMB > 0 ? lastDownloadedMB / lastTotalMB : 0;
-        onProgress(pct, lastDownloadedMB, lastTotalMB, lastSpeedMBs);
+      if (lastTotalBytes > 0) {
+        onProgress(
+          lastPct,
+          lastWrittenBytes / (1024 * 1024),
+          lastTotalBytes / (1024 * 1024),
+          lastSpeedMBs,
+          lastEtaMs
+        );
       }
       return;
-    }
-
-    // Downloaded/written summary line: "Downloaded: 450.00 MiB, Written: 425.50 MiB"
-    const downloadedMatch = line.match(/Downloaded:\s+(\d+\.?\d*)\s+MiB/);
-    if (downloadedMatch) {
-      lastDownloadedMB = parseFloat(downloadedMatch[1]);
     }
   };
 

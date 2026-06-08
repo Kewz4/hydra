@@ -194,6 +194,19 @@ export const getLegendaryGameCoverUrl = (
   return game.key_images[0]?.url ?? null;
 };
 
+function parseEtaToMs(eta: string): number {
+  const parts = eta.split(":").map(Number);
+  if (parts.length === 3) {
+    const [h, m, s] = parts;
+    return ((h * 3600) + (m * 60) + s) * 1000;
+  }
+  if (parts.length === 2) {
+    const [m, s] = parts;
+    return ((m * 60) + s) * 1000;
+  }
+  return 0;
+}
+
 export function spawnLegendaryInstall(
   appName: string,
   downloadPath: string,
@@ -202,7 +215,8 @@ export function spawnLegendaryInstall(
     progress: number,
     downloadedMB: number,
     totalMB: number,
-    speedMBs: number
+    speedMBs: number,
+    etaMs: number
   ) => void,
   onComplete: () => void,
   onError: (err: string) => void,
@@ -231,17 +245,22 @@ export function spawnLegendaryInstall(
     }
   );
 
-  // Legendary progress formats (varies by version):
-  //   "Progress: 12.34% (5678.90/45678.90 MiB), Running for ..."
-  //   "Running for 00:00:05, downloaded 123.45 MiB of 4567.89 MiB at 12.34 MiB/s"
-  const progressSlashRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB/;
-  const progressOfRegex =
-    /downloaded?\s+(\d+\.?\d*)\s+MiB\s+of\s+(\d+\.?\d*)\s+MiB/i;
-  const speedRegex = /(\d+\.?\d*)\s+(?:MiB|MB)\/s/;
-  const completeRegex =
-    /Finished installation|Successfully installed|Install completed|Download completed/i;
+  // Legendary actual output format (from DLManager):
+  //   [DLManager] INFO: = Progress: 4.52% (55/1218), Running for 00:00:13, ETA: 00:04:38
+  //   [DLManager] INFO: - Downloaded: 14.41 MiB, Written: 25.22 MiB
+  //   [DLManager] INFO: - 0.55 MiB/s (raw) / 1.97 MiB/s (decompressed)
+  //   [DLManager] INFO: - 0.00 MiB/s (write) / 0.00 MiB/s (read)
+  // Completion: process exits with code 0.
+  const progressPctRegex = /Progress:\s+(\d+\.?\d*)%.*ETA:\s+([\d:]+)/;
+  const writtenRegex =
+    /Downloaded:\s+(\d+\.?\d*)\s+MiB.*Written:\s+(\d+\.?\d*)\s+MiB/;
+  const speedRegex = /(\d+\.?\d*)\s+MiB\/s\s*\(raw\)/;
 
+  let lastPct = 0;
+  let lastWrittenMB = 0;
+  let lastDownloadedMB = 0;
   let lastSpeedMBs = 0;
+  let lastEtaMs = 0;
   let completed = false;
 
   const handleLine = (line: string, isStderr: boolean) => {
@@ -249,23 +268,27 @@ export function spawnLegendaryInstall(
     onLog?.(line, isStderr);
     if (completed) return;
 
-    const speedMatch = line.match(speedRegex);
-    if (speedMatch) lastSpeedMBs = parseFloat(speedMatch[1]);
-
-    const slashMatch = line.match(progressSlashRegex);
-    const ofMatch = slashMatch ? null : line.match(progressOfRegex);
-    const progressMatch = slashMatch ?? ofMatch;
-
-    if (progressMatch) {
-      const downloadedMB = parseFloat(progressMatch[1]);
-      const totalMB = parseFloat(progressMatch[2]);
-      const progress = totalMB > 0 ? downloadedMB / totalMB : 0;
-      onProgress(progress, downloadedMB, totalMB, lastSpeedMBs);
+    const pctMatch = line.match(progressPctRegex);
+    if (pctMatch) {
+      lastPct = parseFloat(pctMatch[1]) / 100;
+      lastEtaMs = parseEtaToMs(pctMatch[2]);
       return;
     }
-    if (completeRegex.test(line)) {
-      completed = true;
-      onComplete();
+
+    const speedMatch = line.match(speedRegex);
+    if (speedMatch) {
+      lastSpeedMBs = parseFloat(speedMatch[1]);
+      return;
+    }
+
+    const writtenMatch = line.match(writtenRegex);
+    if (writtenMatch) {
+      lastDownloadedMB = parseFloat(writtenMatch[1]);
+      lastWrittenMB = parseFloat(writtenMatch[2]);
+      // written = decompressed bytes on disk; use pct to derive total
+      const totalMB = lastPct > 0 ? lastWrittenMB / lastPct : 0;
+      onProgress(lastPct, lastDownloadedMB, totalMB, lastSpeedMBs, lastEtaMs);
+      return;
     }
   };
 

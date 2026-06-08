@@ -19,8 +19,157 @@ function sendLog(objectId: string, line: string, isError = false) {
   });
 }
 
-// Track active gogdl downloads by gameKey
 const activeGogdlDownloads = new Map<string, () => void>();
+
+/** Internal: spawns gogdl and wires progress/complete/error into the DB + IPC. */
+async function startGogdlDownloadInternal(
+  objectId: string,
+  downloadPath: string,
+  accessToken: string,
+  refreshToken: string,
+  binaryPath: string | null
+) {
+  const gameKey = levelKeys.game("gog", objectId);
+
+  const existingDownload = await downloadsSublevel
+    .get(gameKey)
+    .catch(() => null);
+  const initialRecord = {
+    ...(existingDownload ?? {}),
+    shop: "gog" as const,
+    objectId,
+    uri: `gogdl://install/${objectId}`,
+    folderName: null,
+    downloadPath,
+    progress: existingDownload?.progress ?? 0,
+    downloader: Downloader.Gogdl,
+    bytesDownloaded: existingDownload?.bytesDownloaded ?? 0,
+    fileSize: existingDownload?.fileSize ?? null,
+    shouldSeed: false,
+    status: "active" as const,
+    queued: false,
+    timestamp: existingDownload?.timestamp ?? Date.now(),
+    extracting: false,
+    automaticallyExtract: false,
+    automaticallyDeleteArchiveFiles: false,
+  };
+  await downloadsSublevel.put(gameKey, initialRecord);
+  WindowManager.sendToAppWindows("on-downloads-updated");
+
+  let currentRecord = { ...initialRecord };
+
+  sendLog(objectId, `Binary: ${binaryPath}`);
+  sendLog(objectId, `Download path: ${downloadPath}`);
+
+  const cancel = spawnGogdlInstall(
+    objectId,
+    downloadPath,
+    accessToken,
+    refreshToken,
+    binaryPath,
+    async (progress, downloadedMB, totalMB, speedMBs, etaMs) => {
+      sendLog(
+        objectId,
+        `Progress: ${(progress * 100).toFixed(2)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`
+      );
+      currentRecord = {
+        ...currentRecord,
+        progress,
+        bytesDownloaded: downloadedMB * 1024 * 1024,
+        fileSize: totalMB * 1024 * 1024,
+        status: "active",
+      };
+      await downloadsSublevel.put(gameKey, currentRecord).catch(() => {});
+      WindowManager.sendToAppWindows("on-download-progress", {
+        gameId: gameKey,
+        progress,
+        downloadSpeed: speedMBs * 1024 * 1024,
+        timeRemaining:
+          etaMs > 0
+            ? etaMs
+            : speedMBs > 0
+              ? ((totalMB - downloadedMB) / speedMBs) * 1000
+              : 0,
+        numPeers: 0,
+        numSeeds: 0,
+        isDownloadingMetadata: false,
+        isCheckingFiles: false,
+        download: currentRecord,
+      });
+    },
+    async () => {
+      sendLog(objectId, "✓ Download complete!");
+      activeGogdlDownloads.delete(gameKey);
+      const game = await gamesSublevel.get(gameKey).catch(() => null);
+      if (game) {
+        await gamesSublevel.put(gameKey, {
+          ...game,
+          executablePath: `goggalaxy://openGame/${objectId}`,
+        });
+      }
+      const completeRecord = { ...currentRecord, progress: 1, status: "complete" as const };
+      await downloadsSublevel.put(gameKey, completeRecord).catch(() => {});
+      WindowManager.sendToAppWindows("on-download-progress", {
+        gameId: gameKey,
+        progress: 1,
+        downloadSpeed: 0,
+        timeRemaining: 0,
+        numPeers: 0,
+        numSeeds: 0,
+        isDownloadingMetadata: false,
+        isCheckingFiles: false,
+        download: completeRecord,
+      });
+    },
+    async (err) => {
+      sendLog(objectId, `✗ Error: ${err}`, true);
+      activeGogdlDownloads.delete(gameKey);
+      logger.error("gogdl download failed", { objectId, err });
+      await downloadsSublevel.del(gameKey).catch(() => {});
+      WindowManager.sendToAppWindows("on-downloads-updated");
+    },
+    (line, isError) => sendLog(objectId, line, isError)
+  );
+
+  activeGogdlDownloads.set(gameKey, cancel);
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Pause / resume
+// ---------------------------------------------------------------------------
+
+export async function pauseGogdlDownload(gameKey: string) {
+  activeGogdlDownloads.get(gameKey)?.();
+  activeGogdlDownloads.delete(gameKey);
+  const record = await downloadsSublevel.get(gameKey).catch(() => null);
+  if (record) {
+    await downloadsSublevel
+      .put(gameKey, { ...record, status: "paused" })
+      .catch(() => {});
+  }
+  WindowManager.sendToAppWindows("on-downloads-updated");
+  return { ok: true };
+}
+
+export async function resumeGogdlDownload(
+  objectId: string,
+  downloadPath: string,
+  gogRefreshToken: string
+) {
+  const tokens = await refreshGogToken(gogRefreshToken);
+  return startGogdlDownloadInternal(
+    objectId,
+    downloadPath,
+    tokens.access_token,
+    tokens.refresh_token,
+    findGogdlBinary(null)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// IPC events
+// ---------------------------------------------------------------------------
 
 const downloadViaGogdl = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -28,10 +177,9 @@ const downloadViaGogdl = async (
   customDownloadPath?: string
 ) => {
   const prefs = await db
-    .get<
-      string,
-      UserPreferences | null
-    >(levelKeys.userPreferences, { valueEncoding: "json" })
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
     .catch(() => null);
 
   const gogRefreshToken = prefs?.gogRefreshToken;
@@ -44,40 +192,8 @@ const downloadViaGogdl = async (
     throw new Error("GOG account not authenticated");
   }
 
-  // Refresh token to get a fresh access token
   const tokens = await refreshGogToken(gogRefreshToken);
-  const { access_token: accessToken, refresh_token: newRefreshToken } = tokens;
-
   const downloadPath = customDownloadPath ?? (await getDownloadsPath());
-  const gameKey = levelKeys.game("gog", objectId);
-
-  const existingDownload = await downloadsSublevel
-    .get(gameKey)
-    .catch(() => null);
-  const initialRecord = {
-    ...(existingDownload ?? {}),
-    shop: "gog",
-    objectId,
-    uri: `gogdl://install/${objectId}`,
-    folderName: null,
-    downloadPath,
-    progress: 0,
-    downloader: Downloader.Gogdl,
-    bytesDownloaded: 0,
-    fileSize: null,
-    shouldSeed: false,
-    status: "active",
-    queued: false,
-    timestamp: Date.now(),
-    extracting: false,
-    automaticallyExtract: false,
-    automaticallyDeleteArchiveFiles: false,
-  };
-  await downloadsSublevel.put(gameKey, initialRecord);
-  // Notify renderer to refresh library so the download appears in the downloads tab
-  WindowManager.sendToAppWindows("on-downloads-updated");
-
-  let currentRecord = { ...initialRecord };
 
   let binary = findGogdlBinary(null);
   sendLog(objectId, `Starting gogdl download for game ID ${objectId}…`);
@@ -95,87 +211,17 @@ const downloadViaGogdl = async (
         `✗ Failed to auto-install gogdl: ${err?.message ?? err}`,
         true
       );
-      await downloadsSublevel.del(gameKey).catch(() => {});
       throw new Error("gogdl auto-install failed");
     }
   }
 
-  sendLog(objectId, `Binary: ${binary}`);
-  sendLog(objectId, `Download path: ${downloadPath}`);
-
-  const cancel = spawnGogdlInstall(
+  return startGogdlDownloadInternal(
     objectId,
     downloadPath,
-    accessToken,
-    newRefreshToken,
-    binary,
-    async (progress, downloadedMB, totalMB, speedMBs) => {
-      sendLog(
-        objectId,
-        `Progress: ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`
-      );
-      currentRecord = {
-        ...currentRecord,
-        progress,
-        bytesDownloaded: downloadedMB * 1024 * 1024,
-        fileSize: totalMB * 1024 * 1024,
-        status: "active",
-      };
-      await downloadsSublevel.put(gameKey, currentRecord).catch(() => {});
-      WindowManager.sendToAppWindows("on-download-progress", {
-        gameId: gameKey,
-        progress,
-        downloadSpeed: speedMBs * 1024 * 1024,
-        timeRemaining:
-          speedMBs > 0 ? ((totalMB - downloadedMB) / speedMBs) * 1000 : 0,
-        numPeers: 0,
-        numSeeds: 0,
-        isDownloadingMetadata: false,
-        isCheckingFiles: false,
-        download: currentRecord,
-      });
-    },
-    async () => {
-      sendLog(objectId, "✓ Download complete!");
-      // On complete: update game executablePath and set status to complete
-      activeGogdlDownloads.delete(gameKey);
-      const game = await gamesSublevel.get(gameKey).catch(() => null);
-      if (game) {
-        await gamesSublevel.put(gameKey, {
-          ...game,
-          executablePath: `goggalaxy://openGame/${objectId}`,
-        });
-      }
-      await downloadsSublevel
-        .put(gameKey, {
-          ...currentRecord,
-          progress: 1,
-          status: "complete",
-        })
-        .catch(() => {});
-      WindowManager.sendToAppWindows("on-download-progress", {
-        gameId: gameKey,
-        progress: 1,
-        downloadSpeed: 0,
-        timeRemaining: 0,
-        numPeers: 0,
-        numSeeds: 0,
-        isDownloadingMetadata: false,
-        isCheckingFiles: false,
-        download: { ...currentRecord, progress: 1, status: "complete" },
-      });
-    },
-    async (err) => {
-      sendLog(objectId, `✗ Error: ${err}`, true);
-      activeGogdlDownloads.delete(gameKey);
-      logger.error("gogdl download failed", { objectId, err });
-      await downloadsSublevel.del(gameKey).catch(() => {});
-    },
-    (line, isError) => sendLog(objectId, line, isError)
+    tokens.access_token,
+    tokens.refresh_token,
+    binary
   );
-
-  activeGogdlDownloads.set(gameKey, cancel);
-  return { ok: true };
 };
 
 registerEvent("downloadViaGogdl", downloadViaGogdl);
@@ -188,6 +234,7 @@ const cancelGogdlDownload = async (
   activeGogdlDownloads.get(gameKey)?.();
   activeGogdlDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
+  WindowManager.sendToAppWindows("on-downloads-updated");
   return { ok: true };
 };
 
