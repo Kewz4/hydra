@@ -7,14 +7,22 @@ import url from "node:url";
 
 // Detect portable mode: electron-builder NSIS portable sets PORTABLE_EXECUTABLE_DIR;
 // our custom installer writes a "portable" marker file next to the exe.
-// In either case, redirect all user data into a "data" subfolder next to the exe
-// so the entire installation is self-contained and copyable.
+// Also redirect on first run (no .gamehub-setup marker) so Roaming is never
+// touched until the user explicitly chooses "Install" in the setup window.
+const SETUP_MARKER_FILE = ".gamehub-setup";
 const _portableExeDir =
   process.env.PORTABLE_EXECUTABLE_DIR ||
   (() => {
     try {
       const exeDir = path.dirname(process.execPath);
       if (fs.existsSync(path.join(exeDir, "portable"))) return exeDir;
+      if (
+        process.platform === "win32" &&
+        app.isPackaged &&
+        !fs.existsSync(path.join(exeDir, SETUP_MARKER_FILE))
+      ) {
+        return exeDir;
+      }
     } catch {
       // ignore
     }
@@ -23,13 +31,10 @@ const _portableExeDir =
 
 if (_portableExeDir) {
   const dataDir = path.join(_portableExeDir, "data");
-  // Redirect every path Electron might write to so nothing lands in %APPDATA%.
   app.setPath("userData", dataDir);
   app.setPath("logs", path.join(dataDir, "logs"));
   app.setPath("sessionData", path.join(dataDir, "session"));
   app.setPath("crashDumps", path.join(dataDir, "crashes"));
-  // On Windows, appData defaults to %APPDATA% which is roaming — redirect it
-  // so Electron's own Chromium layer (GPU cache, etc.) stays local to the exe.
   if (process.platform === "win32") {
     app.setPath("appData", dataDir);
   }

@@ -67,18 +67,31 @@ const CHART_BACKGROUND_COLOR = "#1a1a1a";
 const COLOR_DISTANCE_THRESHOLD = 28;
 const FALLBACK_CHART_COLOR = "#fff";
 
+function lightenColor(hex: string, minLightness = 0.55): string {
+  const [r, g, b] = hexToRgb(hex);
+  const lightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (lightness >= minLightness) return hex;
+  const factor = minLightness / Math.max(lightness, 0.01);
+  const nr = Math.min(255, Math.round(r * factor));
+  const ng = Math.min(255, Math.round(g * factor));
+  const nb = Math.min(255, Math.round(b * factor));
+  return `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
+}
+
 function pickChartColor(dominant?: string): string {
   if (!dominant || typeof dominant !== "string" || !dominant.startsWith("#")) {
     return FALLBACK_CHART_COLOR;
   }
 
+  const lightened = lightenColor(dominant);
+
   if (
-    isTooCloseRGB(dominant, CHART_BACKGROUND_COLOR, COLOR_DISTANCE_THRESHOLD)
+    isTooCloseRGB(lightened, CHART_BACKGROUND_COLOR, COLOR_DISTANCE_THRESHOLD)
   ) {
     return FALLBACK_CHART_COLOR;
   }
 
-  return dominant;
+  return lightened;
 }
 
 interface AnimatedPercentageProps {

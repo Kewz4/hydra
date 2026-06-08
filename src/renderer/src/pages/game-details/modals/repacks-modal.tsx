@@ -5,6 +5,7 @@ import {
   useMemo,
   useState,
   useRef,
+  createPortal,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -31,7 +32,6 @@ import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import type { DownloadSource, Game, GameRepack } from "@types";
 
 import { DownloadSettingsModal } from "./download-settings-modal";
-import { DownloadProcessModal } from "./download-process-modal";
 import { gameDetailsContext } from "@renderer/context";
 import { Downloader } from "@shared";
 import { orderBy } from "lodash-es";
@@ -295,10 +295,9 @@ export function RepacksModal({
 
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showHyperVisorModal, setShowHyperVisorModal] = useState(false);
-  const [processModal, setProcessModal] = useState<{
-    launcher: "legendary" | "gogdl";
-    objectId: string;
-    title: string;
+  const [flyingThumb, setFlyingThumb] = useState<{
+    src: string;
+    fromRect: DOMRect;
   } | null>(null);
 
   const ACHIEVEMENT_CRACKERS = useMemo(
@@ -394,15 +393,26 @@ export function RepacksModal({
         repack={repack}
       />
 
-      {processModal && (
-        <DownloadProcessModal
-          visible={true}
-          title={processModal.title}
-          objectId={processModal.objectId}
-          launcher={processModal.launcher}
-          onClose={() => setProcessModal(null)}
-        />
-      )}
+      {flyingThumb &&
+        createPortal(
+          <img
+            src={flyingThumb.src}
+            alt=""
+            style={{
+              position: "fixed",
+              left: flyingThumb.fromRect.left,
+              top: flyingThumb.fromRect.top,
+              width: flyingThumb.fromRect.width,
+              height: flyingThumb.fromRect.height,
+              objectFit: "cover",
+              borderRadius: "8px",
+              pointerEvents: "none",
+              zIndex: 99999,
+              animation: "flyToSidebar 0.6s cubic-bezier(0.4,0,0.2,1) forwards",
+            }}
+          />,
+          document.body
+        )}
 
       <Modal
         visible={visible}
@@ -536,15 +546,23 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--epic"
-                      onClick={async () => {
-                        setProcessModal({
-                          launcher: "legendary",
-                          objectId: epicObjectId,
-                          title: game.title ?? epicObjectId,
-                        });
+                      onClick={async (e) => {
                         window.electron
                           .downloadViaLegendary(epicObjectId)
                           .catch(() => {});
+                        const rect = (
+                          e.currentTarget as HTMLElement
+                        ).getBoundingClientRect();
+                        setFlyingThumb({
+                          src:
+                            game.libraryHeroImageUrl ?? game.iconUrl ?? "",
+                          fromRect: rect,
+                        });
+                        setTimeout(() => {
+                          setFlyingThumb(null);
+                          onClose();
+                          navigate("/downloads");
+                        }, 650);
                       }}
                     >
                       <EpicLogo className="repacks-modal__platform-icon" />
@@ -555,15 +573,23 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--gog"
-                      onClick={async () => {
-                        setProcessModal({
-                          launcher: "gogdl",
-                          objectId: gogObjectId,
-                          title: game.title ?? gogObjectId,
-                        });
+                      onClick={async (e) => {
                         window.electron
                           .downloadViaGogdl(gogObjectId)
                           .catch(() => {});
+                        const rect = (
+                          e.currentTarget as HTMLElement
+                        ).getBoundingClientRect();
+                        setFlyingThumb({
+                          src:
+                            game.libraryHeroImageUrl ?? game.iconUrl ?? "",
+                          fromRect: rect,
+                        });
+                        setTimeout(() => {
+                          setFlyingThumb(null);
+                          onClose();
+                          navigate("/downloads");
+                        }, 650);
                       }}
                     >
                       <GogLogo className="repacks-modal__platform-icon" />

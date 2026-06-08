@@ -86,8 +86,13 @@ const openLegendaryAuthWindow = async (
         }
 
         await authenticateLegendary(code, binary);
-        const status = await getLegendaryStatus(binary);
-        resolve({ success: true, account: status.account ?? undefined });
+        // Legendary writes config asynchronously after auth; retry until account appears
+        let status = await getLegendaryStatus(binary);
+        for (let i = 0; i < 5 && !status.account; i++) {
+          await new Promise((r) => setTimeout(r, 600));
+          status = await getLegendaryStatus(binary);
+        }
+        resolve({ success: true, account: status.account ?? "Epic Games" });
       } catch (err) {
         logger.error("legendary auth --code failed", err);
         resolve({ success: false });

@@ -325,7 +325,14 @@ export function spawnLegendaryInstall(
   return () => {
     try {
       killIntentional = true;
-      child.kill();
+      if (process.platform === "win32" && child.pid) {
+        require("node:child_process").execSync(
+          `taskkill /F /T /PID ${child.pid}`,
+          { stdio: "ignore" }
+        );
+      } else {
+        child.kill("SIGKILL");
+      }
     } catch {}
   };
 }
