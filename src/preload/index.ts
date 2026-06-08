@@ -980,4 +980,24 @@ contextBridge.exposeInMainWorld("electron", {
   getAvailableDrives: () => ipcRenderer.invoke("getAvailableDrives"),
   transferGameFiles: (shop: GameShop, objectId: string, destParent: string) =>
     ipcRenderer.invoke("transferGameFiles", shop, objectId, destParent),
+
+  // Installer
+  installerGetDefaults: () => ipcRenderer.invoke("installer:getDefaults"),
+  installerBrowseDirectory: (defaultPath: string) =>
+    ipcRenderer.invoke("installer:browseDirectory", defaultPath),
+  installerRunSetup: (mode: "install" | "portable", destDir?: string) =>
+    ipcRenderer.invoke("installer:runSetup", mode, destDir),
+  installerRelaunch: (destDir: string) =>
+    ipcRenderer.invoke("installer:relaunch", destDir),
+  installerOpenFolder: (destDir: string) =>
+    ipcRenderer.invoke("installer:openFolder", destDir),
+  installerCloseAndLaunch: () =>
+    ipcRenderer.invoke("installer:closeAndLaunch"),
+  onInstallerProgress: (
+    cb: (pct: number, file: string) => void
+  ): (() => void) => {
+    const listener = (_: unknown, pct: number, file: string) => cb(pct, file);
+    ipcRenderer.on("installer:progress", listener);
+    return () => ipcRenderer.off("installer:progress", listener);
+  },
 });

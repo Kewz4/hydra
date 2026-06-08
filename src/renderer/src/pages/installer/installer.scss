@@ -1,0 +1,269 @@
+.installer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0f0f14;
+  color: #e2e2ea;
+  font-family: "Noto Sans", system-ui, sans-serif;
+  user-select: none;
+  overflow: hidden;
+
+  &__titlebar {
+    height: 32px;
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+  }
+
+  &__logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 28px 16px;
+    flex-shrink: 0;
+  }
+
+  &__logo-icon {
+    width: 28px;
+    height: 28px;
+    color: #16b195;
+  }
+
+  &__logo-text {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #f0f1f7;
+  }
+
+  &__body {
+    flex: 1;
+    padding: 0 28px 28px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    &--center {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 16px;
+    }
+  }
+
+  &__heading {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f0f1f7;
+    margin: 0 0 6px;
+  }
+
+  &__sub {
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 20px;
+  }
+
+  &__error {
+    font-size: 12px;
+    color: #e11d48;
+    background: rgba(225, 29, 72, 0.1);
+    border: 1px solid rgba(225, 29, 72, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+  }
+
+  &__cards {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  &__card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    text-align: left;
+    color: inherit;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    &--active {
+      border-color: #16b195;
+      background: rgba(22, 177, 149, 0.08);
+
+      .installer__card-icon {
+        color: #16b195;
+      }
+    }
+  }
+
+  &__card-icon {
+    width: 28px;
+    height: 28px;
+    color: #555;
+    transition: color 0.15s;
+
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  &__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  &__card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f0f1f7;
+  }
+
+  &__card-desc {
+    font-size: 11px;
+    color: #777;
+    line-height: 1.5;
+  }
+
+  &__dir-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  &__dir-input {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #c0c0c8;
+    font-size: 12px;
+    outline: none;
+    font-family: inherit;
+
+    &:focus {
+      border-color: rgba(22, 177, 149, 0.5);
+    }
+  }
+
+  &__actions {
+    margin-top: auto;
+    display: flex;
+    justify-content: flex-end;
+
+    &--done {
+      gap: 10px;
+      justify-content: center;
+      margin-top: 4px;
+    }
+  }
+
+  &__btn {
+    padding: 9px 22px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, background 0.15s;
+
+    &:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    &--primary {
+      background: #16b195;
+      color: #fff;
+
+      &:not(:disabled):hover {
+        background: #13a085;
+      }
+    }
+
+    &--ghost {
+      background: rgba(255, 255, 255, 0.07);
+      color: #c0c0c8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+    }
+  }
+
+  // Installing step
+  &__spinner {
+    width: 36px;
+    height: 36px;
+    border: 3px solid rgba(22, 177, 149, 0.2);
+    border-top-color: #16b195;
+    border-radius: 50%;
+    animation: installer-spin 0.8s linear infinite;
+  }
+
+  &__progress-bar {
+    width: 100%;
+    max-width: 360px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: #16b195;
+    border-radius: 2px;
+    transition: width 0.2s ease;
+  }
+
+  &__progress-label {
+    font-size: 11px;
+    color: #555;
+    max-width: 360px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  // Done step
+  &__checkmark {
+    width: 48px;
+    height: 48px;
+    background: rgba(22, 177, 149, 0.15);
+    border: 2px solid rgba(22, 177, 149, 0.4);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #16b195;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+}
+
+@keyframes installer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

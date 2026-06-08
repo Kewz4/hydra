@@ -159,7 +159,11 @@ app.whenReady().then(async () => {
   );
   const isRunDeepLink = deepLinkArg?.startsWith("hydralauncher://run");
 
-  if (!process.argv.includes("--hidden") && !isRunDeepLink) {
+  const { needsSetup } = await import("./services/installer");
+
+  if (needsSetup()) {
+    WindowManager.createInstallerWindow();
+  } else if (!process.argv.includes("--hidden") && !isRunDeepLink) {
     WindowManager.createMainWindow();
   }
 

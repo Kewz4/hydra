@@ -37,6 +37,7 @@ import CloudSaves from "./pages/cloud-saves/cloud-saves";
 import { AchievementNotification } from "./pages/achievements/notification/achievement-notification";
 import { AchievementNotificationOverlay } from "./components/achievements/notification/achievement-notification-overlay";
 import GameLauncher from "./pages/game-launcher/game-launcher";
+import Installer from "./pages/installer/installer";
 import BigPictureApp from "../../big-picture/src/app";
 import BigPictureCatalogue from "../../big-picture/src/pages/catalogue/catalogue";
 import BigPictureComponentLab from "../../big-picture/src/pages/component-lab/component-lab";
@@ -120,6 +121,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             element={<AchievementNotification />}
           />
           <Route path="/game-launcher" element={<GameLauncher />} />
+          <Route path="/installer" element={<Installer />} />
 
           <Route path="/big-picture" element={<BigPictureApp />}>
             <Route index element={<BigPictureHome />} />

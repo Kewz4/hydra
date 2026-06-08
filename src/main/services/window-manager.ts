@@ -32,6 +32,7 @@ export class WindowManager {
   public static mainWindow: Electron.BrowserWindow | null = null;
   public static notificationWindow: Electron.BrowserWindow | null = null;
   public static gameLauncherWindow: Electron.BrowserWindow | null = null;
+  public static installerWindow: Electron.BrowserWindow | null = null;
   private static bigPicture: Electron.BrowserWindow | null = null;
   private static deferredMainMaximize = false;
 
@@ -372,6 +373,37 @@ export class WindowManager {
         main.focus();
       }
     });
+  }
+
+  public static createInstallerWindow() {
+    if (this.installerWindow && !this.installerWindow.isDestroyed()) {
+      this.installerWindow.focus();
+      return;
+    }
+
+    const win = new BrowserWindow({
+      width: 560,
+      height: 480,
+      resizable: false,
+      frame: false,
+      backgroundColor: "#0f0f14",
+      icon,
+      center: true,
+      webPreferences: {
+        preload: path.join(__dirname, "../preload/index.mjs"),
+        sandbox: false,
+      },
+      show: false,
+    });
+
+    this.installerWindow = win;
+
+    win.once("ready-to-show", () => win.show());
+    win.on("closed", () => {
+      this.installerWindow = null;
+    });
+
+    this.loadWindowURL(win, "installer");
   }
 
   public static openAuthWindow(page: AuthPage, searchParams: URLSearchParams) {
