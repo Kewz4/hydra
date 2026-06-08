@@ -488,9 +488,7 @@ function HeroDownloadView({
             {game.download?.downloader !== undefined && (
               <div className="download-group__stat-item">
                 <div className="download-group__stat-content">
-                  <Badge>
-                    {DOWNLOADER_NAME[game.download.downloader]}
-                  </Badge>
+                  <Badge>{DOWNLOADER_NAME[game.download.downloader]}</Badge>
                 </div>
               </div>
             )}
