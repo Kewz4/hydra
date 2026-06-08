@@ -489,7 +489,7 @@ function HeroDownloadView({
               <div className="download-group__stat-item">
                 <div className="download-group__stat-content">
                   <Badge>
-                    {DOWNLOADER_NAME[Number(game.download.downloader)]}
+                    {DOWNLOADER_NAME[game.download.downloader]}
                   </Badge>
                 </div>
               </div>

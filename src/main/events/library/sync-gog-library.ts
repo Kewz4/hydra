@@ -153,3 +153,6 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
 };
 
 registerEvent("syncGogLibrary", syncGogLibrary);
+
+export const syncGogLibraryInternal = () =>
+  syncGogLibrary({} as Electron.IpcMainInvokeEvent);

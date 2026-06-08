@@ -101,3 +101,5 @@ const syncGamePassLibrary = async () => {
 };
 
 registerEvent("syncGamePassLibrary", syncGamePassLibrary);
+
+export const syncGamePassLibraryInternal = () => syncGamePassLibrary();

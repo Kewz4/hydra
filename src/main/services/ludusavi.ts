@@ -12,14 +12,17 @@ export class Ludusavi {
     ? path.join(process.resourcesPath, "ludusavi")
     : path.join(__dirname, "..", "..", "ludusavi");
 
-  private static configPath = path.join(
-    SystemPath.getPath("userData"),
-    "ludusavi"
-  );
   private static binaryName =
     process.platform === "win32" ? "ludusavi.exe" : "ludusavi";
 
-  private static binaryPath = path.join(this.configPath, this.binaryName);
+  // Lazy getters so app.getPath() is called after app.setPath() runs in portable mode
+  private static get configPath() {
+    return path.join(SystemPath.getPath("userData"), "ludusavi");
+  }
+
+  private static get binaryPath() {
+    return path.join(this.configPath, this.binaryName);
+  }
 
   public static async getConfig() {
     const config = YAML.parse(

@@ -127,3 +127,6 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
 };
 
 registerEvent("syncEpicLibrary", syncEpicLibrary);
+
+export const syncEpicLibraryInternal = () =>
+  syncEpicLibrary({} as Electron.IpcMainInvokeEvent);

@@ -98,3 +98,6 @@ const syncSteamLibrary = async (
 };
 
 registerEvent("syncSteamLibrary", syncSteamLibrary);
+
+export const syncSteamLibraryInternal = (steamId: string, apiKey?: string) =>
+  syncSteamLibrary({} as Electron.IpcMainInvokeEvent, steamId, apiKey);

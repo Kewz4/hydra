@@ -204,6 +204,11 @@ export const loadState = async () => {
 
   startMainLoop();
 
+  // Sync all connected libraries on launch (non-blocking)
+  import("@main/services/main-loop").then(({ syncAllLibraries }) => {
+    syncAllLibraries().catch(() => {});
+  });
+
   CommonRedistManager.downloadCommonRedist();
 
   SystemPath.checkIfPathsAreAvailable();

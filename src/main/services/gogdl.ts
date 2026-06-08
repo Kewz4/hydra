@@ -261,9 +261,15 @@ export function spawnGogdlInstall(
     for (const line of lines) handleLine(line, true);
   });
 
-  child.on("error", (err) => onError(err.message));
+  let killIntentional = false;
+
+  child.on("error", (err) => {
+    if (!killIntentional) onError(err.message);
+  });
 
   child.on("close", (code) => {
+    if (killIntentional) return;
+
     // Flush any remaining buffered output
     if (stderrBuf.trim()) handleLine(stderrBuf, true);
     if (stdoutBuf.trim()) handleLine(stdoutBuf, false);
@@ -281,6 +287,7 @@ export function spawnGogdlInstall(
 
   return () => {
     try {
+      killIntentional = true;
       child.kill();
     } catch {}
   };

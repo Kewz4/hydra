@@ -67,6 +67,7 @@ export const INTERVALS = {
   seedStatusWatcher: 2_000,
   updateChecker: 60_000 * 50, // 50 minutes
   powerSaveBlockerSync: 20_000,
+  librarySync: 6 * 60 * 60 * 1000, // 6 hours
 };
 
 export const DEFAULT_ACHIEVEMENT_SOUND_VOLUME = 0.15;

@@ -261,7 +261,8 @@ export function spawnLegendaryInstall(
   let lastDownloadedMB = 0;
   let lastSpeedMBs = 0;
   let lastEtaMs = 0;
-  const completed = false;
+  let completed = false;
+  let killIntentional = false;
 
   const handleLine = (line: string, isStderr: boolean) => {
     if (!line.trim()) return;
@@ -308,9 +309,12 @@ export function spawnLegendaryInstall(
     for (const line of lines) handleLine(line, true);
   });
 
-  child.on("error", (err) => onError(err.message));
+  child.on("error", (err) => {
+    if (!killIntentional) onError(err.message);
+  });
 
   child.on("close", (code) => {
+    if (killIntentional) return;
     if (stderrBuffer.trim()) handleLine(stderrBuffer, true);
     if (stdoutBuffer.trim()) handleLine(stdoutBuffer, false);
     if (!completed && code !== 0 && code !== null) {
@@ -320,6 +324,7 @@ export function spawnLegendaryInstall(
 
   return () => {
     try {
+      killIntentional = true;
       child.kill();
     } catch {}
   };

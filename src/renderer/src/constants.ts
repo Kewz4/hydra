@@ -2,7 +2,7 @@ import { Downloader } from "@shared";
 
 export const VERSION_CODENAME = "Split the Atom";
 
-export const DOWNLOADER_NAME = {
+export const DOWNLOADER_NAME: Record<string | number, string> = {
   [Downloader.RealDebrid]: "Real-Debrid",
   [Downloader.Torrent]: "Torrent",
   [Downloader.Gofile]: "Gofile",
@@ -16,6 +16,8 @@ export const DOWNLOADER_NAME = {
   [Downloader.Rootz]: "Rootz",
   [Downloader.Premiumize]: "Premiumize",
   [Downloader.AllDebrid]: "AllDebrid",
+  [Downloader.Legendary]: "Epic Games",
+  [Downloader.Gogdl]: "GOG",
 };
 
 export const MAX_MINUTES_TO_SHOW_IN_PLAYTIME = 120;
