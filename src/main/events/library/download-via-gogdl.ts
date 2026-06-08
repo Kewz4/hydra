@@ -49,7 +49,6 @@ const downloadViaGogdl = async (
   const {
     access_token: accessToken,
     refresh_token: newRefreshToken,
-    user_id: userId,
   } = tokens;
 
   const downloadPath = customDownloadPath ?? (await getDownloadsPath());
@@ -112,7 +111,6 @@ const downloadViaGogdl = async (
     downloadPath,
     accessToken,
     newRefreshToken,
-    userId,
     binary,
     async (progress, downloadedMB, totalMB, speedMBs) => {
       sendLog(
