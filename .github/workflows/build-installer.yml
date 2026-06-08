@@ -65,8 +65,7 @@ jobs:
         with:
           name: hydra-windows-installer
           path: |
-            dist/*-setup.exe
-            dist/*-portable.exe
+            dist/*.zip
           retention-days: 30
 
       - name: Create GitHub release (on tag)
@@ -75,7 +74,6 @@ jobs:
         with:
           draft: true
           files: |
-            dist/*-setup.exe
-            dist/*-portable.exe
+            dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
