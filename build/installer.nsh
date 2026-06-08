@@ -1,6 +1,6 @@
 ; ──────────────────────────────────────────────
 ; GameHub – custom NSIS installer
-; Adds an Install vs Portable mode-selection page
+; Mode selection shown before any pages via .onInit
 ; ──────────────────────────────────────────────
 
 !include "nsDialogs.nsh"
@@ -25,57 +25,35 @@
 
   ; ── Global state ──
   Var /GLOBAL GH_PortableMode   ; "0" = install, "1" = portable
-  Var /GLOBAL GH_Dialog
-  Var /GLOBAL GH_RadioInstall
-  Var /GLOBAL GH_RadioPortable
+!macroend
 
-  ; ── Mode-selection page — inserted first so it appears before the directory page ──
-  Page custom GH_ModePage GH_ModePageLeave
+; ── Mode selection runs in .onInit, before any pages ──
+!macro customInit
+  StrCpy $GH_PortableMode "0"
 
-  Function GH_ModePage
-    StrCpy $GH_PortableMode "0"
+  MessageBox MB_YESNO|MB_ICONQUESTION \
+    "How would you like to use GameHub?$\r$\n$\r$\
+Yes  →  Install$\t(Program Files, Start Menu, uninstaller)$\r$\n$\
+No   →  Portable$\t(choose any folder, no shortcuts)" \
+    IDYES GH_InstallMode
 
-    nsDialogs::Create 1018
-    Pop $GH_Dialog
-    ${If} $GH_Dialog == error
-      Abort
-    ${EndIf}
+  ; ── Portable branch ──
+  nsDialogs::SelectFolderDialog \
+    "Select a folder to extract GameHub into" "$DESKTOP"
+  Pop $0
+  ${If} $0 == error
+    ; user cancelled the folder picker — abort installer
+    Quit
+  ${EndIf}
+  StrCpy $GH_PortableMode "1"
+  StrCpy $INSTDIR "$0\GameHub"
+  Goto GH_ModeEnd
 
-    ${NSD_CreateLabel} 0u 0u 100% 16u "How would you like to use GameHub?"
-    Pop $0
+  GH_InstallMode:
+  ; Default INSTDIR (Program Files) is set by electron-builder; leave it.
+  StrCpy $GH_PortableMode "0"
 
-    ${NSD_CreateRadioButton} 12u 22u 100% 13u "Install  —  add to Start Menu and Programs, create an uninstaller"
-    Pop $GH_RadioInstall
-    SendMessage $GH_RadioInstall ${BM_SETCHECK} 1 0   ; checked by default
-
-    ${NSD_CreateLabel} 24u 37u 280u 16u "Recommended. Installs to Program Files; adds shortcuts."
-    Pop $0
-
-    ${NSD_CreateRadioButton} 12u 58u 100% 13u "Portable  —  extract to a folder, no registry changes"
-    Pop $GH_RadioPortable
-
-    ${NSD_CreateLabel} 24u 73u 280u 24u "GameHub runs directly from the folder you choose.$\nNo shortcuts or uninstaller are created."
-    Pop $0
-
-    nsDialogs::Show
-  FunctionEnd
-
-  Function GH_ModePageLeave
-    ${NSD_GetState} $GH_RadioPortable $0
-    ${If} $0 == ${BST_CHECKED}
-      ; Portable selected — let user choose extract folder
-      nsDialogs::SelectFolderDialog "Select a folder to extract GameHub into" "$DESKTOP"
-      Pop $0
-      ${If} $0 == error
-        ; User cancelled the folder dialog → stay on this page
-        Abort
-      ${EndIf}
-      StrCpy $GH_PortableMode "1"
-      StrCpy $INSTDIR "$0\GameHub"
-    ${Else}
-      StrCpy $GH_PortableMode "0"
-    ${EndIf}
-  FunctionEnd
+  GH_ModeEnd:
 !macroend
 
 !macro customInstall
@@ -121,7 +99,7 @@
       Delete "$TEMP\dotnet8-runtime.exe"
     ${EndIf}
   ${Else}
-    ; ── Portable mode: remove what electron-builder wrote to registry/shortcuts ──
+    ; ── Portable mode: strip what electron-builder wrote to registry/shortcuts ──
     ; Delete uninstaller executable
     FindFirst $R0 $R1 "$INSTDIR\Uninstall*.exe"
     ${If} $R1 != ""
