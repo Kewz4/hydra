@@ -21,9 +21,11 @@ import "./library/transfer-game-files";
 import "./installer";
 
 import { isPortableVersion } from "@main/helpers";
+import { WindowManager } from "@main/services";
 
 ipcMain.handle("ping", () => "pong");
 ipcMain.handle("getVersion", () => appVersion);
 ipcMain.handle("isStaging", () => isStaging);
 ipcMain.handle("isPortableVersion", () => isPortableVersion());
 ipcMain.handle("getDefaultDownloadsPath", () => defaultDownloadsPath);
+ipcMain.handle("openConsoleWindow", () => WindowManager.createConsoleWindow());

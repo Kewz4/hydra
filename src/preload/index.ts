@@ -1012,4 +1012,17 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.on("installer:progress", listener);
     return () => ipcRenderer.off("installer:progress", listener);
   },
+
+  // Debug console window
+  openConsoleWindow: () => ipcRenderer.invoke("openConsoleWindow"),
+  onConsoleLog: (
+    cb: (entry: { ts: number; level: string; scope: string; text: string }) => void
+  ): (() => void) => {
+    const listener = (
+      _: unknown,
+      entry: { ts: number; level: string; scope: string; text: string }
+    ) => cb(entry);
+    ipcRenderer.on("console:log", listener);
+    return () => ipcRenderer.off("console:log", listener);
+  },
 });

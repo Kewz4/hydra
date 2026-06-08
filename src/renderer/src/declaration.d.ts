@@ -714,6 +714,8 @@ declare global {
     installerOpenFolder: (destDir: string) => Promise<void>;
     installerCloseAndLaunch: () => Promise<void>;
     onInstallerProgress: (cb: (pct: number, file: string) => void) => () => void;
+    openConsoleWindow: () => Promise<void>;
+    onConsoleLog: (cb: (entry: { ts: number; level: string; scope: string; text: string }) => void) => () => void;
   }
 
   interface Window {

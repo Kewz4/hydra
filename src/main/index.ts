@@ -1,4 +1,4 @@
-import { app, BrowserWindow, net, protocol } from "electron";
+import { app, BrowserWindow, globalShortcut, net, protocol } from "electron";
 import updater from "electron-updater";
 import i18n from "i18next";
 import path from "node:path";
@@ -183,6 +183,11 @@ app.whenReady().then(async () => {
 
   WindowManager.createNotificationWindow();
   WindowManager.createSystemTray(language || "en");
+
+  // Ctrl+Shift+L / Cmd+Shift+L toggles the debug console window
+  globalShortcut.register("CommandOrControl+Shift+L", () => {
+    WindowManager.toggleConsoleWindow();
+  });
 
   if (deepLinkArg) {
     handleDeepLinkPath(deepLinkArg);

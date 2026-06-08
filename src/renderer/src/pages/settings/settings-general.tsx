@@ -513,6 +513,18 @@ export function SettingsGeneral() {
         </div>
       )}
 
+      <h2 className="settings-general__section-title">Debugging</h2>
+      <p className="settings-general__common-redist-description">
+        Open a separate console window showing real-time logs from all processes. Shortcut: Ctrl+Shift+L
+      </p>
+      <Button
+        onClick={() => window.electron.openConsoleWindow()}
+        className="settings-general__common-redist-button"
+        type="button"
+      >
+        Open Debug Console
+      </Button>
+
       <DownloadDirectoryReplacementModal
         visible={downloadDirectoryReplacement !== null}
         nextPath={downloadDirectoryReplacement?.nextPath ?? ""}

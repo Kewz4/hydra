@@ -26,13 +26,14 @@ import { orderBy, slice } from "lodash-es";
 import path from "node:path";
 import UserAgent from "user-agents";
 import { HydraApi } from "./hydra-api";
-import { logger } from "./logger";
+import { logger, setConsoleWindowSender, type ConsoleLogEntry } from "./logger";
 
 export class WindowManager {
   public static mainWindow: Electron.BrowserWindow | null = null;
   public static notificationWindow: Electron.BrowserWindow | null = null;
   public static gameLauncherWindow: Electron.BrowserWindow | null = null;
   public static installerWindow: Electron.BrowserWindow | null = null;
+  public static consoleWindow: Electron.BrowserWindow | null = null;
   private static bigPicture: Electron.BrowserWindow | null = null;
   private static deferredMainMaximize = false;
 
@@ -907,6 +908,52 @@ export class WindowManager {
     } else {
       tray.addListener("click", showContextMenu);
       tray.addListener("right-click", showContextMenu);
+    }
+  }
+
+  public static createConsoleWindow() {
+    if (this.consoleWindow && !this.consoleWindow.isDestroyed()) {
+      this.consoleWindow.focus();
+      return;
+    }
+
+    this.consoleWindow = new BrowserWindow({
+      width: 900,
+      height: 600,
+      minWidth: 600,
+      minHeight: 300,
+      title: "GameHub Console",
+      backgroundColor: "#0d0d0d",
+      webPreferences: {
+        preload: path.join(__dirname, "../preload/index.mjs"),
+        sandbox: false,
+      },
+    });
+
+    setConsoleWindowSender((entry: ConsoleLogEntry) => {
+      if (this.consoleWindow && !this.consoleWindow.isDestroyed()) {
+        this.consoleWindow.webContents.send("console:log", entry);
+      }
+    });
+
+    this.loadWindowURL(this.consoleWindow, "console");
+
+    this.consoleWindow.on("closed", () => {
+      this.consoleWindow = null;
+      setConsoleWindowSender(null);
+    });
+  }
+
+  public static toggleConsoleWindow() {
+    if (this.consoleWindow && !this.consoleWindow.isDestroyed()) {
+      if (this.consoleWindow.isVisible()) {
+        this.consoleWindow.hide();
+      } else {
+        this.consoleWindow.show();
+        this.consoleWindow.focus();
+      }
+    } else {
+      this.createConsoleWindow();
     }
   }
 }

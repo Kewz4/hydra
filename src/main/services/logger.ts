@@ -29,6 +29,34 @@ log.transports.file.resolvePathFn = (
   return path.join(logsPath, "logs.txt");
 };
 
+// IPC transport — streams every log entry to the console window in real-time.
+// The transport is registered lazily so ipcMain is available.
+let _consoleWindowSend: ((entry: ConsoleLogEntry) => void) | null = null;
+
+export interface ConsoleLogEntry {
+  ts: number;
+  level: string;
+  scope: string;
+  text: string;
+}
+
+export function setConsoleWindowSender(fn: ((entry: ConsoleLogEntry) => void) | null) {
+  _consoleWindowSend = fn;
+}
+
+const ipcTransport: log.Transport = (message) => {
+  if (!_consoleWindowSend) return;
+  const text = message.data.map((d) => (typeof d === "string" ? d : JSON.stringify(d))).join(" ");
+  _consoleWindowSend({
+    ts: message.date.getTime(),
+    level: message.level,
+    scope: (message.scope as string) || "main",
+    text,
+  });
+};
+ipcTransport.level = "silly";
+log.transports["consoleWindow"] = ipcTransport;
+
 log.errorHandler.startCatching({
   showDialog: false,
 });
