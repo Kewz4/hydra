@@ -2,13 +2,27 @@ import { app, BrowserWindow, net, protocol } from "electron";
 import updater from "electron-updater";
 import i18n from "i18next";
 import path from "node:path";
+import fs from "node:fs";
 import url from "node:url";
 
-// electron-builder sets PORTABLE_EXECUTABLE_DIR when running as a portable exe.
-// Redirect all user data into a "data" subfolder next to the exe so the
-// entire installation is self-contained and copyable.
-if (process.env.PORTABLE_EXECUTABLE_DIR) {
-  const dataDir = path.join(process.env.PORTABLE_EXECUTABLE_DIR, "data");
+// Detect portable mode: electron-builder NSIS portable sets PORTABLE_EXECUTABLE_DIR;
+// our custom installer writes a "portable" marker file next to the exe.
+// In either case, redirect all user data into a "data" subfolder next to the exe
+// so the entire installation is self-contained and copyable.
+const _portableExeDir =
+  process.env.PORTABLE_EXECUTABLE_DIR ||
+  (() => {
+    try {
+      const exeDir = path.dirname(process.execPath);
+      if (fs.existsSync(path.join(exeDir, "portable"))) return exeDir;
+    } catch {
+      // ignore
+    }
+    return null;
+  })();
+
+if (_portableExeDir) {
+  const dataDir = path.join(_portableExeDir, "data");
   app.setPath("userData", dataDir);
   app.setPath("logs", path.join(dataDir, "logs"));
   app.setPath("sessionData", path.join(dataDir, "session"));

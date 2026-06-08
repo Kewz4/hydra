@@ -17,11 +17,22 @@ export const windowsStartMenuPath = path.join(
 export const publicProfilePath = "C:/Users/Public";
 
 // Portable installs store all user data next to the exe.
-// Read PORTABLE_EXECUTABLE_DIR directly here — app.setPath() runs after
-// module init so we can't rely on it being reflected in app.getPath() yet.
-const portableDataDir = process.env.PORTABLE_EXECUTABLE_DIR
-  ? path.join(process.env.PORTABLE_EXECUTABLE_DIR, "data")
-  : null;
+// Check both PORTABLE_EXECUTABLE_DIR (NSIS portable) and a "portable" marker
+// file next to the exe (our custom installer).  app.setPath() already ran in
+// index.ts, but constants.ts is evaluated independently so we re-derive it.
+import fs from "node:fs";
+const _portableDir =
+  process.env.PORTABLE_EXECUTABLE_DIR ||
+  (() => {
+    try {
+      const exeDir = path.dirname(process.execPath);
+      if (fs.existsSync(path.join(exeDir, "portable"))) return exeDir;
+    } catch {
+      return null;
+    }
+    return null;
+  })();
+const portableDataDir = _portableDir ? path.join(_portableDir, "data") : null;
 
 const getUserDataPath = () => portableDataDir ?? SystemPath.getPath("userData");
 
