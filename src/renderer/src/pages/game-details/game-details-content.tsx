@@ -173,13 +173,13 @@ export function GameDetailsContent() {
             <div className="game-details__hero-content">
               <GameLogo game={game} shopDetails={shopDetails} />
 
-              {isGameInLibrary && (
-                <span className="game-details__in-library-badge">
-                  {t("already_in_library")}
-                </span>
-              )}
-
               <div className="game-details__hero-buttons game-details__hero-buttons--right">
+                {isGameInLibrary && (
+                  <span className="game-details__in-library-badge">
+                    {t("already_in_library")}
+                  </span>
+                )}
+
                 {game && (
                   <button
                     type="button"

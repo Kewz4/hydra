@@ -98,7 +98,10 @@ const runLegendary = async (
   binary: string,
   args: string[]
 ): Promise<string> => {
-  const { stdout } = await execFileAsync(binary, args, { timeout: 60_000 });
+  const { stdout } = await execFileAsync(binary, args, {
+    timeout: 60_000,
+    env: legendaryEnv(),
+  });
   return stdout;
 };
 
@@ -153,10 +156,12 @@ export const getLegendaryConfigPath = (): string => {
   return configPath;
 };
 
-const legendaryBaseArgs = (): string[] => [
-  "--config-path",
-  getLegendaryConfigPath(),
-];
+const legendaryBaseArgs = (): string[] => [];
+
+const legendaryEnv = (): NodeJS.ProcessEnv => ({
+  ...process.env,
+  LEGENDARY_CONFIG_PATH: getLegendaryConfigPath(),
+});
 
 export const authenticateLegendary = async (
   code: string,
@@ -168,7 +173,7 @@ export const authenticateLegendary = async (
   await execFileAsync(
     binary,
     [...legendaryBaseArgs(), "auth", "--code", code.trim()],
-    { timeout: 30_000 }
+    { timeout: 30_000, env: legendaryEnv() }
   );
 };
 
@@ -222,6 +227,7 @@ export function spawnLegendaryInstall(
     ],
     {
       stdio: ["ignore", "pipe", "pipe"],
+      env: legendaryEnv(),
     }
   );
 

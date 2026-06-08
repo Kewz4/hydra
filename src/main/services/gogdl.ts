@@ -142,6 +142,9 @@ export function spawnGogdlInstall(
   }
 
   const configDir = writeGogdlCredentials(accessToken, refreshToken, userId);
+  // heroic-gogdl --auth-config-path expects the path to the auth.json FILE,
+  // not the containing directory — passing the directory causes PermissionError.
+  const authJsonPath = path.join(configDir, "auth.json");
 
   // heroic-gogdl: --auth-config-path MUST come before the subcommand
   // Progress is output as JSON lines to stdout
@@ -149,7 +152,7 @@ export function spawnGogdlInstall(
     binary,
     [
       "--auth-config-path",
-      configDir,
+      authJsonPath,
       "download",
       gameId,
       "--platform",
