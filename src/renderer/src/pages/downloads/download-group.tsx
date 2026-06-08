@@ -606,8 +606,9 @@ export function DownloadGroup({
   const [gameToCancelObjectId, setGameToCancelObjectId] = useState<
     string | null
   >(null);
-  const [gameToCancelDownloader, setGameToCancelDownloader] =
-    useState<string | null>(null);
+  const [gameToCancelDownloader, setGameToCancelDownloader] = useState<
+    string | null
+  >(null);
   const [gameActionTypes, setGameActionTypes] = useState<
     Record<string, "install" | "open-folder">
   >({});
@@ -864,7 +865,11 @@ export function DownloadGroup({
         {
           label: t("cancel"),
           onClick: () => {
-            handleCancelClick(game.shop, game.objectId, game.download?.downloader);
+            handleCancelClick(
+              game.shop,
+              game.objectId,
+              game.download?.downloader
+            );
           },
           icon: <XCircleIcon />,
         },
