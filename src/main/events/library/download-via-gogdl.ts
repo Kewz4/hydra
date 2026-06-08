@@ -46,10 +46,7 @@ const downloadViaGogdl = async (
 
   // Refresh token to get a fresh access token
   const tokens = await refreshGogToken(gogRefreshToken);
-  const {
-    access_token: accessToken,
-    refresh_token: newRefreshToken,
-  } = tokens;
+  const { access_token: accessToken, refresh_token: newRefreshToken } = tokens;
 
   const downloadPath = customDownloadPath ?? (await getDownloadsPath());
   const gameKey = levelKeys.game("gog", objectId);
