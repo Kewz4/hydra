@@ -34,6 +34,8 @@ export const gameDetailsContext = createContext<GameDetailsContext>({
   shopDetails: null,
   repacks: [],
   shop: "steam",
+  canonicalShop: "steam",
+  canonicalObjectId: undefined,
   gameTitle: "",
   isGameRunning: false,
   isLoading: false,
@@ -72,9 +74,9 @@ export function GameDetailsContextProvider({
   gameTitle,
   shop,
 }: Readonly<GameDetailsContextProps>) {
-  const [shopDetails, setShopDetails] = useState<ShopDetailsWithAssets | null>(
-    null
-  );
+  const [shopDetails, setShopDetails] = useState<ShopDetailsWithAssets | null>(null);
+  const [canonicalShop, setCanonicalShop] = useState<GameShop>(shop);
+  const [canonicalObjectId, setCanonicalObjectId] = useState<string | undefined>(objectId);
   const [achievements, setAchievements] = useState<UserAchievement[] | null>(
     null
   );
@@ -107,10 +109,37 @@ export function GameDetailsContextProvider({
   );
 
   const updateGame = useCallback(async () => {
-    return window.electron
-      .getGameByObjectId(shop, objectId)
-      .then((result) => setGame(result));
-  }, [shop, objectId]);
+    const result = await window.electron.getGameByObjectId(shop, objectId);
+
+    if (result) {
+      setGame(result);
+      return;
+    }
+
+    // Catalogue entry not in library — check if the user has it under a different shop
+    // (e.g. viewing a Steam catalogue entry but the user owns it on Epic/GOG)
+    if (gameTitle && shop === "steam") {
+      const libraryMatch = await window.electron.findLibraryGameByTitle(gameTitle).catch(() => null);
+      if (libraryMatch && (libraryMatch.shop === "epic" || libraryMatch.shop === "gog")) {
+        // Synthesize a game object so the repacks modal shows the platform download button.
+        // _synthesized flag prevents this from triggering the "Download via Steam" path.
+        const synthetic = {
+          ...libraryMatch,
+          shop: "steam" as const,
+          objectId,
+          _synthesized: true,
+          alternativeShops: [
+            ...(libraryMatch.alternativeShops ?? []),
+            { shop: libraryMatch.shop, objectId: libraryMatch.objectId, executablePath: libraryMatch.executablePath },
+          ],
+        };
+        setGame(synthetic as any);
+        return;
+      }
+    }
+
+    setGame(result);
+  }, [shop, objectId, gameTitle]);
 
   const isGameDownloading =
     lastPacket?.gameId === game?.id && game?.download?.status === "active";
@@ -177,26 +206,40 @@ export function GameDetailsContextProvider({
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    const shopDetailsPromise = window.electron
-      .getGameShopDetails(objectId, shop, getSteamLanguage(i18n.language))
-      .then((result) => {
-        if (abortController.signal.aborted) return;
+    const rawShopDetailsPromise = window.electron.getGameShopDetails(
+      objectId,
+      shop,
+      getSteamLanguage(i18n.language)
+    );
 
-        setShopDetails(result);
+    const shopDetailsPromise = rawShopDetailsPromise.then((result) => {
+      if (abortController.signal.aborted) return;
 
-        if (
-          result?.content_descriptors.ids.includes(
-            SteamContentDescriptor.AdultOnlySexualContent
-          ) &&
-          !userPreferences?.disableNsfwAlert
-        ) {
-          setHasNSFWContentBlocked(true);
-        }
+      setShopDetails(result);
 
-        if (result?.assets) {
-          setIsLoading(false);
-        }
-      });
+      // For non-Steam games, use the Steam equivalent for reviews/achievements/stats
+      if (result && shop !== "steam" && (result as any).steam_appid) {
+        const steamId = String((result as any).steam_appid);
+        setCanonicalShop("steam");
+        setCanonicalObjectId(steamId);
+      } else {
+        setCanonicalShop(shop);
+        setCanonicalObjectId(objectId);
+      }
+
+      if (
+        result?.content_descriptors?.ids?.includes(
+          SteamContentDescriptor.AdultOnlySexualContent
+        ) &&
+        !userPreferences?.disableNsfwAlert
+      ) {
+        setHasNSFWContentBlocked(true);
+      }
+
+      if (result?.assets) {
+        setIsLoading(false);
+      }
+    });
 
     if (shop !== "custom") {
       window.electron.getGameStats(objectId, shop).then((result) => {
@@ -226,13 +269,22 @@ export function GameDetailsContextProvider({
       });
 
     if (userDetails && shop !== "custom") {
-      window.electron
-        .getUnlockedAchievements(objectId, shop)
-        .then((achievements) => {
-          if (abortController.signal.aborted) return;
-          setAchievements(achievements);
-        })
-        .catch(() => void 0);
+      // Achievements are indexed by Steam — wait for shopDetails so we have the canonical Steam ID
+      rawShopDetailsPromise.then((details) => {
+        if (abortController.signal.aborted) return;
+        const steamId = shop !== "steam" && (details as any)?.steam_appid
+          ? String((details as any).steam_appid)
+          : null;
+        const achObjectId = steamId ?? objectId;
+        const achShop: GameShop = steamId ? "steam" : shop;
+        window.electron
+          .getUnlockedAchievements(achObjectId, achShop)
+          .then((achievements) => {
+            if (abortController.signal.aborted) return;
+            setAchievements(achievements);
+          })
+          .catch(() => void 0);
+      });
     }
   }, [
     updateGame,
@@ -251,6 +303,8 @@ export function GameDetailsContextProvider({
     setIsGameRunning(false);
     setAchievements(null);
     setGameOptionsInitialCategory("general");
+    setCanonicalShop(shop);
+    setCanonicalObjectId(objectId);
     dispatch(setHeaderTitle(gameTitle));
   }, [objectId, gameTitle, dispatch]);
 
@@ -389,15 +443,63 @@ export function GameDetailsContextProvider({
           downloadSourceIds: sources.map((source) => source.id),
         };
 
-        const downloads = await window.electron.hydraApi.get<GameRepack[]>(
+        let downloads = await window.electron.hydraApi.get<GameRepack[]>(
           `/games/${shop}/${objectId}/download-sources`,
-          {
-            params,
-            needsAuth: false,
-          }
-        );
+          { params, needsAuth: false }
+        ).catch(() => [] as GameRepack[]);
 
-        setRepacks(downloads);
+        // For non-Steam games with no repacks, search the Hydra catalogue
+        // by title to find the Steam equivalent and fetch its repacks
+        if ((!downloads || downloads.length === 0) && shop !== "steam" && shop !== "custom") {
+          try {
+            const steamId = await window.electron.hydraApi
+              .post<{ edges: Array<{ shop: string; objectId: string; title: string }> }>(
+                "/catalogue/search",
+                {
+                  data: {
+                    title: gameTitle,
+                    sortBy: "popularity",
+                    sortOrder: "desc",
+                    downloadSourceFingerprints: [],
+                    tags: [],
+                    publishers: [],
+                    genres: [],
+                    developers: [],
+                    protondbSupportBadges: [],
+                    deckCompatibility: [],
+                    take: 5,
+                    skip: 0,
+                  },
+                  needsAuth: false,
+                }
+              )
+              .then((resp) => {
+                const normalizedTitle = gameTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const match =
+                  resp?.edges?.find(
+                    (r) =>
+                      r.shop === "steam" &&
+                      r.title.toLowerCase().replace(/[^a-z0-9]/g, "") === normalizedTitle
+                  ) ?? resp?.edges?.find((r) => r.shop === "steam");
+                return match?.objectId ?? null;
+              })
+              .catch(() => null);
+
+            if (steamId) {
+              const steamRepacks = await window.electron.hydraApi
+                .get<GameRepack[]>(`/games/steam/${steamId}/download-sources`, {
+                  params,
+                  needsAuth: false,
+                })
+                .catch(() => [] as GameRepack[]);
+              if (steamRepacks?.length) downloads = steamRepacks;
+            }
+          } catch (_e) {
+            // silent fallback
+          }
+        }
+
+        setRepacks(downloads ?? []);
       } catch (error) {
         console.error("Failed to fetch download sources:", error);
       }
@@ -447,6 +549,8 @@ export function GameDetailsContextProvider({
         game,
         shopDetails,
         shop,
+        canonicalShop,
+        canonicalObjectId,
         repacks,
         gameTitle,
         isGameRunning,

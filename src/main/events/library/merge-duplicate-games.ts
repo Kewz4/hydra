@@ -23,6 +23,7 @@ const mergeDuplicateGames = async (_event: Electron.IpcMainInvokeEvent) => {
   const total = duplicateBuckets.length;
   let current = 0;
   let merged = 0;
+  const mergedTitles: string[] = [];
 
   WindowManager.sendToAppWindows("on-dedup-progress", { current, total, title: null });
 
@@ -39,12 +40,13 @@ const mergeDuplicateGames = async (_event: Electron.IpcMainInvokeEvent) => {
       logger.warn(`mergeDuplicateGames: dedup failed for "${representativeTitle}"`, err);
     });
     merged += bucket.length - 1;
+    mergedTitles.push(representativeTitle);
     logger.log(`Merged ${bucket.length - 1} duplicate(s) for "${representativeTitle}"`);
   }
 
   WindowManager.sendToAppWindows("on-dedup-progress", { current: total, total, title: null, done: true });
   logger.log(`mergeDuplicateGames: ${merged} duplicates removed`);
-  return { merged };
+  return { merged, mergedTitles };
 };
 
 registerEvent("mergeDuplicateGames", mergeDuplicateGames);

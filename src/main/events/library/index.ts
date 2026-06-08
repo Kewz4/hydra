@@ -76,3 +76,5 @@ import "./transfer-game-files";
 import "./get-available-drives";
 import "./generate-missing-metadata";
 import "./merge-duplicate-games";
+import "./find-library-game-by-title";
+import "./get-gogdl-status";

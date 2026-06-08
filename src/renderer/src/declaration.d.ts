@@ -170,12 +170,12 @@ declare global {
     }>;
     installLegendary: () => Promise<{ path: string }>;
     openLegendaryAuthWindow: () => Promise<{ success: boolean; account?: string }>;
-    syncEpicLibrary: () => Promise<{ total: number; added: number }>;
+    syncEpicLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null; what: string }> }>;
     installBattleNet: () => Promise<{ path: string }>;
     onLegendaryInstallProgress: (cb: (pct: number) => void) => () => void;
     onBattleNetInstallProgress: (cb: (pct: number) => void) => () => void;
     openGogAuthWindow: () => Promise<{ refresh_token: string; username: string } | null>;
-    syncGogLibrary: () => Promise<{ total: number; added: number }>;
+    syncGogLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null; what: string }> }>;
     getGogUserInfo: () => Promise<{ userId: string; username: string } | null>;
     getBattleNetGames: () => Promise<{
       installed: boolean;
@@ -274,8 +274,10 @@ declare global {
     verifyExecutablePathInUse: (executablePath: string) => Promise<Game>;
     getLibrary: () => Promise<LibraryGame[]>;
     refreshLibraryAssets: () => Promise<void>;
-    generateMissingMetadata: () => Promise<{ updated: number; skipped: number }>;
-    mergeDuplicateGames: () => Promise<{ merged: number }>;
+    generateMissingMetadata: () => Promise<{ updated: number; skipped: number; results: Array<{ title: string; coverUrl: string | null; what: string }> }>;
+    mergeDuplicateGames: () => Promise<{ merged: number; mergedTitles: string[] }>;
+    findLibraryGameByTitle: (title: string) => Promise<import("@types").Game | null>;
+    getGogdlStatus: () => Promise<{ binaryFound: boolean; binaryPath: string | null }>;
     openGameInstaller: (shop: GameShop, objectId: string) => Promise<boolean>;
     getGameInstallerActionType: (
       shop: GameShop,
@@ -503,6 +505,12 @@ declare global {
     onPreflightProgress: (
       cb: (value: { status: string; detail: string | null }) => void
     ) => () => Electron.IpcRenderer;
+    onLegendaryProcessLog: (
+      cb: (value: { objectId: string; line: string; isError: boolean }) => void
+    ) => () => Electron.IpcRenderer;
+    onGogdlProcessLog: (
+      cb: (value: { objectId: string; line: string; isError: boolean }) => void
+    ) => () => Electron.IpcRenderer;
     onMetadataProgress: (
       cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
     ) => () => Electron.IpcRenderer;
@@ -697,6 +705,15 @@ declare global {
     /* Event listeners for transfer progress */
     on: (channel: string, listener: (...args: any[]) => void) => void;
     off: (channel: string, listener: (...args: any[]) => void) => void;
+
+    /* Installer */
+    installerGetDefaults: () => Promise<{ defaultInstallDir: string; exeDir: string }>;
+    installerBrowseDirectory: (defaultPath: string) => Promise<string | null>;
+    installerRunSetup: (mode: "install" | "portable", destDir?: string) => Promise<void>;
+    installerRelaunch: (destDir: string) => Promise<void>;
+    installerOpenFolder: (destDir: string) => Promise<void>;
+    installerCloseAndLaunch: () => Promise<void>;
+    onInstallerProgress: (cb: (pct: number, file: string) => void) => () => void;
   }
 
   interface Window {

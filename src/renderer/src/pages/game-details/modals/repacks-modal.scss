@@ -186,26 +186,77 @@
   }
 
   &__platform-options {
-    margin-bottom: calc(globals.$spacing-unit * 3);
-    padding-bottom: calc(globals.$spacing-unit * 3);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 0;
+    padding: calc(globals.$spacing-unit * 2.5) calc(globals.$spacing-unit * 2.5);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
   }
 
   &__platform-options-label {
-    font-size: globals.$small-font-size;
-    font-weight: 600;
-    color: var(--color-text-secondary);
-    margin-bottom: calc(globals.$spacing-unit * 1.5);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--color-text);
+    margin-bottom: calc(globals.$spacing-unit * 2);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
   }
 
   &__platform-buttons {
     display: flex;
     flex-wrap: wrap;
-    gap: calc(globals.$spacing-unit * 1);
+    gap: calc(globals.$spacing-unit * 1.5);
   }
 
   &__platform-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: calc(globals.$spacing-unit * 2) calc(globals.$spacing-unit * 3);
+    border-radius: 10px;
+    border: none;
+    background: #111;
+    color: #fff;
     font-size: globals.$small-font-size;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s ease, transform 0.12s ease;
+    min-width: 120px;
+
+    &:hover {
+      background: #222;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+
+    span {
+      white-space: nowrap;
+    }
+  }
+
+  &__platform-icon {
+    width: 28px;
+    height: 28px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  &__or-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: calc(globals.$spacing-unit * 3);
+    margin-bottom: calc(globals.$spacing-unit * 2);
+    color: var(--color-text-secondary);
+    font-size: globals.$small-font-size;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    opacity: 0.5;
   }
 
   &__badges {

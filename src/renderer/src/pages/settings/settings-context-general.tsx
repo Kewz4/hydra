@@ -19,6 +19,7 @@ import {
 } from "@shared";
 import { SettingsAppearance } from "./appearance/settings-appearance";
 import { DownloadDirectoryReplacementModal } from "./download-directory-replacement-modal";
+import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
 interface LanguageOption {
   option: string;
@@ -60,6 +61,7 @@ export function SettingsContextGeneral({
   const [metadataProgress, setMetadataProgress] = useState<{ current: number; total: number; title: string | null } | null>(null);
   const [deduping, setDeduping] = useState(false);
   const [dedupProgress, setDedupProgress] = useState<{ current: number; total: number; title: string | null } | null>(null);
+  const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
 
   const [form, setForm] = useState({
     downloadsPath: "",
@@ -330,7 +332,18 @@ export function SettingsContextGeneral({
             });
             try {
               const result = await window.electron.generateMissingMetadata();
-              showSuccessToast(`Metadata updated for ${result.updated} game${result.updated !== 1 ? "s" : ""}, skipped ${result.skipped}.`);
+              setSyncModal({
+                heading: "Metadata Generation Complete",
+                summary: result.updated > 0
+                  ? `Updated ${result.updated} game${result.updated !== 1 ? "s" : ""}, skipped ${result.skipped} (already had artwork).`
+                  : `No new metadata found. All ${result.skipped} games already have artwork.`,
+                results: result.results.map((r) => ({
+                  title: r.title,
+                  coverUrl: r.coverUrl,
+                  what: r.what,
+                  isNew: true,
+                })),
+              });
             } catch {
               showErrorToast("Failed to generate metadata.");
             } finally {
@@ -377,11 +390,17 @@ export function SettingsContextGeneral({
             });
             try {
               const result = await window.electron.mergeDuplicateGames();
-              showSuccessToast(
-                result.merged > 0
+              setSyncModal({
+                heading: "Duplicate Check Complete",
+                summary: result.merged > 0
                   ? `Merged ${result.merged} duplicate game${result.merged !== 1 ? "s" : ""}.`
-                  : "No duplicates found."
-              );
+                  : "No duplicates found.",
+                results: result.mergedTitles.map((title) => ({
+                  title,
+                  coverUrl: null,
+                  what: "Duplicate entries merged — download options preserved",
+                })),
+              });
             } catch {
               showErrorToast("Failed to merge duplicates.");
             } finally {
@@ -440,6 +459,16 @@ export function SettingsContextGeneral({
         onClose={() => setDownloadDirectoryReplacement(null)}
         onConfirm={handleConfirmDownloadDirectoryReplacement}
       />
+
+      {syncModal && (
+        <LibrarySyncModal
+          visible={true}
+          heading={syncModal.heading}
+          summary={syncModal.summary}
+          results={syncModal.results}
+          onClose={() => setSyncModal(null)}
+        />
+      )}
     </div>
   );
 }
