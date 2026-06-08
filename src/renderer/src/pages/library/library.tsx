@@ -481,6 +481,16 @@ export default function Library() {
             !g.executablePath.startsWith("goggalaxy://") &&
             !g.executablePath.startsWith("msxbox://"))
       );
+    if (storeFilter === "retigga")
+      return filteredLibrary.filter(
+        (g) =>
+          g.executablePath &&
+          !g.executablePath.startsWith("steam://") &&
+          !g.executablePath.startsWith("legendary://") &&
+          !g.executablePath.startsWith("goggalaxy://") &&
+          !g.executablePath.startsWith("msxbox://") &&
+          !g.executablePath.includes("://")
+      );
     return filteredLibrary.filter((g) => g.shop === storeFilter);
   }, [filteredLibrary, storeFilter]);
 
@@ -540,29 +550,39 @@ export default function Library() {
               marginBottom: "8px",
             }}
           >
-            {["all", "steam", "epic", "gog", "xbox", "custom"].map((store) => (
+            {(
+              [
+                { value: "all", label: "All" },
+                { value: "steam", label: "Steam" },
+                { value: "epic", label: "Epic" },
+                { value: "gog", label: "GOG" },
+                { value: "xbox", label: "Xbox" },
+                { value: "custom", label: "Custom" },
+                { value: "retigga", label: "Retigga" },
+              ] as { value: string; label: string }[]
+            ).map(({ value, label }) => (
               <button
-                key={store}
+                key={value}
                 type="button"
-                onClick={() => setStoreFilter(store)}
+                onClick={() => setStoreFilter(value)}
                 style={{
                   padding: "4px 10px",
                   borderRadius: "12px",
                   border:
-                    storeFilter === store
+                    storeFilter === value
                       ? "1px solid var(--color-primary, #8b5cf6)"
                       : "1px solid rgba(255,255,255,0.2)",
                   background:
-                    storeFilter === store
+                    storeFilter === value
                       ? "var(--color-primary, #8b5cf6)"
                       : "transparent",
                   color: "inherit",
                   cursor: "pointer",
                   fontSize: "0.8rem",
-                  opacity: storeFilter === store ? 1 : 0.7,
+                  opacity: storeFilter === value ? 1 : 0.7,
                 }}
               >
-                {store.charAt(0).toUpperCase() + store.slice(1)}
+                {label}
               </button>
             ))}
           </div>

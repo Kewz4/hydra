@@ -252,6 +252,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (result?.success) {
         setEpicLinked(true);
         setEpicAccount(result.account ?? "Epic");
+
+        // Sync Epic library in background
+        window.electron.syncEpicLibrary().catch(() => {});
       }
     } catch {
       setEpicWindowOpen(false);
@@ -272,6 +275,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         });
         setGogLinked(true);
         setGogUsername(result.username ?? "GOG User");
+
+        // Install gogdl in background if not present
+        const gogdlStatus = await window.electron
+          .getGogdlStatus()
+          .catch(() => ({ binaryFound: false }));
+        if (!gogdlStatus.binaryFound) {
+          window.electron.installGogdl().catch(() => {});
+        }
+
+        // Sync GOG library in background
+        window.electron.syncGogLibrary().catch(() => {});
       }
     } catch {
       setGogWindowOpen(false);
