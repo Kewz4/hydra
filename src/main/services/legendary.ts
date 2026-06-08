@@ -261,7 +261,7 @@ export function spawnLegendaryInstall(
   let lastDownloadedMB = 0;
   let lastSpeedMBs = 0;
   let lastEtaMs = 0;
-  let completed = false;
+  const completed = false;
 
   const handleLine = (line: string, isStderr: boolean) => {
     if (!line.trim()) return;
