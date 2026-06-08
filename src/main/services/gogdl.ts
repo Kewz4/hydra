@@ -56,18 +56,20 @@ export const downloadGogdl = async (
 
   const assets = response.data.assets;
   let assetName: string;
+  const arch = process.arch === "arm64" ? "arm64" : "x86_64";
   if (process.platform === "win32") {
-    assetName = "gogdl.exe";
+    assetName = `gogdl_windows_${arch}.exe`;
   } else if (process.platform === "darwin") {
-    assetName = "gogdl_macos";
+    assetName = `gogdl_macos_${arch}`;
   } else {
-    assetName = "gogdl_linux";
+    assetName = `gogdl_linux_${arch}`;
   }
 
   const asset =
     assets.find((a) => a.name === assetName) ??
+    assets.find((a) => a.name.startsWith("gogdl_windows") && a.name.endsWith(".exe")) ??
     assets.find(
-      (a) => a.name.startsWith("gogdl") && !a.name.endsWith(".tar.gz")
+      (a) => a.name.startsWith("gogdl") && !a.name.endsWith(".tar.gz") && !a.name.endsWith(".zip")
     );
   if (!asset) throw new Error(`No gogdl binary found for ${process.platform}`);
 
