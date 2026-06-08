@@ -52,6 +52,7 @@ jobs:
         run: yarn build:win
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_BUILDER_BINARIES_MIRROR: https://npmmirror.com/mirrors/electron-builder-binaries/
           MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL || 'https://hydra-api-us-east-1.losbroxas.org' }}
           MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL || 'https://auth.hydralauncher.gg' }}
           MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL || 'https://checkout.hydralauncher.gg' }}
