@@ -84,8 +84,7 @@ export default function Downloads() {
     return library.filter((game) => {
       const d = game.download?.downloader;
       if (d === undefined || d === null) return false;
-      const isOfficial =
-        d === Downloader.Legendary || d === Downloader.Gogdl;
+      const isOfficial = d === Downloader.Legendary || d === Downloader.Gogdl;
       return sourceFilter === "official" ? isOfficial : !isOfficial;
     });
   }, [library, sourceFilter]);
