@@ -107,7 +107,11 @@ async function startGogdlDownloadInternal(
           executablePath: `goggalaxy://openGame/${objectId}`,
         });
       }
-      const completeRecord = { ...currentRecord, progress: 1, status: "complete" as const };
+      const completeRecord = {
+        ...currentRecord,
+        progress: 1,
+        status: "complete" as const,
+      };
       await downloadsSublevel.put(gameKey, completeRecord).catch(() => {});
       WindowManager.sendToAppWindows("on-download-progress", {
         gameId: gameKey,

@@ -198,11 +198,11 @@ function parseEtaToMs(eta: string): number {
   const parts = eta.split(":").map(Number);
   if (parts.length === 3) {
     const [h, m, s] = parts;
-    return ((h * 3600) + (m * 60) + s) * 1000;
+    return (h * 3600 + m * 60 + s) * 1000;
   }
   if (parts.length === 2) {
     const [m, s] = parts;
-    return ((m * 60) + s) * 1000;
+    return (m * 60 + s) * 1000;
   }
   return 0;
 }

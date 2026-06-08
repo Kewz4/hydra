@@ -17,7 +17,10 @@ const resumeGameDownload = async (
   const gameKey = levelKeys.game(shop, objectId);
   const download = await downloadsSublevel.get(gameKey).catch(() => null);
 
-  if (download?.downloader === Downloader.Legendary && download?.status === "paused") {
+  if (
+    download?.downloader === Downloader.Legendary &&
+    download?.status === "paused"
+  ) {
     const { resumeLegendaryDownload } = await import(
       "../library/download-via-legendary"
     );
@@ -33,7 +36,10 @@ const resumeGameDownload = async (
     );
   }
 
-  if (download?.downloader === Downloader.Gogdl && download?.status === "paused") {
+  if (
+    download?.downloader === Downloader.Gogdl &&
+    download?.status === "paused"
+  ) {
     const { resumeGogdlDownload } = await import(
       "../library/download-via-gogdl"
     );

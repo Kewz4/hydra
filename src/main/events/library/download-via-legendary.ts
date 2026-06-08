@@ -102,7 +102,11 @@ async function startLegendaryDownloadInternal(
           executablePath: `legendary://run/${objectId}`,
         });
       }
-      const completeRecord = { ...currentRecord, progress: 1, status: "complete" as const };
+      const completeRecord = {
+        ...currentRecord,
+        progress: 1,
+        status: "complete" as const,
+      };
       await downloadsSublevel.put(gameKey, completeRecord).catch(() => {});
       WindowManager.sendToAppWindows("on-download-progress", {
         gameId: gameKey,
@@ -153,7 +157,11 @@ export async function resumeLegendaryDownload(
   downloadPath: string,
   legendaryBinaryPath?: string | null
 ) {
-  return startLegendaryDownloadInternal(objectId, downloadPath, legendaryBinaryPath);
+  return startLegendaryDownloadInternal(
+    objectId,
+    downloadPath,
+    legendaryBinaryPath
+  );
 }
 
 // ---------------------------------------------------------------------------
