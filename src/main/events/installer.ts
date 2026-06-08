@@ -33,7 +33,9 @@ ipcMain.handle(
         app.setPath("logs", path.join(dataDir, "logs"));
         app.setPath("sessionData", path.join(dataDir, "session"));
         app.setPath("crashDumps", path.join(dataDir, "crashes"));
-      } catch { /* setPath may fail after ready on some platforms; ignore */ }
+      } catch {
+        /* setPath may fail after ready on some platforms; ignore */
+      }
       win?.webContents.send("installer:progress", 100, "Done");
       return { ok: true };
     }

@@ -74,9 +74,13 @@ export function GameDetailsContextProvider({
   gameTitle,
   shop,
 }: Readonly<GameDetailsContextProps>) {
-  const [shopDetails, setShopDetails] = useState<ShopDetailsWithAssets | null>(null);
+  const [shopDetails, setShopDetails] = useState<ShopDetailsWithAssets | null>(
+    null
+  );
   const [canonicalShop, setCanonicalShop] = useState<GameShop>(shop);
-  const [canonicalObjectId, setCanonicalObjectId] = useState<string | undefined>(objectId);
+  const [canonicalObjectId, setCanonicalObjectId] = useState<
+    string | undefined
+  >(objectId);
   const [achievements, setAchievements] = useState<UserAchievement[] | null>(
     null
   );
@@ -119,8 +123,13 @@ export function GameDetailsContextProvider({
     // Catalogue entry not in library — check if the user has it under a different shop
     // (e.g. viewing a Steam catalogue entry but the user owns it on Epic/GOG)
     if (gameTitle && shop === "steam") {
-      const libraryMatch = await window.electron.findLibraryGameByTitle(gameTitle).catch(() => null);
-      if (libraryMatch && (libraryMatch.shop === "epic" || libraryMatch.shop === "gog")) {
+      const libraryMatch = await window.electron
+        .findLibraryGameByTitle(gameTitle)
+        .catch(() => null);
+      if (
+        libraryMatch &&
+        (libraryMatch.shop === "epic" || libraryMatch.shop === "gog")
+      ) {
         // Synthesize a game object so the repacks modal shows the platform download button.
         // _synthesized flag prevents this from triggering the "Download via Steam" path.
         const synthetic = {
@@ -130,7 +139,11 @@ export function GameDetailsContextProvider({
           _synthesized: true,
           alternativeShops: [
             ...(libraryMatch.alternativeShops ?? []),
-            { shop: libraryMatch.shop, objectId: libraryMatch.objectId, executablePath: libraryMatch.executablePath },
+            {
+              shop: libraryMatch.shop,
+              objectId: libraryMatch.objectId,
+              executablePath: libraryMatch.executablePath,
+            },
           ],
         };
         setGame(synthetic as any);
@@ -248,7 +261,11 @@ export function GameDetailsContextProvider({
       });
     }
 
-    const assetsPromise = window.electron.getGameAssets(objectId, shop, game?.title);
+    const assetsPromise = window.electron.getGameAssets(
+      objectId,
+      shop,
+      game?.title
+    );
 
     Promise.all([shopDetailsPromise, assetsPromise])
       .then(([_, assets]) => {
@@ -272,9 +289,10 @@ export function GameDetailsContextProvider({
       // Achievements are indexed by Steam — wait for shopDetails so we have the canonical Steam ID
       rawShopDetailsPromise.then((details) => {
         if (abortController.signal.aborted) return;
-        const steamId = shop !== "steam" && (details as any)?.steam_appid
-          ? String((details as any).steam_appid)
-          : null;
+        const steamId =
+          shop !== "steam" && (details as any)?.steam_appid
+            ? String((details as any).steam_appid)
+            : null;
         const achObjectId = steamId ?? objectId;
         const achShop: GameShop = steamId ? "steam" : shop;
         window.electron
@@ -443,43 +461,50 @@ export function GameDetailsContextProvider({
           downloadSourceIds: sources.map((source) => source.id),
         };
 
-        let downloads = await window.electron.hydraApi.get<GameRepack[]>(
-          `/games/${shop}/${objectId}/download-sources`,
-          { params, needsAuth: false }
-        ).catch(() => [] as GameRepack[]);
+        let downloads = await window.electron.hydraApi
+          .get<
+            GameRepack[]
+          >(`/games/${shop}/${objectId}/download-sources`, { params, needsAuth: false })
+          .catch(() => [] as GameRepack[]);
 
         // For non-Steam games with no repacks, search the Hydra catalogue
         // by title to find the Steam equivalent and fetch its repacks
-        if ((!downloads || downloads.length === 0) && shop !== "steam" && shop !== "custom") {
+        if (
+          (!downloads || downloads.length === 0) &&
+          shop !== "steam" &&
+          shop !== "custom"
+        ) {
           try {
             const steamId = await window.electron.hydraApi
-              .post<{ edges: Array<{ shop: string; objectId: string; title: string }> }>(
-                "/catalogue/search",
-                {
-                  data: {
-                    title: gameTitle,
-                    sortBy: "popularity",
-                    sortOrder: "desc",
-                    downloadSourceFingerprints: [],
-                    tags: [],
-                    publishers: [],
-                    genres: [],
-                    developers: [],
-                    protondbSupportBadges: [],
-                    deckCompatibility: [],
-                    take: 5,
-                    skip: 0,
-                  },
-                  needsAuth: false,
-                }
-              )
+              .post<{
+                edges: Array<{ shop: string; objectId: string; title: string }>;
+              }>("/catalogue/search", {
+                data: {
+                  title: gameTitle,
+                  sortBy: "popularity",
+                  sortOrder: "desc",
+                  downloadSourceFingerprints: [],
+                  tags: [],
+                  publishers: [],
+                  genres: [],
+                  developers: [],
+                  protondbSupportBadges: [],
+                  deckCompatibility: [],
+                  take: 5,
+                  skip: 0,
+                },
+                needsAuth: false,
+              })
               .then((resp) => {
-                const normalizedTitle = gameTitle.toLowerCase().replace(/[^a-z0-9]/g, "");
+                const normalizedTitle = gameTitle
+                  .toLowerCase()
+                  .replace(/[^a-z0-9]/g, "");
                 const match =
                   resp?.edges?.find(
                     (r) =>
                       r.shop === "steam" &&
-                      r.title.toLowerCase().replace(/[^a-z0-9]/g, "") === normalizedTitle
+                      r.title.toLowerCase().replace(/[^a-z0-9]/g, "") ===
+                        normalizedTitle
                   ) ?? resp?.edges?.find((r) => r.shop === "steam");
                 return match?.objectId ?? null;
               })

@@ -85,7 +85,9 @@ const addCustomGameToLibrary = async (
     if (match) {
       const catalogueKey = levelKeys.game(match.shop, match.objectId);
       // Check if that catalogue entry already exists in the library
-      const existingCatalogue = await gamesSublevel.get(catalogueKey).catch(() => null);
+      const existingCatalogue = await gamesSublevel
+        .get(catalogueKey)
+        .catch(() => null);
       if (existingCatalogue && !existingCatalogue.isDeleted) {
         // Merge exe into existing catalogue entry
         const merged = {
@@ -94,7 +96,9 @@ const addCustomGameToLibrary = async (
           iconUrl: iconUrl || existingCatalogue.iconUrl || null,
           logoImageUrl: logoImageUrl || existingCatalogue.logoImageUrl || null,
           libraryHeroImageUrl:
-            libraryHeroImageUrl || existingCatalogue.libraryHeroImageUrl || null,
+            libraryHeroImageUrl ||
+            existingCatalogue.libraryHeroImageUrl ||
+            null,
         };
         await gamesSublevel.put(catalogueKey, merged);
         await deduplicateTitle(match.title).catch(() => {});

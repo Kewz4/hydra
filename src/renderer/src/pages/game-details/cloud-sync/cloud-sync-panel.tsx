@@ -186,8 +186,6 @@ export function CloudSyncPanel({
   const disableActions =
     uploadingBackup || restoringBackup || deletingArtifact || freezingArtifact;
 
-
-
   return (
     <>
       <CloudSyncRenameArtifactModal

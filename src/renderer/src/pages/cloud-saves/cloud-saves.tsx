@@ -74,7 +74,10 @@ export default function CloudSaves() {
           artifact.shop,
           artifact.id
         );
-        showSuccessToast("Cloud Saves", `Restored save for ${artifact.gameTitle}.`);
+        showSuccessToast(
+          "Cloud Saves",
+          `Restored save for ${artifact.gameTitle}.`
+        );
       } catch {
         showErrorToast("Cloud Saves", "Failed to restore save.");
       } finally {
@@ -135,20 +138,23 @@ export default function CloudSaves() {
         <h3>How cloud saves work</h3>
         <ul>
           <li>
-            <strong>Automatic saves</strong> — When you enable "Automatic cloud sync" for a game,
-            GameHub backs up your save files each time you launch or close the game. No action needed.
+            <strong>Automatic saves</strong> — When you enable "Automatic cloud
+            sync" for a game, GameHub backs up your save files each time you
+            launch or close the game. No action needed.
           </li>
           <li>
-            <strong>Manual saves</strong> — Open any game's detail page, go to the Cloud Sync panel,
-            and click "Create Backup" any time you want a snapshot.
+            <strong>Manual saves</strong> — Open any game's detail page, go to
+            the Cloud Sync panel, and click "Create Backup" any time you want a
+            snapshot.
           </li>
           <li>
-            <strong>Restoring</strong> — Click <em>Restore</em> on any backup below to overwrite
-            your local save with that cloud snapshot. Make sure the game is closed before restoring.
+            <strong>Restoring</strong> — Click <em>Restore</em> on any backup
+            below to overwrite your local save with that cloud snapshot. Make
+            sure the game is closed before restoring.
           </li>
           <li>
-            <strong>Your saves are private</strong> — Backups are stored under your personal account ID
-            and are never visible to other users.
+            <strong>Your saves are private</strong> — Backups are stored under
+            your personal account ID and are never visible to other users.
           </li>
         </ul>
       </div>
@@ -174,7 +180,10 @@ export default function CloudSaves() {
                   className="cloud-saves__game-header"
                   onClick={() =>
                     navigate(
-                      buildGameDetailsPath(first.shop as GameShop, first.objectId)
+                      buildGameDetailsPath(
+                        first.shop as GameShop,
+                        first.objectId
+                      )
                     )
                   }
                 >
@@ -189,7 +198,9 @@ export default function CloudSaves() {
                       <CloudIcon size={14} />
                     </div>
                   )}
-                  <span className="cloud-saves__game-title">{first.gameTitle}</span>
+                  <span className="cloud-saves__game-title">
+                    {first.gameTitle}
+                  </span>
                   <span className="cloud-saves__game-badge">
                     {entries.length} save{entries.length !== 1 ? "s" : ""}
                   </span>
@@ -205,7 +216,9 @@ export default function CloudSaves() {
                       <div key={artifact.id} className="cloud-saves__entry">
                         <div className="cloud-saves__entry-meta">
                           <span className="cloud-saves__entry-label">
-                            {artifact.label ?? artifact.downloadOptionTitle ?? "Backup"}
+                            {artifact.label ??
+                              artifact.downloadOptionTitle ??
+                              "Backup"}
                           </span>
                           <span className="cloud-saves__entry-detail">
                             {formatDate(artifact.createdAt)}
@@ -225,7 +238,11 @@ export default function CloudSaves() {
                             type="button"
                             onClick={() => handleRestore(artifact)}
                             disabled={isRestoring || isDeleting}
-                            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
                           >
                             <DownloadIcon size={13} />
                             {isRestoring ? "Restoring…" : "Restore"}

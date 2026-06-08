@@ -11,8 +11,11 @@ const getGameArtifacts = async (
   if (shop === "custom") return [];
 
   const prefs = await db
-    .get<string, UserPreferences>(levelKeys.userPreferences, { valueEncoding: "json" })
-    .catch(() => ({} as UserPreferences));
+    .get<
+      string,
+      UserPreferences
+    >(levelKeys.userPreferences, { valueEncoding: "json" })
+    .catch(() => ({}) as UserPreferences);
 
   const userId = prefs?.cloudSyncUserId ?? "anonymous";
   return UploadcareSync.listArtifacts(userId, shop, objectId);

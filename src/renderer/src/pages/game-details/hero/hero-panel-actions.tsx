@@ -197,11 +197,20 @@ export function HeroPanelActions() {
     const targetTitle = gameTitle;
     if (!targetShop || !targetObjectId) return;
     const link = `hydralauncher://game?shop=${encodeURIComponent(targetShop)}&objectId=${encodeURIComponent(targetObjectId)}&title=${encodeURIComponent(targetTitle)}`;
-    navigator.clipboard.writeText(link).then(() => {
-      showSuccessToast(t("share_link_copied", { defaultValue: "Game link copied to clipboard!" }));
-    }).catch(() => {
-      showErrorToast(t("share_link_failed", { defaultValue: "Failed to copy link" }));
-    });
+    navigator.clipboard
+      .writeText(link)
+      .then(() => {
+        showSuccessToast(
+          t("share_link_copied", {
+            defaultValue: "Game link copied to clipboard!",
+          })
+        );
+      })
+      .catch(() => {
+        showErrorToast(
+          t("share_link_failed", { defaultValue: "Failed to copy link" })
+        );
+      });
   };
 
   const deleting = game ? isGameDeleting(game?.id) : false;
@@ -263,9 +272,10 @@ export function HeroPanelActions() {
     if (game?.executablePath) {
       // Protocol-scheme URLs (legendary://, goggalaxy://, msxbox://) launch via
       // external platform. Show "Launch" for these to distinguish from local installs.
-      const isExternalLaunch = /^(legendary|goggalaxy|battlenet|msxbox|steam):\/\//.test(
-        game.executablePath
-      );
+      const isExternalLaunch =
+        /^(legendary|goggalaxy|battlenet|msxbox|steam):\/\//.test(
+          game.executablePath
+        );
       return (
         <Button
           onClick={openGame}
@@ -274,7 +284,9 @@ export function HeroPanelActions() {
           className="hero-panel-actions__action"
         >
           <PlayIcon />
-          {isExternalLaunch ? t("launch", { defaultValue: "Launch" }) : t("play")}
+          {isExternalLaunch
+            ? t("launch", { defaultValue: "Launch" })
+            : t("play")}
         </Button>
       );
     }

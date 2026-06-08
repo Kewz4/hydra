@@ -2,12 +2,19 @@ import { registerEvent } from "../register-event";
 import { WindowManager, logger } from "@main/services";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
-import { spawnLegendaryInstall, findLegendaryBinary } from "@main/services/legendary";
+import {
+  spawnLegendaryInstall,
+  findLegendaryBinary,
+} from "@main/services/legendary";
 import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { Downloader } from "@shared";
 
 function sendLog(objectId: string, line: string, isError = false) {
-  WindowManager.sendToAppWindows("on-legendary-process-log", { objectId, line, isError });
+  WindowManager.sendToAppWindows("on-legendary-process-log", {
+    objectId,
+    line,
+    isError,
+  });
 }
 
 // Track active legendary downloads by gameId
@@ -18,15 +25,22 @@ const downloadViaLegendary = async (
   objectId: string, // Legendary app_name
   customDownloadPath?: string
 ) => {
-  const prefs = await db.get<string, UserPreferences | null>(levelKeys.userPreferences, { valueEncoding: "json" }).catch(() => null);
+  const prefs = await db
+    .get<
+      string,
+      UserPreferences | null
+    >(levelKeys.userPreferences, { valueEncoding: "json" })
+    .catch(() => null);
   const binary = findLegendaryBinary(prefs?.legendaryBinaryPath);
   if (!binary) throw new Error("Legendary binary not found");
 
-  const downloadPath = customDownloadPath ?? await getDownloadsPath();
+  const downloadPath = customDownloadPath ?? (await getDownloadsPath());
   const gameKey = levelKeys.game("epic", objectId);
 
   // Mark download as active in downloads sublevel so the UI tracks it
-  const existingDownload = await downloadsSublevel.get(gameKey).catch(() => null);
+  const existingDownload = await downloadsSublevel
+    .get(gameKey)
+    .catch(() => null);
   const initialRecord = {
     ...(existingDownload ?? {}),
     shop: "epic",
@@ -61,7 +75,10 @@ const downloadViaLegendary = async (
     downloadPath,
     prefs?.legendaryBinaryPath,
     async (progress, downloadedMB, totalMB, speedMBs) => {
-      sendLog(objectId, `↓ ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`);
+      sendLog(
+        objectId,
+        `↓ ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`
+      );
       currentRecord = {
         ...currentRecord,
         progress,
@@ -74,7 +91,8 @@ const downloadViaLegendary = async (
         gameId: gameKey,
         progress,
         downloadSpeed: speedMBs * 1024 * 1024,
-        timeRemaining: speedMBs > 0 ? ((totalMB - downloadedMB) / speedMBs) * 1000 : 0,
+        timeRemaining:
+          speedMBs > 0 ? ((totalMB - downloadedMB) / speedMBs) * 1000 : 0,
         numPeers: 0,
         numSeeds: 0,
         isDownloadingMetadata: false,
@@ -93,11 +111,13 @@ const downloadViaLegendary = async (
           executablePath: `legendary://run/${objectId}`,
         });
       }
-      await downloadsSublevel.put(gameKey, {
-        ...currentRecord,
-        progress: 1,
-        status: "complete",
-      }).catch(() => {});
+      await downloadsSublevel
+        .put(gameKey, {
+          ...currentRecord,
+          progress: 1,
+          status: "complete",
+        })
+        .catch(() => {});
       WindowManager.sendToAppWindows("on-download-progress", {
         gameId: gameKey,
         progress: 1,

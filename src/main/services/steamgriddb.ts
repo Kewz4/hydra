@@ -16,10 +16,10 @@ interface SgdbAsset {
 }
 
 export interface SgdbArtwork {
-  gridUrl: string | null;      // vertical cover 600x900 → coverImageUrl / iconUrl
-  wideGridUrl: string | null;  // horizontal grid 460x215 → libraryImageUrl
-  heroUrl: string | null;      // hero banner → libraryHeroImageUrl
-  logoUrl: string | null;      // transparent logo → logoImageUrl
+  gridUrl: string | null; // vertical cover 600x900 → coverImageUrl / iconUrl
+  wideGridUrl: string | null; // horizontal grid 460x215 → libraryImageUrl
+  heroUrl: string | null; // hero banner → libraryHeroImageUrl
+  logoUrl: string | null; // transparent logo → logoImageUrl
 }
 
 // In-memory search cache: title → SGDB game id (null = no match)
@@ -30,7 +30,15 @@ const artworkCache = new Map<number, SgdbArtwork>();
 /** Loose similarity check: removes edition words and punctuation, then checks overlap. */
 function titlesSimilar(a: string, b: string): boolean {
   const clean = (s: string) =>
-    s.toLowerCase().replace(/[:\-–—]/g, " ").replace(/\b(deluxe|ultimate|complete|definitive|enhanced|gold|goty|remastered|remake|edition)\b/g, "").replace(/\s+/g, " ").trim();
+    s
+      .toLowerCase()
+      .replace(/[:\-–—]/g, " ")
+      .replace(
+        /\b(deluxe|ultimate|complete|definitive|enhanced|gold|goty|remastered|remake|edition)\b/g,
+        ""
+      )
+      .replace(/\s+/g, " ")
+      .trim();
   const ca = clean(a);
   const cb = clean(b);
   return ca === cb || ca.startsWith(cb) || cb.startsWith(ca);
@@ -63,10 +71,10 @@ async function findSgdbGameId(title: string): Promise<number | null> {
 
 async function fetchOne(url: string): Promise<string | null> {
   try {
-    const res = await axios.get<{ success: boolean; data: SgdbAsset[] }>(
-      url,
-      { headers, timeout: 10_000 }
-    );
+    const res = await axios.get<{ success: boolean; data: SgdbAsset[] }>(url, {
+      headers,
+      timeout: 10_000,
+    });
     return res.data.data?.[0]?.url ?? null;
   } catch {
     return null;
@@ -93,7 +101,9 @@ async function getSgdbArtwork(gameId: number): Promise<SgdbArtwork> {
  * Fetch SteamGridDB artwork for a game by title.
  * Returns null if no match is found or all requests fail.
  */
-export async function getSteamGridDbArtwork(title: string): Promise<SgdbArtwork | null> {
+export async function getSteamGridDbArtwork(
+  title: string
+): Promise<SgdbArtwork | null> {
   const gameId = await findSgdbGameId(title);
   if (!gameId) return null;
   return getSgdbArtwork(gameId);

@@ -218,7 +218,9 @@
   font-size: 0.875rem;
   cursor: pointer;
   text-align: left;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 
   &:hover {
     background: rgba(255, 255, 255, 0.08);
@@ -283,4 +285,3 @@
     accent-color: var(--color-accent, #5e81f4);
   }
 }
-

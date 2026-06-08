@@ -223,7 +223,9 @@
     font-size: globals.$small-font-size;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.18s ease, transform 0.12s ease;
+    transition:
+      background 0.18s ease,
+      transform 0.12s ease;
     min-width: 120px;
 
     &:hover {

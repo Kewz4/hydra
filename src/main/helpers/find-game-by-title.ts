@@ -7,7 +7,9 @@ import { normalizeGameTitle } from "./normalize-game-title";
  * "God of War Ragnarök Deluxe Edition" matches "God of War Ragnarök".
  * Returns [key, game] or null.
  */
-export async function findGameByTitle(title: string): Promise<[string, Game] | null> {
+export async function findGameByTitle(
+  title: string
+): Promise<[string, Game] | null> {
   const normalized = normalizeGameTitle(title);
   for await (const [key, game] of gamesSublevel.iterator()) {
     if (!game.isDeleted && normalizeGameTitle(game.title) === normalized) {

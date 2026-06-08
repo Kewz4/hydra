@@ -5,8 +5,11 @@ import type { UserPreferences } from "@types";
 
 const getAllArtifacts = async (_event: Electron.IpcMainInvokeEvent) => {
   const prefs = await db
-    .get<string, UserPreferences>(levelKeys.userPreferences, { valueEncoding: "json" })
-    .catch(() => ({} as UserPreferences));
+    .get<
+      string,
+      UserPreferences
+    >(levelKeys.userPreferences, { valueEncoding: "json" })
+    .catch(() => ({}) as UserPreferences);
 
   const userId = prefs?.cloudSyncUserId ?? "anonymous";
 

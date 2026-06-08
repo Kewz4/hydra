@@ -10,7 +10,9 @@ let steamAppListCache: SteamSearchResult[] | null = null;
 let steamAppListFetchedAt = 0;
 
 /** Search Steam for a game by title. Returns the best-match appId or null. */
-export async function findSteamAppIdByTitle(title: string): Promise<number | null> {
+export async function findSteamAppIdByTitle(
+  title: string
+): Promise<number | null> {
   try {
     // Cache the full app list for 24h
     if (!steamAppListCache || Date.now() - steamAppListFetchedAt > 86400_000) {

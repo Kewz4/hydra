@@ -8,7 +8,12 @@ import { findLegendaryBinary } from "@main/services/legendary";
 import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 
-const EXTERNAL_URL_SCHEMES = ["steam://", "goggalaxy://", "battlenet://", "msxbox://"];
+const EXTERNAL_URL_SCHEMES = [
+  "steam://",
+  "goggalaxy://",
+  "battlenet://",
+  "msxbox://",
+];
 
 const openGame = async (
   _event: Electron.IpcMainInvokeEvent,
@@ -41,11 +46,10 @@ const openGame = async (
 
     await WindowManager.createGameLauncherWindow(shop, objectId);
 
-    execFile(
-      binary,
-      ["launch", appName, "--skip-version-check"],
-      { detached: true, stdio: "ignore" }
-    ).unref();
+    execFile(binary, ["launch", appName, "--skip-version-check"], {
+      detached: true,
+      stdio: "ignore",
+    }).unref();
     return;
   }
 

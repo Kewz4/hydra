@@ -1,6 +1,12 @@
 import { getSteamAppDetails, logger, HydraApi } from "@main/services";
 
-import type { ShopDetails, GameShop, ShopDetailsWithAssets, CatalogueSearchResult, ShopAssets } from "@types";
+import type {
+  ShopDetails,
+  GameShop,
+  ShopDetailsWithAssets,
+  CatalogueSearchResult,
+  ShopAssets,
+} from "@types";
 
 import { registerEvent } from "../register-event";
 import {
@@ -37,12 +43,17 @@ const getGameShopDetails = async (
       // First, try the Hydra API assets for this exact game to get its title
       const gameKey = levelKeys.game(shop, objectId);
       const gameEntry = await gamesSublevel.get(gameKey).catch(() => null);
-      const gameAssets = await gamesShopAssetsSublevel.get(gameKey).catch(() => null);
+      const gameAssets = await gamesShopAssetsSublevel
+        .get(gameKey)
+        .catch(() => null);
       const titleToSearch = gameAssets?.title ?? gameEntry?.title ?? objectId;
 
       // Search the Hydra catalogue for a Steam match by title
       const titleNorm = normalizeGameTitle(titleToSearch);
-      const catalogueResp = await HydraApi.post<{ edges: CatalogueSearchResult[]; count: number }>(
+      const catalogueResp = await HydraApi.post<{
+        edges: CatalogueSearchResult[];
+        count: number;
+      }>(
         "/catalogue/search",
         {
           title: titleToSearch,
@@ -61,9 +72,10 @@ const getGameShopDetails = async (
         { needsAuth: false }
       ).catch(() => null);
 
-      const steamMatch = catalogueResp?.edges?.find(
-        (r) => r.shop === "steam" && normalizeGameTitle(r.title) === titleNorm
-      ) ?? catalogueResp?.edges?.find((r) => r.shop === "steam");
+      const steamMatch =
+        catalogueResp?.edges?.find(
+          (r) => r.shop === "steam" && normalizeGameTitle(r.title) === titleNorm
+        ) ?? catalogueResp?.edges?.find((r) => r.shop === "steam");
 
       if (steamMatch) {
         const steamObjectId = steamMatch.objectId;
@@ -76,20 +88,30 @@ const getGameShopDetails = async (
 
         const details = cachedDetails
           ? { ...cachedDetails, assets: steamAssets ?? gameAssets ?? null }
-          : await getSteamAppDetails(steamObjectId, language).then((r) => {
-              if (r) {
-                // Cache for next time
-                gamesShopCacheSublevel
-                  .put(levelKeys.gameShopCacheItem("steam", steamObjectId, language), r)
-                  .catch(() => {});
-                return { ...r, assets: steamAssets ?? gameAssets ?? null };
-              }
-              return null;
-            }).catch(() => null);
+          : await getSteamAppDetails(steamObjectId, language)
+              .then((r) => {
+                if (r) {
+                  // Cache for next time
+                  gamesShopCacheSublevel
+                    .put(
+                      levelKeys.gameShopCacheItem(
+                        "steam",
+                        steamObjectId,
+                        language
+                      ),
+                      r
+                    )
+                    .catch(() => {});
+                  return { ...r, assets: steamAssets ?? gameAssets ?? null };
+                }
+                return null;
+              })
+              .catch(() => null);
 
         if (details) {
           // Override the name with the actual game title from our library
-          (details as ShopDetails).name = gameAssets?.title ?? gameEntry?.title ?? details.name;
+          (details as ShopDetails).name =
+            gameAssets?.title ?? gameEntry?.title ?? details.name;
           return {
             ...details,
             assets: steamAssets ?? gameAssets ?? null,
@@ -97,7 +119,10 @@ const getGameShopDetails = async (
         }
       }
     } catch (err) {
-      logger.warn(`getGameShopDetails: non-Steam fallback failed for ${shop}/${objectId}`, err);
+      logger.warn(
+        `getGameShopDetails: non-Steam fallback failed for ${shop}/${objectId}`,
+        err
+      );
     }
     return null;
   }

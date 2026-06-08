@@ -6,9 +6,15 @@ import { getSteamGridDbArtwork } from "@main/services/steamgriddb";
 
 const LOCAL_CACHE_EXPIRATION = 1000 * 60 * 60 * 8; // 8 hours
 
-export const getGameAssets = async (objectId: string, shop: GameShop, title?: string) => {
+export const getGameAssets = async (
+  objectId: string,
+  shop: GameShop,
+  title?: string
+) => {
   const cacheKey = levelKeys.game(shop, objectId);
-  const cachedAssets = await gamesShopAssetsSublevel.get(cacheKey).catch(() => null);
+  const cachedAssets = await gamesShopAssetsSublevel
+    .get(cacheKey)
+    .catch(() => null);
 
   if (
     cachedAssets &&
@@ -52,7 +58,8 @@ export const getGameAssets = async (objectId: string, shop: GameShop, title?: st
     title: searchTitle,
     iconUrl: sgdb.gridUrl ?? cachedAssets?.iconUrl ?? null,
     coverImageUrl: sgdb.gridUrl ?? cachedAssets?.coverImageUrl ?? null,
-    libraryHeroImageUrl: sgdb.heroUrl ?? cachedAssets?.libraryHeroImageUrl ?? null,
+    libraryHeroImageUrl:
+      sgdb.heroUrl ?? cachedAssets?.libraryHeroImageUrl ?? null,
     libraryImageUrl: sgdb.wideGridUrl ?? cachedAssets?.libraryImageUrl ?? null,
     logoImageUrl: sgdb.logoUrl ?? cachedAssets?.logoImageUrl ?? null,
     logoPosition: cachedAssets?.logoPosition ?? null,

@@ -157,7 +157,11 @@ declare global {
     getSteamPlayerSummary: (
       steamId: string,
       apiKey?: string
-    ) => Promise<{ steamid: string; personaname: string; avatarfull: string } | null>;
+    ) => Promise<{
+      steamid: string;
+      personaname: string;
+      avatarfull: string;
+    } | null>;
     syncSteamLibrary: (
       steamId: string,
       apiKey?: string
@@ -169,22 +173,60 @@ declare global {
       authenticated: boolean;
     }>;
     installLegendary: () => Promise<{ path: string }>;
-    openLegendaryAuthWindow: () => Promise<{ success: boolean; account?: string }>;
-    syncEpicLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null; what: string }> }>;
+    openLegendaryAuthWindow: () => Promise<{
+      success: boolean;
+      account?: string;
+    }>;
+    syncEpicLibrary: () => Promise<{
+      total: number;
+      added: number;
+      addedGames: Array<{
+        title: string;
+        coverUrl: string | null;
+        what: string;
+      }>;
+    }>;
     installBattleNet: () => Promise<{ path: string }>;
     onLegendaryInstallProgress: (cb: (pct: number) => void) => () => void;
     onBattleNetInstallProgress: (cb: (pct: number) => void) => () => void;
-    openGogAuthWindow: () => Promise<{ refresh_token: string; username: string } | null>;
-    syncGogLibrary: () => Promise<{ total: number; added: number; addedGames: Array<{ title: string; coverUrl: string | null; what: string }> }>;
+    openGogAuthWindow: () => Promise<{
+      refresh_token: string;
+      username: string;
+    } | null>;
+    syncGogLibrary: () => Promise<{
+      total: number;
+      added: number;
+      addedGames: Array<{
+        title: string;
+        coverUrl: string | null;
+        what: string;
+      }>;
+    }>;
     getGogUserInfo: () => Promise<{ userId: string; username: string } | null>;
     getBattleNetGames: () => Promise<{
       installed: boolean;
-      detected: Array<{ productCode: string; title: string; iconUrl: string; launchUri: string }>;
-      all: Array<{ productCode: string; title: string; iconUrl: string; launchUri: string }>;
+      detected: Array<{
+        productCode: string;
+        title: string;
+        iconUrl: string;
+        launchUri: string;
+      }>;
+      all: Array<{
+        productCode: string;
+        title: string;
+        iconUrl: string;
+        launchUri: string;
+      }>;
     }>;
-    addBattleNetGamesToLibrary: (productCodes: string[]) => Promise<{ added: number }>;
+    addBattleNetGamesToLibrary: (
+      productCodes: string[]
+    ) => Promise<{ added: number }>;
     syncGamePassLibrary: () => Promise<{ added: number; total: number }>;
-    openXboxAuthWindow: () => Promise<{ success: boolean; gamertag?: string; hasGamePass?: boolean }>;
+    openXboxAuthWindow: () => Promise<{
+      success: boolean;
+      gamertag?: string;
+      hasGamePass?: boolean;
+    }>;
     addCustomGameToLibrary: (
       title: string,
       executablePath: string,
@@ -274,10 +316,22 @@ declare global {
     verifyExecutablePathInUse: (executablePath: string) => Promise<Game>;
     getLibrary: () => Promise<LibraryGame[]>;
     refreshLibraryAssets: () => Promise<void>;
-    generateMissingMetadata: () => Promise<{ updated: number; skipped: number; results: Array<{ title: string; coverUrl: string | null; what: string }> }>;
-    mergeDuplicateGames: () => Promise<{ merged: number; mergedTitles: string[] }>;
-    findLibraryGameByTitle: (title: string) => Promise<import("@types").Game | null>;
-    getGogdlStatus: () => Promise<{ binaryFound: boolean; binaryPath: string | null }>;
+    generateMissingMetadata: () => Promise<{
+      updated: number;
+      skipped: number;
+      results: Array<{ title: string; coverUrl: string | null; what: string }>;
+    }>;
+    mergeDuplicateGames: () => Promise<{
+      merged: number;
+      mergedTitles: string[];
+    }>;
+    findLibraryGameByTitle: (
+      title: string
+    ) => Promise<import("@types").Game | null>;
+    getGogdlStatus: () => Promise<{
+      binaryFound: boolean;
+      binaryPath: string | null;
+    }>;
     openGameInstaller: (shop: GameShop, objectId: string) => Promise<boolean>;
     getGameInstallerActionType: (
       shop: GameShop,
@@ -512,10 +566,20 @@ declare global {
       cb: (value: { objectId: string; line: string; isError: boolean }) => void
     ) => () => Electron.IpcRenderer;
     onMetadataProgress: (
-      cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+      cb: (value: {
+        current: number;
+        total: number;
+        title: string | null;
+        done?: boolean;
+      }) => void
     ) => () => Electron.IpcRenderer;
     onDedupProgress: (
-      cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+      cb: (value: {
+        current: number;
+        total: number;
+        title: string | null;
+        done?: boolean;
+      }) => void
     ) => () => Electron.IpcRenderer;
     resetCommonRedistPreflight: () => Promise<void>;
     saveTempFile: (fileName: string, fileData: Uint8Array) => Promise<string>;
@@ -695,9 +759,15 @@ declare global {
     cancelGameTransfer: (shop: GameShop, objectId: string) => Promise<void>;
 
     startSteamOpenIdLogin: () => Promise<string>;
-    downloadViaLegendary: (objectId: string, downloadPath?: string) => Promise<{ ok: boolean }>;
+    downloadViaLegendary: (
+      objectId: string,
+      downloadPath?: string
+    ) => Promise<{ ok: boolean }>;
     cancelLegendaryDownload: (objectId: string) => Promise<{ ok: boolean }>;
-    downloadViaGogdl: (objectId: string, downloadPath?: string) => Promise<{ ok: boolean }>;
+    downloadViaGogdl: (
+      objectId: string,
+      downloadPath?: string
+    ) => Promise<{ ok: boolean }>;
     cancelGogdlDownload: (objectId: string) => Promise<{ ok: boolean }>;
     installGogdl: () => Promise<{ path: string }>;
     onGogdlInstallProgress: (cb: (pct: number) => void) => () => void;
@@ -707,15 +777,30 @@ declare global {
     off: (channel: string, listener: (...args: any[]) => void) => void;
 
     /* Installer */
-    installerGetDefaults: () => Promise<{ defaultInstallDir: string; exeDir: string }>;
+    installerGetDefaults: () => Promise<{
+      defaultInstallDir: string;
+      exeDir: string;
+    }>;
     installerBrowseDirectory: (defaultPath: string) => Promise<string | null>;
-    installerRunSetup: (mode: "install" | "portable", destDir?: string) => Promise<void>;
+    installerRunSetup: (
+      mode: "install" | "portable",
+      destDir?: string
+    ) => Promise<void>;
     installerRelaunch: (destDir: string) => Promise<void>;
     installerOpenFolder: (destDir: string) => Promise<void>;
     installerCloseAndLaunch: () => Promise<void>;
-    onInstallerProgress: (cb: (pct: number, file: string) => void) => () => void;
+    onInstallerProgress: (
+      cb: (pct: number, file: string) => void
+    ) => () => void;
     openConsoleWindow: () => Promise<void>;
-    onConsoleLog: (cb: (entry: { ts: number; level: string; scope: string; text: string }) => void) => () => void;
+    onConsoleLog: (
+      cb: (entry: {
+        ts: number;
+        level: string;
+        scope: string;
+        text: string;
+      }) => void
+    ) => () => void;
   }
 
   interface Window {

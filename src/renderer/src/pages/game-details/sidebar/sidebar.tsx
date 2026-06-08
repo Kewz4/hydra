@@ -105,7 +105,10 @@ interface SidebarProps {
   canonicalObjectId?: string;
 }
 
-export function Sidebar({ canonicalShop, canonicalObjectId }: Readonly<SidebarProps> = {}) {
+export function Sidebar({
+  canonicalShop,
+  canonicalObjectId,
+}: Readonly<SidebarProps> = {}) {
   const shouldShowProtonFeatures = window.electron.platform === "linux";
   const [howLongToBeat, setHowLongToBeat] = useState<{
     isLoading: boolean;

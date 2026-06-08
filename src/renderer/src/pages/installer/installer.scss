@@ -90,7 +90,9 @@
     border: 1.5px solid rgba(255, 255, 255, 0.08);
     border-radius: 10px;
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
+    transition:
+      border-color 0.15s,
+      background 0.15s;
     text-align: left;
     color: inherit;
 
@@ -180,7 +182,9 @@
     font-weight: 600;
     cursor: pointer;
     border: none;
-    transition: opacity 0.15s, background 0.15s;
+    transition:
+      opacity 0.15s,
+      background 0.15s;
 
     &:disabled {
       opacity: 0.35;

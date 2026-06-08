@@ -1,4 +1,10 @@
-export type GameShop = "steam" | "epic" | "gog" | "battlenet" | "xbox" | "custom";
+export type GameShop =
+  | "steam"
+  | "epic"
+  | "gog"
+  | "battlenet"
+  | "xbox"
+  | "custom";
 
 export type ShortcutLocation = "desktop" | "start_menu";
 

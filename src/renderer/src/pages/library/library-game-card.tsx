@@ -56,7 +56,10 @@ export const LibraryGameCard = memo(function LibraryGameCard({
     if (diffMin < 60) return `${diffMin}m ago`;
     if (diffHr < 24) return `${diffHr}h ago`;
     if (diffDay < 7) return `${diffDay}d ago`;
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return date.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+    });
   })();
 
   const sources = [
@@ -155,7 +158,10 @@ export const LibraryGameCard = memo(function LibraryGameCard({
         </div>
 
         {lastSaveLabel && (
-          <div className="library-game-card__cloud-save" title={`Last cloud save: ${new Date(game.lastCloudSaveAt!).toLocaleString()}`}>
+          <div
+            className="library-game-card__cloud-save"
+            title={`Last cloud save: ${new Date(game.lastCloudSaveAt!).toLocaleString()}`}
+          >
             <CloudIcon size={10} />
             <span>{lastSaveLabel}</span>
           </div>

@@ -133,10 +133,7 @@ export function BigPictureToastCard({
         className="big-picture-toast__fallback-symbol"
       />
     ) : (
-      <GameHubIcon
-        aria-hidden
-        className="big-picture-toast__fallback-image"
-      />
+      <GameHubIcon aria-hidden className="big-picture-toast__fallback-image" />
     );
 
   return (

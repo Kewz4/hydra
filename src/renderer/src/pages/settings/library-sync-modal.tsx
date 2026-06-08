@@ -23,7 +23,12 @@ export function LibrarySyncModal({
   onClose,
 }: Readonly<LibrarySyncModalProps>) {
   return (
-    <Modal visible={visible} title={heading} description={summary} onClose={onClose}>
+    <Modal
+      visible={visible}
+      title={heading}
+      description={summary}
+      onClose={onClose}
+    >
       <div
         style={{
           maxHeight: 420,
@@ -93,7 +98,9 @@ export function LibrarySyncModal({
               >
                 {r.title}
               </p>
-              <p style={{ margin: "2px 0 0", opacity: 0.6, fontSize: "0.8rem" }}>
+              <p
+                style={{ margin: "2px 0 0", opacity: 0.6, fontSize: "0.8rem" }}
+              >
                 {r.what}
               </p>
             </div>
@@ -115,7 +122,9 @@ export function LibrarySyncModal({
         ))}
       </div>
 
-      <div style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}>
+      <div
+        style={{ marginTop: 16, display: "flex", justifyContent: "flex-end" }}
+      >
         <Button type="button" onClick={onClose}>
           Done
         </Button>

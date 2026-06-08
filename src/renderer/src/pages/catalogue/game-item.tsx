@@ -7,7 +7,12 @@ import { Link } from "@renderer/components/link/link";
 import "./game-item.scss";
 import { useTranslation } from "react-i18next";
 import { CatalogueSearchResult } from "@types";
-import { QuestionIcon, PlusIcon, CheckIcon, ShareAndroidIcon } from "@primer/octicons-react";
+import {
+  QuestionIcon,
+  PlusIcon,
+  CheckIcon,
+  ShareAndroidIcon,
+} from "@primer/octicons-react";
 import cn from "classnames";
 
 const ProtonDBBadge = lazy(async () => {
@@ -37,11 +42,20 @@ export function GameItem({ game }: GameItemProps) {
     e.preventDefault();
     e.stopPropagation();
     const link = `hydralauncher://game?shop=${encodeURIComponent(game.shop)}&objectId=${encodeURIComponent(game.objectId)}&title=${encodeURIComponent(game.title)}`;
-    navigator.clipboard.writeText(link).then(() => {
-      showSuccessToast(t("share_link_copied", { defaultValue: "Game link copied to clipboard!" }));
-    }).catch(() => {
-      showErrorToast(t("share_link_failed", { defaultValue: "Failed to copy link" }));
-    });
+    navigator.clipboard
+      .writeText(link)
+      .then(() => {
+        showSuccessToast(
+          t("share_link_copied", {
+            defaultValue: "Game link copied to clipboard!",
+          })
+        );
+      })
+      .catch(() => {
+        showErrorToast(
+          t("share_link_failed", { defaultValue: "Failed to copy link" })
+        );
+      });
   };
   const shouldShowProtonFeatures = window.electron.platform === "linux";
 

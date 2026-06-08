@@ -3,20 +3,37 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
-import { AlertIcon, CheckCircleFillIcon, DownloadIcon, SyncIcon } from "@primer/octicons-react";
+import {
+  AlertIcon,
+  CheckCircleFillIcon,
+  DownloadIcon,
+  SyncIcon,
+} from "@primer/octicons-react";
 import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
 export function SettingsGogAccount() {
   const { t } = useTranslation("settings");
-  const userPreferences = useAppSelector((state) => state.userPreferences.value);
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
   const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
 
-  const [userInfo, setUserInfo] = useState<{ userId: string; username: string } | null>(null);
+  const [userInfo, setUserInfo] = useState<{
+    userId: string;
+    username: string;
+  } | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
-  const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    total: number;
+    added: number;
+  } | null>(null);
+  const [syncModal, setSyncModal] = useState<{
+    heading: string;
+    summary: string;
+    results: LibrarySyncResult[];
+  } | null>(null);
   const [gogdlFound, setGogdlFound] = useState<boolean | null>(null);
   const [isInstallingGogdl, setIsInstallingGogdl] = useState(false);
   const [gogdlInstallProgress, setGogdlInstallProgress] = useState(0);
@@ -36,13 +53,18 @@ export function SettingsGogAccount() {
   }, [fetchUserInfo]);
 
   useEffect(() => {
-    window.electron.getGogdlStatus().then((s) => setGogdlFound(s.binaryFound)).catch(() => setGogdlFound(false));
+    window.electron
+      .getGogdlStatus()
+      .then((s) => setGogdlFound(s.binaryFound))
+      .catch(() => setGogdlFound(false));
   }, []);
 
   const handleInstallGogdl = async () => {
     setIsInstallingGogdl(true);
     setGogdlInstallProgress(0);
-    gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(setGogdlInstallProgress);
+    gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(
+      setGogdlInstallProgress
+    );
     try {
       await window.electron.installGogdl();
       setGogdlFound(true);
@@ -69,11 +91,16 @@ export function SettingsGogAccount() {
       await fetchUserInfo();
 
       // Auto-install gogdl if not present
-      const status = await window.electron.getGogdlStatus().catch(() => ({ binaryFound: false }));
+      const status = await window.electron
+        .getGogdlStatus()
+        .catch(() => ({ binaryFound: false }));
       if (!status.binaryFound) {
         setIsInstallingGogdl(true);
-        gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(setGogdlInstallProgress);
-        window.electron.installGogdl()
+        gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(
+          setGogdlInstallProgress
+        );
+        window.electron
+          .installGogdl()
           .then(() => setGogdlFound(true))
           .catch(() => {})
           .finally(() => {
@@ -103,13 +130,16 @@ export function SettingsGogAccount() {
       const result = await window.electron.syncGogLibrary();
       setSyncResult(result);
 
-      const dedupResult = await window.electron.mergeDuplicateGames().catch(() => ({ merged: 0, mergedTitles: [] }));
+      const dedupResult = await window.electron
+        .mergeDuplicateGames()
+        .catch(() => ({ merged: 0, mergedTitles: [] }));
 
       setSyncModal({
         heading: "GOG Library Synced",
-        summary: result.added > 0
-          ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
-          : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
+        summary:
+          result.added > 0
+            ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
+            : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
         results: (result.addedGames ?? []).map((g) => ({
           title: g.title,
           coverUrl: g.coverUrl,
@@ -127,87 +157,113 @@ export function SettingsGogAccount() {
   if (userInfo) {
     return (
       <>
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "12px",
-            borderRadius: "8px",
-            background: "var(--color-background-2, rgba(255,255,255,0.05))",
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <CheckCircleFillIcon size={14} />
-              <strong>{userInfo.username}</strong>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px",
+              borderRadius: "8px",
+              background: "var(--color-background-2, rgba(255,255,255,0.05))",
+            }}
+          >
+            <div style={{ flex: 1 }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                <CheckCircleFillIcon size={14} />
+                <strong>{userInfo.username}</strong>
+              </div>
+              <small style={{ opacity: 0.6 }}>{userInfo.userId}</small>
             </div>
-            <small style={{ opacity: 0.6 }}>{userInfo.userId}</small>
-          </div>
-          <Button type="button" onClick={handleDisconnect} theme="outline">
-            {t("disconnect")}
-          </Button>
-        </div>
-
-        {gogdlFound === false && (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", borderRadius: "8px", background: "rgba(255,255,255,0.05)" }}>
-            <AlertIcon size={16} />
-            <span style={{ flex: 1, fontSize: "0.9rem" }}>gogdl not found — required to download GOG games</span>
-            <Button
-              type="button"
-              onClick={handleInstallGogdl}
-              disabled={isInstallingGogdl}
-              style={{ display: "flex", alignItems: "center", gap: "6px" }}
-            >
-              <DownloadIcon size={14} />
-              {isInstallingGogdl
-                ? gogdlInstallProgress > 0
-                  ? `Downloading ${gogdlInstallProgress}%`
-                  : "Downloading…"
-                : "Install gogdl"}
+            <Button type="button" onClick={handleDisconnect} theme="outline">
+              {t("disconnect")}
             </Button>
           </div>
-        )}
 
-        {gogdlFound === true && (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 10px", borderRadius: "6px", background: "rgba(255,255,255,0.04)", fontSize: "0.85rem" }}>
-            <CheckCircleFillIcon size={13} />
-            <span style={{ opacity: 0.7 }}>gogdl ready</span>
-          </div>
-        )}
-
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Button
-            type="button"
-            onClick={handleSync}
-            disabled={isSyncing}
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
-          >
-            <SyncIcon size={14} />
-            {isSyncing ? t("syncing") : t("sync_gog_library")}
-          </Button>
-          {syncResult && (
-            <small style={{ opacity: 0.7 }}>
-              {t("sync_result", { added: syncResult.added, total: syncResult.total })}
-            </small>
+          {gogdlFound === false && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "10px 14px",
+                borderRadius: "8px",
+                background: "rgba(255,255,255,0.05)",
+              }}
+            >
+              <AlertIcon size={16} />
+              <span style={{ flex: 1, fontSize: "0.9rem" }}>
+                gogdl not found — required to download GOG games
+              </span>
+              <Button
+                type="button"
+                onClick={handleInstallGogdl}
+                disabled={isInstallingGogdl}
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                <DownloadIcon size={14} />
+                {isInstallingGogdl
+                  ? gogdlInstallProgress > 0
+                    ? `Downloading ${gogdlInstallProgress}%`
+                    : "Downloading…"
+                  : "Install gogdl"}
+              </Button>
+            </div>
           )}
+
+          {gogdlFound === true && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "6px 10px",
+                borderRadius: "6px",
+                background: "rgba(255,255,255,0.04)",
+                fontSize: "0.85rem",
+              }}
+            >
+              <CheckCircleFillIcon size={13} />
+              <span style={{ opacity: 0.7 }}>gogdl ready</span>
+            </div>
+          )}
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Button
+              type="button"
+              onClick={handleSync}
+              disabled={isSyncing}
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <SyncIcon size={14} />
+              {isSyncing ? t("syncing") : t("sync_gog_library")}
+            </Button>
+            {syncResult && (
+              <small style={{ opacity: 0.7 }}>
+                {t("sync_result", {
+                  added: syncResult.added,
+                  total: syncResult.total,
+                })}
+              </small>
+            )}
+          </div>
+
+          <p style={{ opacity: 0.6, fontSize: "0.85em", margin: 0 }}>
+            {t("gog_library_description")}
+          </p>
         </div>
 
-        <p style={{ opacity: 0.6, fontSize: "0.85em", margin: 0 }}>
-          {t("gog_library_description")}
-        </p>
-      </div>
-
-      {syncModal && (
-        <LibrarySyncModal
-          visible={true}
-          heading={syncModal.heading}
-          summary={syncModal.summary}
-          results={syncModal.results}
-          onClose={() => setSyncModal(null)}
-        />
-      )}
+        {syncModal && (
+          <LibrarySyncModal
+            visible={true}
+            heading={syncModal.heading}
+            summary={syncModal.summary}
+            results={syncModal.results}
+            onClose={() => setSyncModal(null)}
+          />
+        )}
       </>
     );
   }

@@ -470,8 +470,7 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("downloadGameArtifact", objectId, shop, gameArtifactId),
   getGameArtifacts: (objectId: string, shop: GameShop) =>
     ipcRenderer.invoke("getGameArtifacts", objectId, shop),
-  getAllArtifacts: () =>
-    ipcRenderer.invoke("getAllArtifacts"),
+  getAllArtifacts: () => ipcRenderer.invoke("getAllArtifacts"),
   deleteGameArtifact: (artifactId: string) =>
     ipcRenderer.invoke("deleteGameArtifact", artifactId),
   getGameBackupPreview: (objectId: string, shop: GameShop) =>
@@ -670,21 +669,41 @@ contextBridge.exposeInMainWorld("electron", {
     return () => ipcRenderer.removeListener("preflight-progress", listener);
   },
   onMetadataProgress: (
-    cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+    cb: (value: {
+      current: number;
+      total: number;
+      title: string | null;
+      done?: boolean;
+    }) => void
   ) => {
     const listener = (
       _event: Electron.IpcRendererEvent,
-      value: { current: number; total: number; title: string | null; done?: boolean }
+      value: {
+        current: number;
+        total: number;
+        title: string | null;
+        done?: boolean;
+      }
     ) => cb(value);
     ipcRenderer.on("on-metadata-progress", listener);
     return () => ipcRenderer.removeListener("on-metadata-progress", listener);
   },
   onDedupProgress: (
-    cb: (value: { current: number; total: number; title: string | null; done?: boolean }) => void
+    cb: (value: {
+      current: number;
+      total: number;
+      title: string | null;
+      done?: boolean;
+    }) => void
   ) => {
     const listener = (
       _event: Electron.IpcRendererEvent,
-      value: { current: number; total: number; title: string | null; done?: boolean }
+      value: {
+        current: number;
+        total: number;
+        title: string | null;
+        done?: boolean;
+      }
     ) => cb(value);
     ipcRenderer.on("on-dedup-progress", listener);
     return () => ipcRenderer.removeListener("on-dedup-progress", listener);
@@ -767,14 +786,18 @@ contextBridge.exposeInMainWorld("electron", {
     return () => ipcRenderer.removeListener("on-account-updated", listener);
   },
   onLegendaryInstallProgress: (cb: (pct: number) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, pct: number) => cb(pct);
+    const listener = (_event: Electron.IpcRendererEvent, pct: number) =>
+      cb(pct);
     ipcRenderer.on("on-legendary-install-progress", listener);
-    return () => ipcRenderer.removeListener("on-legendary-install-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-legendary-install-progress", listener);
   },
   onBattleNetInstallProgress: (cb: (pct: number) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, pct: number) => cb(pct);
+    const listener = (_event: Electron.IpcRendererEvent, pct: number) =>
+      cb(pct);
     ipcRenderer.on("on-battlenet-install-progress", listener);
-    return () => ipcRenderer.removeListener("on-battlenet-install-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-battlenet-install-progress", listener);
   },
   startSteamOpenIdLogin: (): Promise<string> =>
     ipcRenderer.invoke("startSteamOpenIdLogin"),
@@ -788,19 +811,33 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("cancelGogdlDownload", objectId),
   installGogdl: () => ipcRenderer.invoke("installGogdl"),
   onGogdlInstallProgress: (cb: (pct: number) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, pct: number) => cb(pct);
+    const listener = (_event: Electron.IpcRendererEvent, pct: number) =>
+      cb(pct);
     ipcRenderer.on("on-gogdl-install-progress", listener);
-    return () => ipcRenderer.removeListener("on-gogdl-install-progress", listener);
+    return () =>
+      ipcRenderer.removeListener("on-gogdl-install-progress", listener);
   },
   getGogdlStatus: () => ipcRenderer.invoke("getGogdlStatus"),
-  findLibraryGameByTitle: (title: string) => ipcRenderer.invoke("findLibraryGameByTitle", title),
-  onLegendaryProcessLog: (cb: (value: { objectId: string; line: string; isError: boolean }) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, value: { objectId: string; line: string; isError: boolean }) => cb(value);
+  findLibraryGameByTitle: (title: string) =>
+    ipcRenderer.invoke("findLibraryGameByTitle", title),
+  onLegendaryProcessLog: (
+    cb: (value: { objectId: string; line: string; isError: boolean }) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      value: { objectId: string; line: string; isError: boolean }
+    ) => cb(value);
     ipcRenderer.on("on-legendary-process-log", listener);
-    return () => ipcRenderer.removeListener("on-legendary-process-log", listener);
+    return () =>
+      ipcRenderer.removeListener("on-legendary-process-log", listener);
   },
-  onGogdlProcessLog: (cb: (value: { objectId: string; line: string; isError: boolean }) => void) => {
-    const listener = (_event: Electron.IpcRendererEvent, value: { objectId: string; line: string; isError: boolean }) => cb(value);
+  onGogdlProcessLog: (
+    cb: (value: { objectId: string; line: string; isError: boolean }) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      value: { objectId: string; line: string; isError: boolean }
+    ) => cb(value);
     ipcRenderer.on("on-gogdl-process-log", listener);
     return () => ipcRenderer.removeListener("on-gogdl-process-log", listener);
   },
@@ -1003,8 +1040,7 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("installer:relaunch", destDir),
   installerOpenFolder: (destDir: string) =>
     ipcRenderer.invoke("installer:openFolder", destDir),
-  installerCloseAndLaunch: () =>
-    ipcRenderer.invoke("installer:closeAndLaunch"),
+  installerCloseAndLaunch: () => ipcRenderer.invoke("installer:closeAndLaunch"),
   onInstallerProgress: (
     cb: (pct: number, file: string) => void
   ): (() => void) => {
@@ -1016,7 +1052,12 @@ contextBridge.exposeInMainWorld("electron", {
   // Debug console window
   openConsoleWindow: () => ipcRenderer.invoke("openConsoleWindow"),
   onConsoleLog: (
-    cb: (entry: { ts: number; level: string; scope: string; text: string }) => void
+    cb: (entry: {
+      ts: number;
+      level: string;
+      scope: string;
+      text: string;
+    }) => void
   ): (() => void) => {
     const listener = (
       _: unknown,

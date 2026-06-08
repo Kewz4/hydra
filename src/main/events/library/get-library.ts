@@ -87,9 +87,21 @@ const getLibrary = async (): Promise<LibraryGame[]> => {
               unlockedAchievementCount,
               achievementCount: game.achievementCount ?? 0,
               // Image URLs: prefer custom overrides, then fresh assets, then game record
-              iconUrl: game.customIconUrl || gameAssets?.iconUrl || game.iconUrl || null,
-              libraryHeroImageUrl: game.customHeroImageUrl || gameAssets?.libraryHeroImageUrl || game.libraryHeroImageUrl || null,
-              logoImageUrl: game.customLogoImageUrl || gameAssets?.logoImageUrl || game.logoImageUrl || null,
+              iconUrl:
+                game.customIconUrl ||
+                gameAssets?.iconUrl ||
+                game.iconUrl ||
+                null,
+              libraryHeroImageUrl:
+                game.customHeroImageUrl ||
+                gameAssets?.libraryHeroImageUrl ||
+                game.libraryHeroImageUrl ||
+                null,
+              logoImageUrl:
+                game.customLogoImageUrl ||
+                gameAssets?.logoImageUrl ||
+                game.logoImageUrl ||
+                null,
               libraryImageUrl: gameAssets?.libraryImageUrl || null,
               coverImageUrl: gameAssets?.coverImageUrl || null,
               customIconUrl: game.customIconUrl,

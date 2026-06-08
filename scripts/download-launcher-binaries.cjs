@@ -25,20 +25,30 @@ function download(url, dest) {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
     const get = (u) => {
-      https.get(u, { headers: { "User-Agent": "gamehub-build-script" } }, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          file.close();
-          get(res.headers.location);
-          return;
-        }
-        if (res.statusCode !== 200) {
-          file.close();
-          reject(new Error(`HTTP ${res.statusCode} for ${u}`));
-          return;
-        }
-        res.pipe(file);
-        file.on("finish", () => file.close(resolve));
-      }).on("error", reject);
+      https
+        .get(
+          u,
+          { headers: { "User-Agent": "gamehub-build-script" } },
+          (res) => {
+            if (
+              res.statusCode >= 300 &&
+              res.statusCode < 400 &&
+              res.headers.location
+            ) {
+              file.close();
+              get(res.headers.location);
+              return;
+            }
+            if (res.statusCode !== 200) {
+              file.close();
+              reject(new Error(`HTTP ${res.statusCode} for ${u}`));
+              return;
+            }
+            res.pipe(file);
+            file.on("finish", () => file.close(resolve));
+          }
+        )
+        .on("error", reject);
     };
     get(url);
   });
@@ -55,29 +65,46 @@ function githubGet(url) {
     }
     const get = (u) => {
       const parsed = new URL(u);
-      const opts = { hostname: parsed.hostname, path: parsed.pathname + parsed.search, headers };
-      https.get(opts, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          res.resume();
-          get(res.headers.location);
-          return;
-        }
-        let data = "";
-        res.on("data", (c) => (data += c));
-        res.on("end", () => {
-          try { resolve(JSON.parse(data)); }
-          catch (e) { reject(e); }
-        });
-      }).on("error", reject);
+      const opts = {
+        hostname: parsed.hostname,
+        path: parsed.pathname + parsed.search,
+        headers,
+      };
+      https
+        .get(opts, (res) => {
+          if (
+            res.statusCode >= 300 &&
+            res.statusCode < 400 &&
+            res.headers.location
+          ) {
+            res.resume();
+            get(res.headers.location);
+            return;
+          }
+          let data = "";
+          res.on("data", (c) => (data += c));
+          res.on("end", () => {
+            try {
+              resolve(JSON.parse(data));
+            } catch (e) {
+              reject(e);
+            }
+          });
+        })
+        .on("error", reject);
     };
     get(url);
   });
 }
 
 async function getLatestRelease(owner, repo) {
-  const parsed = await githubGet(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+  const parsed = await githubGet(
+    `https://api.github.com/repos/${owner}/${repo}/releases/latest`
+  );
   if (!Array.isArray(parsed.assets)) {
-    throw new Error(`GitHub API error for ${owner}/${repo}: ${parsed.message || JSON.stringify(parsed)}`);
+    throw new Error(
+      `GitHub API error for ${owner}/${repo}: ${parsed.message || JSON.stringify(parsed)}`
+    );
   }
   return parsed;
 }
@@ -85,11 +112,17 @@ async function getLatestRelease(owner, repo) {
 async function downloadLegendary(platform) {
   console.log("Fetching legendary release info…");
   const release = await getLatestRelease("derrod", "legendary");
-  const assetName = platform === "win32" ? "legendary.exe"
-    : platform === "darwin" ? "legendary_macos"
-    : "legendary_linux_x86_64";
-  const asset = release.assets.find((a) => a.name === assetName)
-    ?? release.assets.find((a) => a.name.startsWith("legendary") && !a.name.endsWith(".zip"));
+  const assetName =
+    platform === "win32"
+      ? "legendary.exe"
+      : platform === "darwin"
+        ? "legendary_macos"
+        : "legendary_linux_x86_64";
+  const asset =
+    release.assets.find((a) => a.name === assetName) ??
+    release.assets.find(
+      (a) => a.name.startsWith("legendary") && !a.name.endsWith(".zip")
+    );
   if (!asset) throw new Error(`No legendary asset for platform=${platform}`);
   const ext = platform === "win32" ? ".exe" : "";
   const dest = path.join(OUT_DIR, `legendary${ext}`);
@@ -101,12 +134,21 @@ async function downloadLegendary(platform) {
 
 async function downloadGogdl(platform) {
   console.log("Fetching gogdl release info…");
-  const release = await getLatestRelease("Heroic-Games-Launcher", "heroic-gogdl");
-  const assetName = platform === "win32" ? "gogdl.exe"
-    : platform === "darwin" ? "gogdl_macos"
-    : "gogdl_linux";
-  const asset = release.assets.find((a) => a.name === assetName)
-    ?? release.assets.find((a) => a.name.startsWith("gogdl") && !a.name.endsWith(".tar.gz"));
+  const release = await getLatestRelease(
+    "Heroic-Games-Launcher",
+    "heroic-gogdl"
+  );
+  const assetName =
+    platform === "win32"
+      ? "gogdl.exe"
+      : platform === "darwin"
+        ? "gogdl_macos"
+        : "gogdl_linux";
+  const asset =
+    release.assets.find((a) => a.name === assetName) ??
+    release.assets.find(
+      (a) => a.name.startsWith("gogdl") && !a.name.endsWith(".tar.gz")
+    );
   if (!asset) throw new Error(`No gogdl asset for platform=${platform}`);
   const ext = platform === "win32" ? ".exe" : "";
   const dest = path.join(OUT_DIR, `gogdl${ext}`);

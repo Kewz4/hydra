@@ -30,7 +30,10 @@ const openGogAuthWindow = async (
 
       try {
         const tokens = await exchangeGogCode(code);
-        resolve({ refresh_token: tokens.refresh_token, username: tokens.username });
+        resolve({
+          refresh_token: tokens.refresh_token,
+          username: tokens.username,
+        });
       } catch (err) {
         logger.error("GOG token exchange failed", err);
         resolve(null);

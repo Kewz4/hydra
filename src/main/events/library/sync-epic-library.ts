@@ -1,5 +1,10 @@
 import { registerEvent } from "../register-event";
-import { db, gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
+import {
+  db,
+  gamesSublevel,
+  gamesShopAssetsSublevel,
+  levelKeys,
+} from "@main/level";
 import type { UserPreferences } from "@types";
 import {
   getLegendaryGames,
@@ -21,7 +26,11 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
   const games = await getLegendaryGames(prefs?.legendaryBinaryPath);
 
   let added = 0;
-  const addedGames: Array<{ title: string; coverUrl: string | null; what: string }> = [];
+  const addedGames: Array<{
+    title: string;
+    coverUrl: string | null;
+    what: string;
+  }> = [];
 
   for (const epicGame of games) {
     const objectId = epicGame.app_name;
@@ -34,13 +43,21 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     const titleMatch = await findGameByTitle(epicGame.app_title);
     if (titleMatch) {
       const [matchKey, matchGame] = titleMatch;
-      const alreadyLinked = matchGame.alternativeShops?.some(s => s.shop === "epic" && s.objectId === objectId);
+      const alreadyLinked = matchGame.alternativeShops?.some(
+        (s) => s.shop === "epic" && s.objectId === objectId
+      );
       if (!alreadyLinked) {
         await gamesSublevel.put(matchKey, {
           ...matchGame,
           alternativeShops: [
             ...(matchGame.alternativeShops ?? []),
-            { shop: "epic", objectId, executablePath: epicGame.is_installed ? `legendary://run/${objectId}` : null },
+            {
+              shop: "epic",
+              objectId,
+              executablePath: epicGame.is_installed
+                ? `legendary://run/${objectId}`
+                : null,
+            },
           ],
         });
       }
@@ -48,7 +65,9 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     }
 
     const coverUrl = getLegendaryGameCoverUrl(epicGame);
-    const executablePath = epicGame.is_installed ? `legendary://run/${objectId}` : null;
+    const executablePath = epicGame.is_installed
+      ? `legendary://run/${objectId}`
+      : null;
 
     const assets = await fetchBestAssets("epic", objectId, epicGame.app_title, {
       iconUrl: coverUrl,
@@ -73,27 +92,33 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     };
 
     await gamesSublevel.put(gameKey, game);
-    await gamesShopAssetsSublevel.put(gameKey, {
-      objectId,
-      shop: "epic" as const,
-      title: epicGame.app_title,
-      iconUrl: assets.iconUrl,
-      coverImageUrl: assets.coverImageUrl,
-      libraryImageUrl: assets.libraryImageUrl,
-      libraryHeroImageUrl: assets.libraryHeroImageUrl,
-      logoImageUrl: assets.logoImageUrl,
-      logoPosition: assets.logoPosition,
-      downloadSources: assets.downloadSources ?? [],
-    }).catch(() => {});
+    await gamesShopAssetsSublevel
+      .put(gameKey, {
+        objectId,
+        shop: "epic" as const,
+        title: epicGame.app_title,
+        iconUrl: assets.iconUrl,
+        coverImageUrl: assets.coverImageUrl,
+        libraryImageUrl: assets.libraryImageUrl,
+        libraryHeroImageUrl: assets.libraryHeroImageUrl,
+        logoImageUrl: assets.logoImageUrl,
+        logoPosition: assets.logoPosition,
+        downloadSources: assets.downloadSources ?? [],
+      })
+      .catch(() => {});
     await createGame(game).catch(() => {});
     await deduplicateTitle(epicGame.app_title).catch(() => {});
 
     added++;
-    const gotHydraAssets = Boolean(assets.coverImageUrl || assets.libraryHeroImageUrl);
+    const gotHydraAssets = Boolean(
+      assets.coverImageUrl || assets.libraryHeroImageUrl
+    );
     addedGames.push({
       title: epicGame.app_title,
       coverUrl: assets.coverImageUrl ?? assets.libraryHeroImageUrl ?? coverUrl,
-      what: gotHydraAssets ? "Cover fetched from Hydra API (Steam catalogue)" : "Added — no Hydra API match found",
+      what: gotHydraAssets
+        ? "Cover fetched from Hydra API (Steam catalogue)"
+        : "Added — no Hydra API match found",
     });
   }
 

@@ -3,14 +3,21 @@ import { Trans, useTranslation } from "react-i18next";
 import { Button, Link, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
-import { LinkExternalIcon, SyncIcon, CheckCircleFillIcon, MarkGithubIcon } from "@primer/octicons-react";
+import {
+  LinkExternalIcon,
+  SyncIcon,
+  CheckCircleFillIcon,
+  MarkGithubIcon,
+} from "@primer/octicons-react";
 import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
 const STEAM_API_KEY_URL = "https://steamcommunity.com/dev/apikey";
 
 export function SettingsSteamAccount() {
   const { t } = useTranslation("settings");
-  const userPreferences = useAppSelector((state) => state.userPreferences.value);
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
   const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
 
@@ -24,8 +31,15 @@ export function SettingsSteamAccount() {
   const [isSaving, setIsSaving] = useState(false);
   const [isOpenIdPending, setIsOpenIdPending] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
-  const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    total: number;
+    added: number;
+  } | null>(null);
+  const [syncModal, setSyncModal] = useState<{
+    heading: string;
+    summary: string;
+    results: LibrarySyncResult[];
+  } | null>(null);
 
   useEffect(() => {
     if (userPreferences) {
@@ -54,7 +68,10 @@ export function SettingsSteamAccount() {
     try {
       const detectedSteamId = await window.electron.startSteamOpenIdLogin();
       // Save immediately so the linked-account panel renders
-      await updateUserPreferences({ steamId: detectedSteamId, steamApiKey: apiKey.trim() || null });
+      await updateUserPreferences({
+        steamId: detectedSteamId,
+        steamApiKey: apiKey.trim() || null,
+      });
       setSteamId(detectedSteamId);
       // Fetch and display profile
       const summary = await window.electron
@@ -79,14 +96,20 @@ export function SettingsSteamAccount() {
 
     setIsSaving(true);
     try {
-      const summary = await window.electron.getSteamPlayerSummary(steamId.trim(), apiKey.trim() || undefined);
+      const summary = await window.electron.getSteamPlayerSummary(
+        steamId.trim(),
+        apiKey.trim() || undefined
+      );
 
       if (!summary) {
         showErrorToast(t("steam_account_not_found"));
         return;
       }
 
-      await updateUserPreferences({ steamId: steamId.trim(), steamApiKey: apiKey.trim() || null });
+      await updateUserPreferences({
+        steamId: steamId.trim(),
+        steamApiKey: apiKey.trim() || null,
+      });
       setLinkedAccount(summary);
       showSuccessToast(t("steam_account_linked"));
     } catch {
@@ -112,16 +135,22 @@ export function SettingsSteamAccount() {
     setIsSyncing(true);
     setSyncResult(null);
     try {
-      const result = await window.electron.syncSteamLibrary(savedSteamId, userPreferences?.steamApiKey ?? undefined);
+      const result = await window.electron.syncSteamLibrary(
+        savedSteamId,
+        userPreferences?.steamApiKey ?? undefined
+      );
       setSyncResult(result);
 
-      const dedupResult = await window.electron.mergeDuplicateGames().catch(() => ({ merged: 0, mergedTitles: [] }));
+      const dedupResult = await window.electron
+        .mergeDuplicateGames()
+        .catch(() => ({ merged: 0, mergedTitles: [] }));
 
       setSyncModal({
         heading: "Steam Library Synced",
-        summary: result.added > 0
-          ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
-          : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
+        summary:
+          result.added > 0
+            ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
+            : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
         results: [],
       });
     } catch {
@@ -134,80 +163,96 @@ export function SettingsSteamAccount() {
   if (linkedAccount) {
     return (
       <>
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            padding: "12px",
-            borderRadius: "8px",
-            background: "var(--color-background-2, rgba(255,255,255,0.05))",
-          }}
-        >
-          <img
-            src={linkedAccount.avatarfull}
-            alt={linkedAccount.personaname}
-            style={{ width: 48, height: 48, borderRadius: "50%" }}
-          />
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <CheckCircleFillIcon size={14} />
-              <strong>{linkedAccount.personaname}</strong>
-            </div>
-            <small style={{ opacity: 0.6 }}>{linkedAccount.steamid}</small>
-          </div>
-          <Button type="button" onClick={handleDisconnect} theme="outline">
-            {t("disconnect")}
-          </Button>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <Button
-            type="button"
-            onClick={handleSync}
-            disabled={isSyncing}
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "12px",
+              borderRadius: "8px",
+              background: "var(--color-background-2, rgba(255,255,255,0.05))",
+            }}
           >
-            <SyncIcon size={14} />
-            {isSyncing ? t("syncing") : t("sync_steam_library")}
-          </Button>
+            <img
+              src={linkedAccount.avatarfull}
+              alt={linkedAccount.personaname}
+              style={{ width: 48, height: 48, borderRadius: "50%" }}
+            />
+            <div style={{ flex: 1 }}>
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                <CheckCircleFillIcon size={14} />
+                <strong>{linkedAccount.personaname}</strong>
+              </div>
+              <small style={{ opacity: 0.6 }}>{linkedAccount.steamid}</small>
+            </div>
+            <Button type="button" onClick={handleDisconnect} theme="outline">
+              {t("disconnect")}
+            </Button>
+          </div>
 
-          {syncResult && (
-            <small style={{ opacity: 0.7 }}>
-              {t("steam_sync_result", { added: syncResult.added, total: syncResult.total })}
-            </small>
-          )}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Button
+              type="button"
+              onClick={handleSync}
+              disabled={isSyncing}
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <SyncIcon size={14} />
+              {isSyncing ? t("syncing") : t("sync_steam_library")}
+            </Button>
+
+            {syncResult && (
+              <small style={{ opacity: 0.7 }}>
+                {t("steam_sync_result", {
+                  added: syncResult.added,
+                  total: syncResult.total,
+                })}
+              </small>
+            )}
+          </div>
+
+          <p style={{ opacity: 0.6, fontSize: "0.85em", margin: 0 }}>
+            {t("steam_library_description")}
+          </p>
         </div>
 
-        <p style={{ opacity: 0.6, fontSize: "0.85em", margin: 0 }}>
-          {t("steam_library_description")}
-        </p>
-      </div>
-
-      {syncModal && (
-        <LibrarySyncModal
-          visible={true}
-          heading={syncModal.heading}
-          summary={syncModal.summary}
-          results={syncModal.results}
-          onClose={() => setSyncModal(null)}
-        />
-      )}
+        {syncModal && (
+          <LibrarySyncModal
+            visible={true}
+            heading={syncModal.heading}
+            summary={syncModal.summary}
+            results={syncModal.results}
+            onClose={() => setSyncModal(null)}
+          />
+        )}
       </>
     );
   }
 
   return (
-    <form onSubmit={handleConnect} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <p style={{ margin: 0, opacity: 0.8 }}>{t("steam_account_description")}</p>
+    <form
+      onSubmit={handleConnect}
+      style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+    >
+      <p style={{ margin: 0, opacity: 0.8 }}>
+        {t("steam_account_description")}
+      </p>
 
       <div>
         <Button
           type="button"
           onClick={handleSteamOpenIdLogin}
           disabled={isOpenIdPending}
-          style={{ display: "flex", alignItems: "center", gap: "8px", background: "#1b2838", color: "#c7d5e0" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            background: "#1b2838",
+            color: "#c7d5e0",
+          }}
         >
           <MarkGithubIcon size={16} />
           {isOpenIdPending ? t("waiting_for_steam") : t("login_with_steam")}

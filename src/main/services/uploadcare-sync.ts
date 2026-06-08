@@ -88,7 +88,9 @@ export class UploadcareSync {
   }
 
   /** List all save artifacts across all games for a user, newest first. */
-  static async listAllArtifacts(userId: string): Promise<GameArtifactWithGame[]> {
+  static async listAllArtifacts(
+    userId: string
+  ): Promise<GameArtifactWithGame[]> {
     const res = await axios.get(`${API_BASE}/files/`, {
       params: {
         "metadata[userId]": userId,
@@ -108,7 +110,8 @@ export class UploadcareSync {
       .map((f) => ({
         id: f.uuid as string,
         artifactLengthInBytes: f.size as number,
-        downloadOptionTitle: (f.metadata?.downloadOptionTitle as string) ?? null,
+        downloadOptionTitle:
+          (f.metadata?.downloadOptionTitle as string) ?? null,
         createdAt: f.datetime_uploaded as string,
         updatedAt: f.datetime_uploaded as string,
         hostname: (f.metadata?.hostname as string) ?? "",

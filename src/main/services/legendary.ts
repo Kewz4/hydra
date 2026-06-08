@@ -26,7 +26,11 @@ const getPlatformSearchPaths = (): string[] => {
   const binDir = path.join(userData, "bin");
   // Bundled: try both resourcesPath and exe-adjacent resources (for portable builds)
   const resourcesBin = path.join(process.resourcesPath ?? "", "bin");
-  const execAdjacentBin = path.join(path.dirname(process.execPath ?? ""), "resources", "bin");
+  const execAdjacentBin = path.join(
+    path.dirname(process.execPath ?? ""),
+    "resources",
+    "bin"
+  );
 
   if (process.platform === "win32") {
     const localAppData = process.env.LOCALAPPDATA ?? "";
@@ -65,7 +69,9 @@ export const getLegendaryInstallPath = (): string => {
   return path.join(binDir, `legendary${ext}`);
 };
 
-export const findLegendaryBinary = (customPath?: string | null): string | null => {
+export const findLegendaryBinary = (
+  customPath?: string | null
+): string | null => {
   if (customPath && fs.existsSync(customPath)) return customPath;
 
   for (const candidate of getPlatformSearchPaths()) {
@@ -77,7 +83,10 @@ export const findLegendaryBinary = (customPath?: string | null): string | null =
   // Try PATH via which/where
   try {
     const whichCmd = process.platform === "win32" ? "where" : "which";
-    const { stdout } = require("node:child_process").execSync(`${whichCmd} legendary`, { encoding: "utf8", timeout: 3000 });
+    const { stdout } = require("node:child_process").execSync(
+      `${whichCmd} legendary`,
+      { encoding: "utf8", timeout: 3000 }
+    );
     const bin = stdout.trim().split("\n")[0].trim();
     if (bin && fs.existsSync(bin)) return bin;
   } catch {}
@@ -85,7 +94,10 @@ export const findLegendaryBinary = (customPath?: string | null): string | null =
   return null;
 };
 
-const runLegendary = async (binary: string, args: string[]): Promise<string> => {
+const runLegendary = async (
+  binary: string,
+  args: string[]
+): Promise<string> => {
   const { stdout } = await execFileAsync(binary, args, { timeout: 60_000 });
   return stdout;
 };
@@ -97,7 +109,11 @@ export const getLegendaryStatus = async (
   if (!binary) return { account: null, authenticated: false };
 
   try {
-    const output = await runLegendary(binary, [...legendaryBaseArgs(), "status", "--json"]);
+    const output = await runLegendary(binary, [
+      ...legendaryBaseArgs(),
+      "status",
+      "--json",
+    ]);
     const data = JSON.parse(output);
     return {
       account: data.account ?? null,
@@ -115,21 +131,32 @@ export const getLegendaryGames = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  const output = await runLegendary(binary, [...legendaryBaseArgs(), "list", "--json"]);
+  const output = await runLegendary(binary, [
+    ...legendaryBaseArgs(),
+    "list",
+    "--json",
+  ]);
   const data = JSON.parse(output);
 
-  if (!Array.isArray(data)) throw new Error("Unexpected legendary output format");
+  if (!Array.isArray(data))
+    throw new Error("Unexpected legendary output format");
 
   return data as LegendaryGame[];
 };
 
 export const getLegendaryConfigPath = (): string => {
-  const configPath = path.join(SystemPath.getPath("userData"), "legendary-config");
+  const configPath = path.join(
+    SystemPath.getPath("userData"),
+    "legendary-config"
+  );
   fs.mkdirSync(configPath, { recursive: true });
   return configPath;
 };
 
-const legendaryBaseArgs = (): string[] => ["--config-path", getLegendaryConfigPath()];
+const legendaryBaseArgs = (): string[] => [
+  "--config-path",
+  getLegendaryConfigPath(),
+];
 
 export const authenticateLegendary = async (
   code: string,
@@ -138,12 +165,23 @@ export const authenticateLegendary = async (
   const binary = findLegendaryBinary(binaryPath);
   if (!binary) throw new Error("legendary binary not found");
 
-  await execFileAsync(binary, [...legendaryBaseArgs(), "auth", "--code", code.trim()], { timeout: 30_000 });
+  await execFileAsync(
+    binary,
+    [...legendaryBaseArgs(), "auth", "--code", code.trim()],
+    { timeout: 30_000 }
+  );
 };
 
-export const getLegendaryGameCoverUrl = (game: LegendaryGame): string | null => {
+export const getLegendaryGameCoverUrl = (
+  game: LegendaryGame
+): string | null => {
   if (!game.key_images?.length) return null;
-  const priority = ["DieselGameBoxTall", "DieselGameBox", "Thumbnail", "DieselGameBoxWide"];
+  const priority = [
+    "DieselGameBoxTall",
+    "DieselGameBox",
+    "Thumbnail",
+    "DieselGameBoxWide",
+  ];
   for (const type of priority) {
     const img = game.key_images.find((k) => k.type === type);
     if (img) return img.url;
@@ -155,7 +193,12 @@ export function spawnLegendaryInstall(
   appName: string,
   downloadPath: string,
   binaryPath: string | null | undefined,
-  onProgress: (progress: number, downloadedMB: number, totalMB: number, speedMBs: number) => void,
+  onProgress: (
+    progress: number,
+    downloadedMB: number,
+    totalMB: number,
+    speedMBs: number
+  ) => void,
   onComplete: () => void,
   onError: (err: string) => void,
   onLog?: (line: string, isError: boolean) => void
@@ -166,17 +209,31 @@ export function spawnLegendaryInstall(
     return () => {};
   }
 
-  const child = spawn(binary, [...legendaryBaseArgs(), "install", appName, "--base-path", downloadPath, "--yes", "--skip-sdl"], {
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const child = spawn(
+    binary,
+    [
+      ...legendaryBaseArgs(),
+      "install",
+      appName,
+      "--base-path",
+      downloadPath,
+      "--yes",
+      "--skip-sdl",
+    ],
+    {
+      stdio: ["ignore", "pipe", "pipe"],
+    }
+  );
 
   // Legendary progress formats (varies by version):
   //   "Progress: 12.34% (5678.90/45678.90 MiB), Running for ..."
   //   "Running for 00:00:05, downloaded 123.45 MiB of 4567.89 MiB at 12.34 MiB/s"
   const progressSlashRegex = /(\d+\.?\d*)\/(\d+\.?\d*)\s+MiB/;
-  const progressOfRegex = /downloaded?\s+(\d+\.?\d*)\s+MiB\s+of\s+(\d+\.?\d*)\s+MiB/i;
+  const progressOfRegex =
+    /downloaded?\s+(\d+\.?\d*)\s+MiB\s+of\s+(\d+\.?\d*)\s+MiB/i;
   const speedRegex = /(\d+\.?\d*)\s+(?:MiB|MB)\/s/;
-  const completeRegex = /Finished installation|Successfully installed|Install completed|Download completed/i;
+  const completeRegex =
+    /Finished installation|Successfully installed|Install completed|Download completed/i;
 
   let lastSpeedMBs = 0;
   let completed = false;
@@ -233,7 +290,9 @@ export function spawnLegendaryInstall(
   });
 
   return () => {
-    try { child.kill(); } catch {}
+    try {
+      child.kill();
+    } catch {}
   };
 }
 
@@ -260,18 +319,27 @@ export const downloadLegendary = async (
     assetName = "legendary_linux_x86_64";
   }
 
-  const asset = assets.find((a) => a.name === assetName) ?? assets.find((a) => a.name.includes("legendary") && !a.name.endsWith(".tar.gz"));
+  const asset =
+    assets.find((a) => a.name === assetName) ??
+    assets.find(
+      (a) => a.name.includes("legendary") && !a.name.endsWith(".tar.gz")
+    );
 
-  if (!asset) throw new Error(`No legendary binary found for ${process.platform}`);
+  if (!asset)
+    throw new Error(`No legendary binary found for ${process.platform}`);
 
   const destPath = getLegendaryInstallPath();
 
-  const downloadResponse = await axios.get<ArrayBuffer>(asset.browser_download_url, {
-    responseType: "arraybuffer",
-    onDownloadProgress: (evt) => {
-      if (evt.total && onProgress) onProgress(Math.round((evt.loaded / evt.total) * 100));
-    },
-  });
+  const downloadResponse = await axios.get<ArrayBuffer>(
+    asset.browser_download_url,
+    {
+      responseType: "arraybuffer",
+      onDownloadProgress: (evt) => {
+        if (evt.total && onProgress)
+          onProgress(Math.round((evt.loaded / evt.total) * 100));
+      },
+    }
+  );
 
   fs.writeFileSync(destPath, Buffer.from(downloadResponse.data));
 
@@ -282,4 +350,3 @@ export const downloadLegendary = async (
   logger.log(`legendary downloaded to ${destPath}`);
   return destPath;
 };
-

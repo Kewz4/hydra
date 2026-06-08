@@ -2,7 +2,8 @@ import axios from "axios";
 import { logger } from "./logger";
 
 const CLIENT_ID = "46899977096215655";
-const CLIENT_SECRET = "9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9";
+const CLIENT_SECRET =
+  "9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9";
 // GOG's public client only accepts this exact redirect URI
 const REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
 
@@ -52,7 +53,12 @@ export const refreshGogToken = async (
     },
   });
 
-  const { access_token, refresh_token: newRefresh, user_id, username } = response.data;
+  const {
+    access_token,
+    refresh_token: newRefresh,
+    user_id,
+    username,
+  } = response.data;
   return {
     access_token,
     refresh_token: newRefresh ?? refreshToken,
@@ -89,7 +95,12 @@ export const getGogOwnedGameIds = async (
 
 export const getGogGameDetails = async (
   productId: number
-): Promise<{ id: number; title: string; game_type: string; images: { logo2x: string; background: string } } | null> => {
+): Promise<{
+  id: number;
+  title: string;
+  game_type: string;
+  images: { logo2x: string; background: string };
+} | null> => {
   try {
     const response = await axios.get(
       `https://api.gog.com/products/${productId}`,

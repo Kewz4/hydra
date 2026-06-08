@@ -71,15 +71,23 @@ export const loadState = async () => {
     Promise.all([
       import("./services/achievements/get-xbox-achievements"),
       import("./level"),
-    ]).then(([{ syncXboxGameAchievements }, { gamesSublevel }]) => {
-      gamesSublevel.values().all().then((games) => {
-        for (const g of games) {
-          if (g.shop === "xbox" && (g as any).xboxTitleId) {
-            syncXboxGameAchievements(g.objectId, (g as any).xboxTitleId).catch(() => {});
-          }
-        }
-      });
-    }).catch(() => {});
+    ])
+      .then(([{ syncXboxGameAchievements }, { gamesSublevel }]) => {
+        gamesSublevel
+          .values()
+          .all()
+          .then((games) => {
+            for (const g of games) {
+              if (g.shop === "xbox" && (g as any).xboxTitleId) {
+                syncXboxGameAchievements(
+                  g.objectId,
+                  (g as any).xboxTitleId
+                ).catch(() => {});
+              }
+            }
+          });
+      })
+      .catch(() => {});
   }
 
   if (userPreferences?.realDebridApiToken) {

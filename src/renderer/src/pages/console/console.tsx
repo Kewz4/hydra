@@ -65,7 +65,9 @@ export default function ConsolePage() {
     if (levelFilter !== "all" && e.level !== levelFilter) return false;
     if (filter) {
       const q = filter.toLowerCase();
-      return e.text.toLowerCase().includes(q) || e.scope.toLowerCase().includes(q);
+      return (
+        e.text.toLowerCase().includes(q) || e.scope.toLowerCase().includes(q)
+      );
     }
     return true;
   });

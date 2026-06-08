@@ -9,7 +9,9 @@ export interface MetadataGameResult {
   what: string;
 }
 
-const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent): Promise<{
+const generateMissingMetadata = async (
+  _event: Electron.IpcMainInvokeEvent
+): Promise<{
   updated: number;
   skipped: number;
   results: MetadataGameResult[];
@@ -23,13 +25,23 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent): Pro
   let current = 0;
   const results: MetadataGameResult[] = [];
 
-  WindowManager.sendToAppWindows("on-metadata-progress", { current, total, title: null });
+  WindowManager.sendToAppWindows("on-metadata-progress", {
+    current,
+    total,
+    title: null,
+  });
 
   for (const game of games) {
     current++;
-    WindowManager.sendToAppWindows("on-metadata-progress", { current, total, title: game.title });
+    WindowManager.sendToAppWindows("on-metadata-progress", {
+      current,
+      total,
+      title: game.title,
+    });
     const cacheKey = levelKeys.game(game.shop, game.objectId);
-    const assets = await gamesShopAssetsSublevel.get(cacheKey).catch(() => null);
+    const assets = await gamesShopAssetsSublevel
+      .get(cacheKey)
+      .catch(() => null);
 
     // Only skip if we have an actual cover or hero image — icon alone is not sufficient
     const hasCover = assets?.coverImageUrl || assets?.libraryHeroImageUrl;
@@ -59,7 +71,8 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent): Pro
         updatedAt: Date.now(),
       });
 
-      const coverUrl = best.coverImageUrl ?? best.libraryHeroImageUrl ?? best.iconUrl ?? null;
+      const coverUrl =
+        best.coverImageUrl ?? best.libraryHeroImageUrl ?? best.iconUrl ?? null;
       const found: string[] = [];
       if (best.coverImageUrl) found.push("cover");
       if (best.libraryHeroImageUrl) found.push("hero image");
@@ -69,7 +82,8 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent): Pro
       results.push({
         title: game.title,
         coverUrl,
-        what: found.length > 0 ? `Found: ${found.join(", ")}` : "Updated metadata",
+        what:
+          found.length > 0 ? `Found: ${found.join(", ")}` : "Updated metadata",
       });
 
       updated++;
@@ -79,7 +93,12 @@ const generateMissingMetadata = async (_event: Electron.IpcMainInvokeEvent): Pro
     }
   }
 
-  WindowManager.sendToAppWindows("on-metadata-progress", { current: total, total, title: null, done: true });
+  WindowManager.sendToAppWindows("on-metadata-progress", {
+    current: total,
+    total,
+    title: null,
+    done: true,
+  });
   logger.log(`generateMissingMetadata: ${updated} updated, ${skipped} skipped`);
   return { updated, skipped, results };
 };

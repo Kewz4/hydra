@@ -15,9 +15,9 @@ export interface XboxGame {
 }
 
 export interface XboxTokenSet {
-  accessToken: string;   // MSA token
-  userHash: string;      // XBL uhs claim
-  xstsToken: string;     // XSTS token
+  accessToken: string; // MSA token
+  userHash: string; // XBL uhs claim
+  xstsToken: string; // XSTS token
   expiry: Date;
 }
 
@@ -66,7 +66,9 @@ export function extractMsaToken(url: string): string | null {
 }
 
 /** Exchange MSA token for Xbox Live (XBL) token */
-async function getXblToken(msaToken: string): Promise<{ token: string; uhs: string }> {
+async function getXblToken(
+  msaToken: string
+): Promise<{ token: string; uhs: string }> {
   const res = await axios.post(
     "https://user.auth.xboxlive.com/user/authenticate",
     {
@@ -79,14 +81,21 @@ async function getXblToken(msaToken: string): Promise<{ token: string; uhs: stri
       RelyingParty: "http://auth.xboxlive.com",
       TokenType: "JWT",
     },
-    { headers: { "Content-Type": "application/json", Accept: "application/json" } }
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    }
   );
   const uhs = res.data.DisplayClaims.xui[0].uhs as string;
   return { token: res.data.Token as string, uhs };
 }
 
 /** Exchange XBL token for XSTS token */
-async function getXstsToken(xblToken: string): Promise<{ token: string; gamertag: string; xuid: string }> {
+async function getXstsToken(
+  xblToken: string
+): Promise<{ token: string; gamertag: string; xuid: string }> {
   const res = await axios.post(
     "https://xsts.auth.xboxlive.com/xsts/authorize",
     {
@@ -97,7 +106,12 @@ async function getXstsToken(xblToken: string): Promise<{ token: string; gamertag
       RelyingParty: "http://xboxlive.com",
       TokenType: "JWT",
     },
-    { headers: { "Content-Type": "application/json", Accept: "application/json" } }
+    {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    }
   );
   const claims = res.data.DisplayClaims?.xui?.[0] ?? {};
   return {
@@ -174,7 +188,12 @@ export async function exchangeMsaForXboxTokens(
   // Don't try to detect Game Pass via API — it requires Microsoft partner access
   // and public endpoints are unreliable. User sets the toggle manually in settings.
   return {
-    tokens: { accessToken: msaAccessToken, userHash: uhs, xstsToken: xsts.token, expiry },
+    tokens: {
+      accessToken: msaAccessToken,
+      userHash: uhs,
+      xstsToken: xsts.token,
+      expiry,
+    },
     user: { gamertag: xsts.gamertag, xuid: xsts.xuid, hasGamePass: false },
   };
 }
@@ -204,7 +223,10 @@ function pickImageUrl(images: any[]): string | null {
   return uri.startsWith("//") ? `https:${uri}` : uri;
 }
 
-export async function getGamePassCatalog(uhs?: string, xstsToken?: string): Promise<XboxGame[]> {
+export async function getGamePassCatalog(
+  uhs?: string,
+  xstsToken?: string
+): Promise<XboxGame[]> {
   const authHeader =
     uhs && xstsToken ? { Authorization: `XBL3.0 x=${uhs};${xstsToken}` } : {};
 
@@ -241,17 +263,27 @@ export async function getGamePassCatalog(uhs?: string, xstsToken?: string): Prom
         if (!pfn) continue;
 
         const id: string = product.ProductId;
-        const title: string = product.LocalizedProperties?.[0]?.ProductTitle ?? id;
+        const title: string =
+          product.LocalizedProperties?.[0]?.ProductTitle ?? id;
         const description: string | null =
           product.LocalizedProperties?.[0]?.ShortDescription ?? null;
         const images: any[] = product.LocalizedProperties?.[0]?.Images ?? [];
         const coverUrl = pickImageUrl(images);
 
         const altIds: any[] = product.AlternateIds ?? [];
-        const titleIdEntry = altIds.find((a: any) => a.IdType === "XboxTitleId");
+        const titleIdEntry = altIds.find(
+          (a: any) => a.IdType === "XboxTitleId"
+        );
         const titleId: string | null = titleIdEntry?.Value ?? null;
 
-        games.push({ productId: id, title, packageFamilyName: pfn, coverUrl, description, titleId });
+        games.push({
+          productId: id,
+          title,
+          packageFamilyName: pfn,
+          coverUrl,
+          description,
+          titleId,
+        });
       }
     } catch {
       // skip failed batch

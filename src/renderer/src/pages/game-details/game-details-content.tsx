@@ -257,7 +257,12 @@ export function GameDetailsContent() {
             )}
           </div>
 
-          {shop !== "custom" && <Sidebar canonicalShop={canonicalShop} canonicalObjectId={canonicalObjectId} />}
+          {shop !== "custom" && (
+            <Sidebar
+              canonicalShop={canonicalShop}
+              canonicalObjectId={canonicalObjectId}
+            />
+          )}
         </div>
       </section>
     </div>

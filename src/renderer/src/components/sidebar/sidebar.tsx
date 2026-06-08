@@ -579,7 +579,8 @@ export function Sidebar() {
                       <span>{t(nameKey)}</span>
                       {isDownloading && (
                         <span className="sidebar__download-eta">
-                          {Math.round((lastPacket?.progress ?? 0) * 100)}%{eta ? ` · ${eta}` : ""}
+                          {Math.round((lastPacket?.progress ?? 0) * 100)}%
+                          {eta ? ` · ${eta}` : ""}
                         </span>
                       )}
                     </button>
@@ -587,7 +588,9 @@ export function Sidebar() {
                       <div className="sidebar__download-bar">
                         <div
                           className="sidebar__download-bar__fill"
-                          style={{ width: `${Math.round((lastPacket?.progress ?? 0) * 100)}%` }}
+                          style={{
+                            width: `${Math.round((lastPacket?.progress ?? 0) * 100)}%`,
+                          }}
                         />
                       </div>
                     )}

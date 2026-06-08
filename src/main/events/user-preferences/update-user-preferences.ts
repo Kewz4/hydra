@@ -39,9 +39,9 @@ const updateUserPreferences = async (
   // explicitly saved (even if it equals the default — getDownloadsPath will
   // fall back to the system default only when the value is null/undefined).
   const preservedDownloadsPath =
-    normalizedDownloadDirectoryPreferences.downloadsPath
-    ?? mergedPreferences.downloadsPath
-    ?? null;
+    normalizedDownloadDirectoryPreferences.downloadsPath ??
+    mergedPreferences.downloadsPath ??
+    null;
 
   const updatedPreferences = {
     ...mergedPreferences,

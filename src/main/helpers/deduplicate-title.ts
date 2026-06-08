@@ -29,12 +29,18 @@ import { normalizeGameTitle } from "./normalize-game-title";
 
 function canonicalScore(shop: Game["shop"]): number {
   switch (shop) {
-    case "steam":     return 20; // Catalogue, richest Hydra API assets
-    case "epic":      return 18; // Catalogue
-    case "gog":       return 18; // Catalogue
-    case "xbox":      return 18; // Catalogue
-    case "battlenet": return 16; // Catalogue (partial)
-    default:          return 1;  // custom — no catalogue match
+    case "steam":
+      return 20; // Catalogue, richest Hydra API assets
+    case "epic":
+      return 18; // Catalogue
+    case "gog":
+      return 18; // Catalogue
+    case "xbox":
+      return 18; // Catalogue
+    case "battlenet":
+      return 16; // Catalogue (partial)
+    default:
+      return 1; // custom — no catalogue match
   }
 }
 
@@ -54,8 +60,12 @@ export async function deduplicateTitle(title: string): Promise<string | null> {
   matches.sort(([, a], [, b]) => {
     const scoreDiff = canonicalScore(b.shop) - canonicalScore(a.shop);
     if (scoreDiff !== 0) return scoreDiff;
-    const aTime = a.addedToLibraryAt ? new Date(a.addedToLibraryAt).getTime() : 0;
-    const bTime = b.addedToLibraryAt ? new Date(b.addedToLibraryAt).getTime() : 0;
+    const aTime = a.addedToLibraryAt
+      ? new Date(a.addedToLibraryAt).getTime()
+      : 0;
+    const bTime = b.addedToLibraryAt
+      ? new Date(b.addedToLibraryAt).getTime()
+      : 0;
     return aTime - bTime; // earlier = lower number = preferred
   });
 
@@ -67,7 +77,8 @@ export async function deduplicateTitle(title: string): Promise<string | null> {
   let bestLaunchOptions = canonicalGame.launchOptions ?? null;
   for (const [, dup] of duplicates) {
     if (!bestExePath && dup.executablePath) bestExePath = dup.executablePath;
-    if (!bestLaunchOptions && dup.launchOptions) bestLaunchOptions = dup.launchOptions;
+    if (!bestLaunchOptions && dup.launchOptions)
+      bestLaunchOptions = dup.launchOptions;
   }
 
   // Update canonical with merged executable if it lacked one
@@ -110,7 +121,9 @@ export async function deduplicateTitle(title: string): Promise<string | null> {
     }
 
     await gamesSublevel.put(dupKey, { ...dupGame, isDeleted: true });
-    logger.log(`deduplicateTitle: soft-deleted duplicate "${dupGame.title}" [${dupKey}] → kept [${canonicalKey}]`);
+    logger.log(
+      `deduplicateTitle: soft-deleted duplicate "${dupGame.title}" [${dupKey}] → kept [${canonicalKey}]`
+    );
   }
 
   // Persist merged alternativeShops back onto the canonical entry

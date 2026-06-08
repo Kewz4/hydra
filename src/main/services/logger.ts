@@ -40,13 +40,17 @@ export interface ConsoleLogEntry {
   text: string;
 }
 
-export function setConsoleWindowSender(fn: ((entry: ConsoleLogEntry) => void) | null) {
+export function setConsoleWindowSender(
+  fn: ((entry: ConsoleLogEntry) => void) | null
+) {
   _consoleWindowSend = fn;
 }
 
 const ipcTransport: log.Transport = (message) => {
   if (!_consoleWindowSend) return;
-  const text = message.data.map((d) => (typeof d === "string" ? d : JSON.stringify(d))).join(" ");
+  const text = message.data
+    .map((d) => (typeof d === "string" ? d : JSON.stringify(d)))
+    .join(" ");
   _consoleWindowSend({
     ts: message.date.getTime(),
     level: message.level,

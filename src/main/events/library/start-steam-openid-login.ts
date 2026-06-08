@@ -8,7 +8,10 @@ import { logger } from "@main/services";
 const OPENID_STEAM_URL = "https://steamcommunity.com/openid/login";
 const STEAM_ID_REGEX = /^https?:\/\/steamcommunity\.com\/openid\/id\/(\d+)$/;
 
-function verifyOpenId(params: URLSearchParams, realm: string): Promise<boolean> {
+function verifyOpenId(
+  params: URLSearchParams,
+  realm: string
+): Promise<boolean> {
   return new Promise((resolve) => {
     const verifyParams = new URLSearchParams(params);
     verifyParams.set("openid.mode", "check_authentication");
@@ -16,10 +19,18 @@ function verifyOpenId(params: URLSearchParams, realm: string): Promise<boolean> 
     const body = verifyParams.toString();
     const req = https.request(
       OPENID_STEAM_URL,
-      { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", "Content-Length": Buffer.byteLength(body) } },
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Length": Buffer.byteLength(body),
+        },
+      },
       (res) => {
         let data = "";
-        res.on("data", (chunk) => { data += chunk; });
+        res.on("data", (chunk) => {
+          data += chunk;
+        });
         res.on("end", () => {
           resolve(data.includes("is_valid:true"));
         });
@@ -31,7 +42,9 @@ function verifyOpenId(params: URLSearchParams, realm: string): Promise<boolean> 
   });
 }
 
-const startSteamOpenIdLogin = async (_event: Electron.IpcMainInvokeEvent): Promise<string> => {
+const startSteamOpenIdLogin = async (
+  _event: Electron.IpcMainInvokeEvent
+): Promise<string> => {
   return new Promise((resolve, reject) => {
     const server = http.createServer();
 
@@ -42,19 +55,31 @@ const startSteamOpenIdLogin = async (_event: Electron.IpcMainInvokeEvent): Promi
       const realm = `http://localhost:${port}/`;
 
       const loginUrl = new URL(OPENID_STEAM_URL);
-      loginUrl.searchParams.set("openid.ns", "http://specs.openid.net/auth/2.0");
+      loginUrl.searchParams.set(
+        "openid.ns",
+        "http://specs.openid.net/auth/2.0"
+      );
       loginUrl.searchParams.set("openid.mode", "checkid_setup");
       loginUrl.searchParams.set("openid.return_to", callbackUrl);
       loginUrl.searchParams.set("openid.realm", realm);
-      loginUrl.searchParams.set("openid.identity", "http://specs.openid.net/auth/2.0/identifier_select");
-      loginUrl.searchParams.set("openid.claimed_id", "http://specs.openid.net/auth/2.0/identifier_select");
+      loginUrl.searchParams.set(
+        "openid.identity",
+        "http://specs.openid.net/auth/2.0/identifier_select"
+      );
+      loginUrl.searchParams.set(
+        "openid.claimed_id",
+        "http://specs.openid.net/auth/2.0/identifier_select"
+      );
 
       shell.openExternal(loginUrl.toString());
 
-      const timeout = setTimeout(() => {
-        server.close();
-        reject(new Error("Steam login timed out after 5 minutes"));
-      }, 5 * 60 * 1000);
+      const timeout = setTimeout(
+        () => {
+          server.close();
+          reject(new Error("Steam login timed out after 5 minutes"));
+        },
+        5 * 60 * 1000
+      );
 
       server.on("request", async (req, res) => {
         try {

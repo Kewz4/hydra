@@ -16,7 +16,9 @@ type Step = "idle" | "installing" | "signing_in" | "syncing";
 
 export function SettingsEpicAccount() {
   const { t } = useTranslation("settings");
-  const userPreferences = useAppSelector((state) => state.userPreferences.value);
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
   const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
 
@@ -29,8 +31,15 @@ export function SettingsEpicAccount() {
   } | null>(null);
   const [step, setStep] = useState<Step>("idle");
   const [installProgress, setInstallProgress] = useState(0);
-  const [syncResult, setSyncResult] = useState<{ total: number; added: number } | null>(null);
-  const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    total: number;
+    added: number;
+  } | null>(null);
+  const [syncModal, setSyncModal] = useState<{
+    heading: string;
+    summary: string;
+    results: LibrarySyncResult[];
+  } | null>(null);
   const unsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -49,7 +58,8 @@ export function SettingsEpicAccount() {
 
   // Subscribe to download progress
   useEffect(() => {
-    const unsub = window.electron.onLegendaryInstallProgress(setInstallProgress);
+    const unsub =
+      window.electron.onLegendaryInstallProgress(setInstallProgress);
     unsubRef.current = unsub;
     return () => unsub();
   }, []);
@@ -110,13 +120,16 @@ export function SettingsEpicAccount() {
       setSyncResult(result);
 
       // Auto-run dedup after sync
-      const dedupResult = await window.electron.mergeDuplicateGames().catch(() => ({ merged: 0, mergedTitles: [] }));
+      const dedupResult = await window.electron
+        .mergeDuplicateGames()
+        .catch(() => ({ merged: 0, mergedTitles: [] }));
 
       setSyncModal({
         heading: "Epic Library Synced",
-        summary: result.added > 0
-          ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
-          : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
+        summary:
+          result.added > 0
+            ? `Added ${result.added} game${result.added !== 1 ? "s" : ""} (${result.total} total).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`
+            : `Library up to date (${result.total} games).${dedupResult.merged > 0 ? ` Merged ${dedupResult.merged} duplicate${dedupResult.merged !== 1 ? "s" : ""}.` : ""}`,
         results: (result.addedGames ?? []).map((g) => ({
           title: g.title,
           coverUrl: g.coverUrl,
@@ -137,116 +150,136 @@ export function SettingsEpicAccount() {
 
   return (
     <>
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <p style={{ margin: 0, opacity: 0.8 }}>{t("epic_account_description")}</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <p style={{ margin: 0, opacity: 0.8 }}>
+          {t("epic_account_description")}
+        </p>
 
-      {/* Status chip */}
-      {status && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "10px 14px",
-            borderRadius: "8px",
-            background: "var(--color-background-2, rgba(255,255,255,0.05))",
-          }}
-        >
-          {isAuthenticated ? (
-            <>
-              <CheckCircleFillIcon size={16} />
-              <span style={{ flex: 1 }}>
-                {t("epic_logged_in_as", { username: status.account })}
-              </span>
-              <Button type="button" theme="outline" onClick={handleSignOut} disabled={isBusy}>
-                {t("sign_out")}
-              </Button>
-            </>
-          ) : binaryFound ? (
-            <>
-              <AlertIcon size={16} />
-              <span>{t("legendary_not_authenticated")}</span>
-            </>
-          ) : (
-            <>
-              <AlertIcon size={16} />
-              <span>{t("legendary_not_found")}</span>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Install legendary */}
-      {!binaryFound && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <Button
-            type="button"
-            onClick={handleInstall}
-            disabled={isBusy}
-            style={{ display: "flex", alignItems: "center", gap: "6px", width: "fit-content" }}
+        {/* Status chip */}
+        {status && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 14px",
+              borderRadius: "8px",
+              background: "var(--color-background-2, rgba(255,255,255,0.05))",
+            }}
           >
-            <DownloadIcon size={14} />
-            {step === "installing"
-              ? installProgress > 0
-                ? t("downloading_pct", { pct: installProgress })
-                : t("downloading")
-              : t("install_legendary")}
-          </Button>
-
-          {/* Manual path override */}
-          <form
-            onSubmit={handleSavePath}
-            style={{ display: "flex", flexDirection: "column", gap: "4px" }}
-          >
-            <TextField
-              label={t("legendary_binary_path")}
-              value={legendaryPath}
-              onChange={(e) => setLegendaryPath(e.target.value)}
-              placeholder={t("legendary_binary_placeholder")}
-              hint={t("legendary_binary_hint")}
-              rightContent={
-                <Button type="submit" disabled={isBusy}>
-                  {t("save_changes")}
+            {isAuthenticated ? (
+              <>
+                <CheckCircleFillIcon size={16} />
+                <span style={{ flex: 1 }}>
+                  {t("epic_logged_in_as", { username: status.account })}
+                </span>
+                <Button
+                  type="button"
+                  theme="outline"
+                  onClick={handleSignOut}
+                  disabled={isBusy}
+                >
+                  {t("sign_out")}
                 </Button>
-              }
-            />
-          </form>
-        </div>
-      )}
+              </>
+            ) : binaryFound ? (
+              <>
+                <AlertIcon size={16} />
+                <span>{t("legendary_not_authenticated")}</span>
+              </>
+            ) : (
+              <>
+                <AlertIcon size={16} />
+                <span>{t("legendary_not_found")}</span>
+              </>
+            )}
+          </div>
+        )}
 
-      {/* Sign in */}
-      {binaryFound && !isAuthenticated && (
-        <Button
-          type="button"
-          onClick={handleSignIn}
-          disabled={isBusy}
-          style={{ display: "flex", alignItems: "center", gap: "6px", width: "fit-content" }}
-        >
-          <PersonIcon size={14} />
-          {step === "signing_in" ? t("signing_in") : t("sign_in_epic")}
-        </Button>
-      )}
+        {/* Install legendary */}
+        {!binaryFound && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <Button
+              type="button"
+              onClick={handleInstall}
+              disabled={isBusy}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                width: "fit-content",
+              }}
+            >
+              <DownloadIcon size={14} />
+              {step === "installing"
+                ? installProgress > 0
+                  ? t("downloading_pct", { pct: installProgress })
+                  : t("downloading")
+                : t("install_legendary")}
+            </Button>
 
-      {/* Sync library */}
-      {isAuthenticated && (
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Manual path override */}
+            <form
+              onSubmit={handleSavePath}
+              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
+            >
+              <TextField
+                label={t("legendary_binary_path")}
+                value={legendaryPath}
+                onChange={(e) => setLegendaryPath(e.target.value)}
+                placeholder={t("legendary_binary_placeholder")}
+                hint={t("legendary_binary_hint")}
+                rightContent={
+                  <Button type="submit" disabled={isBusy}>
+                    {t("save_changes")}
+                  </Button>
+                }
+              />
+            </form>
+          </div>
+        )}
+
+        {/* Sign in */}
+        {binaryFound && !isAuthenticated && (
           <Button
             type="button"
-            onClick={handleSync}
+            onClick={handleSignIn}
             disabled={isBusy}
-            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              width: "fit-content",
+            }}
           >
-            <SyncIcon size={14} />
-            {step === "syncing" ? t("syncing") : t("sync_epic_library")}
+            <PersonIcon size={14} />
+            {step === "signing_in" ? t("signing_in") : t("sign_in_epic")}
           </Button>
-          {syncResult && (
-            <small style={{ opacity: 0.7 }}>
-              {t("sync_result", { added: syncResult.added, total: syncResult.total })}
-            </small>
-          )}
-        </div>
-      )}
-    </div>
+        )}
+
+        {/* Sync library */}
+        {isAuthenticated && (
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <Button
+              type="button"
+              onClick={handleSync}
+              disabled={isBusy}
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <SyncIcon size={14} />
+              {step === "syncing" ? t("syncing") : t("sync_epic_library")}
+            </Button>
+            {syncResult && (
+              <small style={{ opacity: 0.7 }}>
+                {t("sync_result", {
+                  added: syncResult.added,
+                  total: syncResult.total,
+                })}
+              </small>
+            )}
+          </div>
+        )}
+      </div>
 
       {syncModal && (
         <LibrarySyncModal

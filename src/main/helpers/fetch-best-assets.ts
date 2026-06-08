@@ -36,7 +36,10 @@ function shopAssetsToResult(assets: ShopAssets): BestAssets {
   };
 }
 
-async function tryHydraAssets(shop: GameShop, objectId: string): Promise<BestAssets | null> {
+async function tryHydraAssets(
+  shop: GameShop,
+  objectId: string
+): Promise<BestAssets | null> {
   try {
     const assets = await HydraApi.get<ShopAssets | null>(
       `/games/${shop}/${objectId}/assets`,
@@ -44,7 +47,13 @@ async function tryHydraAssets(shop: GameShop, objectId: string): Promise<BestAss
       { needsAuth: false }
     );
     // Only treat as a hit if at least one image field is populated
-    if (assets && (assets.coverImageUrl || assets.iconUrl || assets.libraryHeroImageUrl || assets.libraryImageUrl)) {
+    if (
+      assets &&
+      (assets.coverImageUrl ||
+        assets.iconUrl ||
+        assets.libraryHeroImageUrl ||
+        assets.libraryImageUrl)
+    ) {
       return shopAssetsToResult(assets);
     }
   } catch {
@@ -53,9 +62,14 @@ async function tryHydraAssets(shop: GameShop, objectId: string): Promise<BestAss
   return null;
 }
 
-async function tryHydraCatalogueByTitle(title: string): Promise<BestAssets | null> {
+async function tryHydraCatalogueByTitle(
+  title: string
+): Promise<BestAssets | null> {
   try {
-    const resp = await HydraApi.post<{ edges: CatalogueSearchResult[]; count: number }>(
+    const resp = await HydraApi.post<{
+      edges: CatalogueSearchResult[];
+      count: number;
+    }>(
       "/catalogue/search",
       {
         title,
@@ -74,7 +88,9 @@ async function tryHydraCatalogueByTitle(title: string): Promise<BestAssets | nul
       { needsAuth: false }
     );
     const titleNorm = normalizeGameTitle(title);
-    const match = resp?.edges?.find((r) => normalizeGameTitle(r.title) === titleNorm);
+    const match = resp?.edges?.find(
+      (r) => normalizeGameTitle(r.title) === titleNorm
+    );
     if (!match) return null;
     return tryHydraAssets(match.shop, match.objectId);
   } catch {
@@ -82,7 +98,10 @@ async function tryHydraCatalogueByTitle(title: string): Promise<BestAssets | nul
   }
 }
 
-function sgdbToAssets(sgdb: Awaited<ReturnType<typeof getSteamGridDbArtwork>>, fallback: Partial<BestAssets> = {}): BestAssets {
+function sgdbToAssets(
+  sgdb: Awaited<ReturnType<typeof getSteamGridDbArtwork>>,
+  fallback: Partial<BestAssets> = {}
+): BestAssets {
   return {
     iconUrl: sgdb?.gridUrl ?? fallback.iconUrl ?? null,
     coverImageUrl: sgdb?.gridUrl ?? fallback.coverImageUrl ?? null,
@@ -112,12 +131,21 @@ export async function fetchBestAssets(
     // Merge: keep Hydra API values but fill any nulls from initialFallback
     return {
       iconUrl: hydraAssets.iconUrl ?? initialFallback.iconUrl ?? null,
-      coverImageUrl: hydraAssets.coverImageUrl ?? initialFallback.coverImageUrl ?? null,
-      libraryImageUrl: hydraAssets.libraryImageUrl ?? initialFallback.libraryImageUrl ?? null,
-      libraryHeroImageUrl: hydraAssets.libraryHeroImageUrl ?? initialFallback.libraryHeroImageUrl ?? null,
-      logoImageUrl: hydraAssets.logoImageUrl ?? initialFallback.logoImageUrl ?? null,
-      logoPosition: hydraAssets.logoPosition ?? initialFallback.logoPosition ?? null,
-      downloadSources: hydraAssets.downloadSources?.length ? hydraAssets.downloadSources : initialFallback.downloadSources ?? [],
+      coverImageUrl:
+        hydraAssets.coverImageUrl ?? initialFallback.coverImageUrl ?? null,
+      libraryImageUrl:
+        hydraAssets.libraryImageUrl ?? initialFallback.libraryImageUrl ?? null,
+      libraryHeroImageUrl:
+        hydraAssets.libraryHeroImageUrl ??
+        initialFallback.libraryHeroImageUrl ??
+        null,
+      logoImageUrl:
+        hydraAssets.logoImageUrl ?? initialFallback.logoImageUrl ?? null,
+      logoPosition:
+        hydraAssets.logoPosition ?? initialFallback.logoPosition ?? null,
+      downloadSources: hydraAssets.downloadSources?.length
+        ? hydraAssets.downloadSources
+        : (initialFallback.downloadSources ?? []),
     };
   }
 
@@ -127,12 +155,25 @@ export async function fetchBestAssets(
     if (catalogueAssets) {
       return {
         iconUrl: catalogueAssets.iconUrl ?? initialFallback.iconUrl ?? null,
-        coverImageUrl: catalogueAssets.coverImageUrl ?? initialFallback.coverImageUrl ?? null,
-        libraryImageUrl: catalogueAssets.libraryImageUrl ?? initialFallback.libraryImageUrl ?? null,
-        libraryHeroImageUrl: catalogueAssets.libraryHeroImageUrl ?? initialFallback.libraryHeroImageUrl ?? null,
-        logoImageUrl: catalogueAssets.logoImageUrl ?? initialFallback.logoImageUrl ?? null,
-        logoPosition: catalogueAssets.logoPosition ?? initialFallback.logoPosition ?? null,
-        downloadSources: catalogueAssets.downloadSources?.length ? catalogueAssets.downloadSources : initialFallback.downloadSources ?? [],
+        coverImageUrl:
+          catalogueAssets.coverImageUrl ??
+          initialFallback.coverImageUrl ??
+          null,
+        libraryImageUrl:
+          catalogueAssets.libraryImageUrl ??
+          initialFallback.libraryImageUrl ??
+          null,
+        libraryHeroImageUrl:
+          catalogueAssets.libraryHeroImageUrl ??
+          initialFallback.libraryHeroImageUrl ??
+          null,
+        logoImageUrl:
+          catalogueAssets.logoImageUrl ?? initialFallback.logoImageUrl ?? null,
+        logoPosition:
+          catalogueAssets.logoPosition ?? initialFallback.logoPosition ?? null,
+        downloadSources: catalogueAssets.downloadSources?.length
+          ? catalogueAssets.downloadSources
+          : (initialFallback.downloadSources ?? []),
       };
     }
   }

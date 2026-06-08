@@ -1,6 +1,11 @@
 import { BrowserWindow } from "electron";
 import { registerEvent } from "../register-event";
-import { authenticateLegendary, findLegendaryBinary, downloadLegendary, getLegendaryStatus } from "@main/services/legendary";
+import {
+  authenticateLegendary,
+  findLegendaryBinary,
+  downloadLegendary,
+  getLegendaryStatus,
+} from "@main/services/legendary";
 import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import { logger } from "@main/services";
@@ -18,9 +23,12 @@ const EPIC_LOGIN_URL =
 const extractCode = (bodyText: string): string | null => {
   try {
     const json = JSON.parse(bodyText.trim());
-    const code = json?.authorizationCode || json?.exchangeCode || json?.code || null;
+    const code =
+      json?.authorizationCode || json?.exchangeCode || json?.code || null;
     if (code && typeof code === "string" && code.length > 8) return code;
-  } catch {}
+  } catch (_) {
+    // ignore parse errors
+  }
   return null;
 };
 
@@ -28,7 +36,10 @@ const openLegendaryAuthWindow = async (
   _event: Electron.IpcMainInvokeEvent
 ): Promise<{ success: boolean; account?: string }> => {
   const prefs = await db
-    .get<string, UserPreferences | null>(levelKeys.userPreferences, { valueEncoding: "json" })
+    .get<
+      string,
+      UserPreferences | null
+    >(levelKeys.userPreferences, { valueEncoding: "json" })
     .catch(() => null);
 
   return new Promise((resolve) => {
@@ -36,7 +47,11 @@ const openLegendaryAuthWindow = async (
       width: 640,
       height: 800,
       title: "Sign in to Epic Games",
-      webPreferences: { nodeIntegration: false, contextIsolation: true, webSecurity: true },
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        webSecurity: true,
+      },
     });
 
     win.loadURL(EPIC_LOGIN_URL);
@@ -49,7 +64,9 @@ const openLegendaryAuthWindow = async (
 
       let bodyText = "";
       try {
-        bodyText = await win.webContents.executeJavaScript("document.body.innerText");
+        bodyText = await win.webContents.executeJavaScript(
+          "document.body.innerText"
+        );
       } catch {
         return;
       }

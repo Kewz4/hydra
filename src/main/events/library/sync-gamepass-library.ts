@@ -20,7 +20,10 @@ const syncGamePassLibrary = async () => {
     throw new Error("Xbox account not connected. Sign in first.");
   }
 
-  const games = await getGamePassCatalog(prefs.xboxUserHash, prefs.xboxXstsToken);
+  const games = await getGamePassCatalog(
+    prefs.xboxUserHash,
+    prefs.xboxXstsToken
+  );
 
   let added = 0;
 
@@ -33,24 +36,35 @@ const syncGamePassLibrary = async () => {
     const titleMatch = await findGameByTitle(xboxGame.title);
     if (titleMatch) {
       const [matchKey, matchGame] = titleMatch;
-      const alreadyLinked = matchGame.alternativeShops?.some(s => s.shop === "xbox" && s.objectId === xboxGame.productId);
+      const alreadyLinked = matchGame.alternativeShops?.some(
+        (s) => s.shop === "xbox" && s.objectId === xboxGame.productId
+      );
       if (!alreadyLinked) {
         await gamesSublevel.put(matchKey, {
           ...matchGame,
           alternativeShops: [
             ...(matchGame.alternativeShops ?? []),
-            { shop: "xbox", objectId: xboxGame.productId, executablePath: `msxbox://game/?productId=${xboxGame.productId}` },
+            {
+              shop: "xbox",
+              objectId: xboxGame.productId,
+              executablePath: `msxbox://game/?productId=${xboxGame.productId}`,
+            },
           ],
         });
       }
       continue; // Don't create a duplicate entry
     }
 
-    const assets = await fetchBestAssets("xbox", xboxGame.productId, xboxGame.title, {
-      iconUrl: xboxGame.coverUrl ?? null,
-      coverImageUrl: xboxGame.coverUrl ?? null,
-      libraryHeroImageUrl: xboxGame.coverUrl ?? null,
-    });
+    const assets = await fetchBestAssets(
+      "xbox",
+      xboxGame.productId,
+      xboxGame.title,
+      {
+        iconUrl: xboxGame.coverUrl ?? null,
+        coverImageUrl: xboxGame.coverUrl ?? null,
+        libraryHeroImageUrl: xboxGame.coverUrl ?? null,
+      }
+    );
 
     const game = {
       title: xboxGame.title,
@@ -76,7 +90,9 @@ const syncGamePassLibrary = async () => {
 
     // Sync achievements for this game if titleId is available
     if (xboxGame.titleId) {
-      syncXboxGameAchievements(xboxGame.productId, xboxGame.titleId).catch(() => {});
+      syncXboxGameAchievements(xboxGame.productId, xboxGame.titleId).catch(
+        () => {}
+      );
     }
   }
 

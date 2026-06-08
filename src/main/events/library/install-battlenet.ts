@@ -18,7 +18,9 @@ const installBattleNet = async (_event: Electron.IpcMainInvokeEvent) => {
   const url = BATTLENET_INSTALLER_URLS[process.platform as NodeJS.Platform];
 
   if (!url) {
-    throw new Error(`Battle.net installer not available for ${process.platform}`);
+    throw new Error(
+      `Battle.net installer not available for ${process.platform}`
+    );
   }
 
   const tmpDir = path.join(SystemPath.getPath("userData"), "tmp");

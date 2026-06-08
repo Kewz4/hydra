@@ -9,7 +9,9 @@ const UPLOADCARE_DOCS_URL = "https://uploadcare.com/docs/start/";
 
 export function SettingsUploadcare() {
   const { t } = useTranslation("settings");
-  const userPreferences = useAppSelector((state) => state.userPreferences.value);
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
   const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
 
@@ -25,8 +27,7 @@ export function SettingsUploadcare() {
   }, [userPreferences]);
 
   const isConfigured = !!(
-    userPreferences?.uploadcarePublicKey &&
-    userPreferences?.uploadcareSecretKey
+    userPreferences?.uploadcarePublicKey && userPreferences?.uploadcareSecretKey
   );
 
   const handleSave = async (e: React.FormEvent) => {
@@ -47,7 +48,10 @@ export function SettingsUploadcare() {
   };
 
   const handleDisconnect = async () => {
-    await updateUserPreferences({ uploadcarePublicKey: null, uploadcareSecretKey: null });
+    await updateUserPreferences({
+      uploadcarePublicKey: null,
+      uploadcareSecretKey: null,
+    });
     setPublicKey("");
     setSecretKey("");
     showSuccessToast(t("uploadcare_disconnected"));
@@ -76,7 +80,10 @@ export function SettingsUploadcare() {
         </div>
       )}
 
-      <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+      <form
+        onSubmit={handleSave}
+        style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+      >
         <TextField
           label={t("uploadcare_public_key")}
           value={publicKey}

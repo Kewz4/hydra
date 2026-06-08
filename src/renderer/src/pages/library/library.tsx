@@ -471,8 +471,17 @@ export default function Library() {
 
   const storeFilteredLibrary = useMemo(() => {
     if (storeFilter === "all") return filteredLibrary;
-    if (storeFilter === "local") return filteredLibrary.filter(g => !g.executablePath || (!g.executablePath.includes("://") && !g.executablePath.startsWith("steam://") && !g.executablePath.startsWith("legendary://") && !g.executablePath.startsWith("goggalaxy://") && !g.executablePath.startsWith("msxbox://")));
-    return filteredLibrary.filter(g => g.shop === storeFilter);
+    if (storeFilter === "local")
+      return filteredLibrary.filter(
+        (g) =>
+          !g.executablePath ||
+          (!g.executablePath.includes("://") &&
+            !g.executablePath.startsWith("steam://") &&
+            !g.executablePath.startsWith("legendary://") &&
+            !g.executablePath.startsWith("goggalaxy://") &&
+            !g.executablePath.startsWith("msxbox://"))
+      );
+    return filteredLibrary.filter((g) => g.shop === storeFilter);
   }, [filteredLibrary, storeFilter]);
 
   const favoritesCount = useMemo(() => {
@@ -520,7 +529,17 @@ export default function Library() {
             </div>
           </div>
 
-          <div className="library__store-filters" role="group" aria-label="Filter by store" style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "8px" }}>
+          <div
+            className="library__store-filters"
+            role="group"
+            aria-label="Filter by store"
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+              marginBottom: "8px",
+            }}
+          >
             {["all", "steam", "epic", "gog", "xbox", "custom"].map((store) => (
               <button
                 key={store}
@@ -529,8 +548,14 @@ export default function Library() {
                 style={{
                   padding: "4px 10px",
                   borderRadius: "12px",
-                  border: storeFilter === store ? "1px solid var(--color-primary, #8b5cf6)" : "1px solid rgba(255,255,255,0.2)",
-                  background: storeFilter === store ? "var(--color-primary, #8b5cf6)" : "transparent",
+                  border:
+                    storeFilter === store
+                      ? "1px solid var(--color-primary, #8b5cf6)"
+                      : "1px solid rgba(255,255,255,0.2)",
+                  background:
+                    storeFilter === store
+                      ? "var(--color-primary, #8b5cf6)"
+                      : "transparent",
                   color: "inherit",
                   cursor: "pointer",
                   fontSize: "0.8rem",
@@ -649,10 +674,7 @@ export default function Library() {
                 transition={{ duration: 0.2 }}
               >
                 {storeFilteredLibrary.map((game) => (
-                  <li
-                    key={game.id}
-                    style={{ listStyle: "none" }}
-                  >
+                  <li key={game.id} style={{ listStyle: "none" }}>
                     <LibraryGameCard
                       game={game}
                       onMouseEnter={handleOnMouseEnterGameCard}

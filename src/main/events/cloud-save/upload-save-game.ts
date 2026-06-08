@@ -11,14 +11,21 @@ const uploadSaveGame = async (
   downloadOptionTitle: string | null
 ) => {
   const prefs = await db
-    .get<string, UserPreferences>(levelKeys.userPreferences, { valueEncoding: "json" })
-    .catch(() => ({} as UserPreferences));
+    .get<
+      string,
+      UserPreferences
+    >(levelKeys.userPreferences, { valueEncoding: "json" })
+    .catch(() => ({}) as UserPreferences);
 
   // Ensure a stable cloud sync user ID exists
   let userId = prefs?.cloudSyncUserId;
   if (!userId) {
     userId = UploadcareSync.generateUserId();
-    await db.put(levelKeys.userPreferences, { ...prefs, cloudSyncUserId: userId }, { valueEncoding: "json" });
+    await db.put(
+      levelKeys.userPreferences,
+      { ...prefs, cloudSyncUserId: userId },
+      { valueEncoding: "json" }
+    );
   }
 
   return CloudSync.uploadSaveGame(

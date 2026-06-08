@@ -1,6 +1,10 @@
 import axios from "axios";
 import { db, levelKeys, gameAchievementsSublevel } from "@main/level";
-import type { UserPreferences, SteamAchievement, UnlockedAchievement } from "@types";
+import type {
+  UserPreferences,
+  SteamAchievement,
+  UnlockedAchievement,
+} from "@types";
 import { logger } from "@main/services/logger";
 
 interface XblAchievement {
@@ -19,7 +23,13 @@ interface XblAchievement {
   productId: string;
   achievementType: string;
   isRevoked: boolean;
-  rewards: Array<{ name: string | null; description: string | null; value: string; mediaAsset: any; type: string }>;
+  rewards: Array<{
+    name: string | null;
+    description: string | null;
+    value: string;
+    mediaAsset: any;
+    type: string;
+  }>;
   estimatedTime: string;
   deeplink: string;
 }
@@ -29,7 +39,10 @@ export async function getXboxAchievements(
   xuid: string,
   uhs: string,
   xstsToken: string
-): Promise<{ achievements: SteamAchievement[]; unlocked: UnlockedAchievement[] }> {
+): Promise<{
+  achievements: SteamAchievement[];
+  unlocked: UnlockedAchievement[];
+}> {
   const headers = {
     Authorization: `XBL3.0 x=${uhs};${xstsToken}`,
     "x-xbl-contract-version": "2",
@@ -74,13 +87,16 @@ export async function getXboxAchievements(
 
 /** Fetch and store Xbox achievements for a game in the library. */
 export async function syncXboxGameAchievements(
-  objectId: string,  // productId
+  objectId: string, // productId
   titleId: string
 ): Promise<void> {
   try {
-    const prefs = await db.get<string, UserPreferences>(levelKeys.userPreferences, {
-      valueEncoding: "json",
-    });
+    const prefs = await db.get<string, UserPreferences>(
+      levelKeys.userPreferences,
+      {
+        valueEncoding: "json",
+      }
+    );
 
     if (!prefs?.xboxXstsToken || !prefs?.xboxUserHash) return;
 
@@ -106,8 +122,14 @@ export async function syncXboxGameAchievements(
       language: "en",
     });
 
-    logger.log(`Xbox achievements synced for ${objectId}: ${unlocked.length}/${achievements.length} unlocked`);
+    logger.log(
+      `Xbox achievements synced for ${objectId}: ${unlocked.length}/${achievements.length} unlocked`
+    );
   } catch (err) {
-    logger.error("Failed to sync Xbox achievements", { objectId, titleId, err });
+    logger.error("Failed to sync Xbox achievements", {
+      objectId,
+      titleId,
+      err,
+    });
   }
 }

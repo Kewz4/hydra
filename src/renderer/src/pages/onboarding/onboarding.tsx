@@ -61,7 +61,9 @@ function parseSteamId(input: string): string {
 
 export function Onboarding({ onComplete }: OnboardingProps) {
   const { t, i18n } = useTranslation("settings");
-  const userPreferences = useAppSelector((state) => state.userPreferences.value);
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
 
   const [stepIndex, setStepIndex] = useState(0);
 
@@ -92,7 +94,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [steamBusy, setSteamBusy] = useState(false);
   const [steamError, setSteamError] = useState("");
   const [steamOpenIdBusy, setSteamOpenIdBusy] = useState(false);
-  const [steamProfile, setSteamProfile] = useState<{ personaname: string; avatarfull: string } | null>(null);
+  const [steamProfile, setSteamProfile] = useState<{
+    personaname: string;
+    avatarfull: string;
+  } | null>(null);
 
   // Epic
   const [epicBusy, setEpicBusy] = useState(false);
@@ -190,7 +195,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     setSteamError("");
     try {
       const detectedId = await window.electron.startSteamOpenIdLogin();
-      const summary = await window.electron.getSteamPlayerSummary(detectedId, undefined).catch(() => null);
+      const summary = await window.electron
+        .getSteamPlayerSummary(detectedId, undefined)
+        .catch(() => null);
       await window.electron.updateUserPreferences({ steamId: detectedId });
       if (summary) setSteamProfile(summary);
       setSteamLinked(true);
@@ -233,7 +240,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const handleEpicConnect = async () => {
     setEpicBusy(true);
     try {
-      const status = await window.electron.getLegendaryStatus().catch(() => null);
+      const status = await window.electron
+        .getLegendaryStatus()
+        .catch(() => null);
       if (!status?.binaryFound) {
         await window.electron.installLegendary().catch(() => null);
       }
@@ -330,14 +339,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         )}
 
         <div className="onboarding-body">
-
           {/* ── Welcome ── */}
           {currentStep === "welcome" && (
             <>
               <p className="onboarding-step-description">
                 Let's get you set up quickly. We'll configure a few basics,
-                optionally connect your accounts, then you're in.
-                You can change everything later in Settings.
+                optionally connect your accounts, then you're in. You can change
+                everything later in Settings.
               </p>
               <div className="onboarding-actions">
                 <Button type="button" onClick={next}>
@@ -351,7 +359,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {currentStep === "language" && (
             <>
               <div className="onboarding-platform-hero">
-                <GearIcon size={32} className="onboarding-platform-hero__icon" />
+                <GearIcon
+                  size={32}
+                  className="onboarding-platform-hero__icon"
+                />
                 <h2>Language</h2>
               </div>
               <p className="onboarding-step-description">
@@ -364,8 +375,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     type="button"
                     className={[
                       "onboarding-select-item",
-                      selectedLanguage === option ? "onboarding-select-item--active" : "",
-                    ].filter(Boolean).join(" ")}
+                      selectedLanguage === option
+                        ? "onboarding-select-item--active"
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     onClick={() => setSelectedLanguage(option)}
                   >
                     {selectedLanguage === option && (
@@ -387,7 +402,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {currentStep === "install-path" && (
             <>
               <div className="onboarding-platform-hero">
-                <GearIcon size={32} className="onboarding-platform-hero__icon" />
+                <GearIcon
+                  size={32}
+                  className="onboarding-platform-hero__icon"
+                />
                 <h2>Default Install Folder</h2>
               </div>
               <p className="onboarding-step-description">
@@ -399,12 +417,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   onChange={(e) => setInstallPath(e.target.value)}
                   placeholder={defaultInstallPath}
                 />
-                <Button type="button" theme="outline" onClick={handlePickFolder}>
+                <Button
+                  type="button"
+                  theme="outline"
+                  onClick={handlePickFolder}
+                >
                   Browse…
                 </Button>
               </div>
               <div className="onboarding-actions">
-                <button type="button" className="onboarding-skip" onClick={next}>
+                <button
+                  type="button"
+                  className="onboarding-skip"
+                  onClick={next}
+                >
                   Use default
                 </button>
                 <Button type="button" onClick={handleInstallPathSave}>
@@ -433,11 +459,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     Signed in — you're all set
                   </div>
                   <div className="onboarding-actions">
-                    <Button type="button" onClick={next}>Continue</Button>
+                    <Button type="button" onClick={next}>
+                      Continue
+                    </Button>
                   </div>
                 </>
               ) : accountWindowOpen ? (
-                <div className="onboarding-actions" style={{ justifyContent: "center" }}>
+                <div
+                  className="onboarding-actions"
+                  style={{ justifyContent: "center" }}
+                >
                   <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>
                     Waiting for sign-in…
                   </span>
@@ -471,18 +502,34 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               {steamLinked ? (
                 <>
                   {steamProfile ? (
-                    <div className="onboarding-connected-badge" style={{ gap: "10px" }}>
+                    <div
+                      className="onboarding-connected-badge"
+                      style={{ gap: "10px" }}
+                    >
                       <img
                         src={steamProfile.avatarfull}
                         alt={steamProfile.personaname}
-                        style={{ width: 32, height: 32, borderRadius: "50%", flexShrink: 0 }}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                        }}
                       />
                       <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
                           <CheckCircleFillIcon size={14} />
                           <strong>{steamProfile.personaname}</strong>
                         </div>
-                        <small style={{ opacity: 0.6 }}>Steam connected — library will sync</small>
+                        <small style={{ opacity: 0.6 }}>
+                          Steam connected — library will sync
+                        </small>
                       </div>
                     </div>
                   ) : (
@@ -492,33 +539,56 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     </div>
                   )}
                   <div className="onboarding-actions">
-                    <Button type="button" onClick={next}>Continue</Button>
+                    <Button type="button" onClick={next}>
+                      Continue
+                    </Button>
                   </div>
                 </>
               ) : (
                 <>
                   <p className="onboarding-step-description">
-                    Sign in with Steam to import your library automatically, or enter
-                    your Steam ID manually.
+                    Sign in with Steam to import your library automatically, or
+                    enter your Steam ID manually.
                   </p>
 
-                  <div className="onboarding-actions" style={{ marginBottom: "12px" }}>
+                  <div
+                    className="onboarding-actions"
+                    style={{ marginBottom: "12px" }}
+                  >
                     <Button
                       type="button"
                       onClick={handleSteamOpenIdConnect}
                       disabled={steamOpenIdBusy}
-                      style={{ background: "#1b2838", color: "#c7d5e0", display: "flex", alignItems: "center", gap: "8px" }}
+                      style={{
+                        background: "#1b2838",
+                        color: "#c7d5e0",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                      }}
                     >
                       <SteamLogo style={{ width: 18, height: 18 }} />
-                      {steamOpenIdBusy ? "Opening Steam…" : "Sign in with Steam"}
+                      {steamOpenIdBusy
+                        ? "Opening Steam…"
+                        : "Sign in with Steam"}
                     </Button>
                   </div>
 
-                  <p style={{ margin: "0 0 8px", opacity: 0.45, textAlign: "center", fontSize: "0.85rem" }}>
+                  <p
+                    style={{
+                      margin: "0 0 8px",
+                      opacity: 0.45,
+                      textAlign: "center",
+                      fontSize: "0.85rem",
+                    }}
+                  >
                     or enter manually
                   </p>
 
-                  <form className="onboarding-form" onSubmit={handleSteamConnect}>
+                  <form
+                    className="onboarding-form"
+                    onSubmit={handleSteamConnect}
+                  >
                     <TextField
                       label="Steam Profile URL or ID"
                       value={steamInput}
@@ -534,7 +604,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                       type="password"
                       placeholder="32-character API key (optional)"
                       hint={
-                        <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
                           Only needed for achievement tracking.{" "}
                           <button
                             type="button"
@@ -553,13 +629,23 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     />
 
                     {steamError && (
-                      <p style={{ color: "var(--color-danger, #f87171)", margin: 0, fontSize: "0.85rem" }}>
+                      <p
+                        style={{
+                          color: "var(--color-danger, #f87171)",
+                          margin: 0,
+                          fontSize: "0.85rem",
+                        }}
+                      >
                         {steamError}
                       </p>
                     )}
 
                     <div className="onboarding-actions">
-                      <button type="button" className="onboarding-skip" onClick={next}>
+                      <button
+                        type="button"
+                        className="onboarding-skip"
+                        onClick={next}
+                      >
                         Skip for now
                       </button>
                       <Button
@@ -594,19 +680,35 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     Signed in as {epicAccount}
                   </div>
                   <div className="onboarding-actions">
-                    <Button type="button" onClick={next}>Continue</Button>
+                    <Button type="button" onClick={next}>
+                      Continue
+                    </Button>
                   </div>
                 </>
               ) : epicWindowOpen ? (
-                <div className="onboarding-actions" style={{ justifyContent: "center" }}>
-                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>Waiting for sign-in…</span>
+                <div
+                  className="onboarding-actions"
+                  style={{ justifyContent: "center" }}
+                >
+                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>
+                    Waiting for sign-in…
+                  </span>
                 </div>
               ) : (
                 <div className="onboarding-actions">
-                  <button type="button" className="onboarding-skip" onClick={next} disabled={epicBusy}>
+                  <button
+                    type="button"
+                    className="onboarding-skip"
+                    onClick={next}
+                    disabled={epicBusy}
+                  >
                     Skip for now
                   </button>
-                  <Button type="button" onClick={handleEpicConnect} disabled={epicBusy}>
+                  <Button
+                    type="button"
+                    onClick={handleEpicConnect}
+                    disabled={epicBusy}
+                  >
                     <PersonIcon size={14} />
                     {epicBusy ? "Opening…" : "Connect Epic"}
                   </Button>
@@ -633,19 +735,35 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     Connected as {gogUsername}
                   </div>
                   <div className="onboarding-actions">
-                    <Button type="button" onClick={next}>Continue</Button>
+                    <Button type="button" onClick={next}>
+                      Continue
+                    </Button>
                   </div>
                 </>
               ) : gogWindowOpen ? (
-                <div className="onboarding-actions" style={{ justifyContent: "center" }}>
-                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>Waiting for sign-in…</span>
+                <div
+                  className="onboarding-actions"
+                  style={{ justifyContent: "center" }}
+                >
+                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>
+                    Waiting for sign-in…
+                  </span>
                 </div>
               ) : (
                 <div className="onboarding-actions">
-                  <button type="button" className="onboarding-skip" onClick={next} disabled={gogBusy}>
+                  <button
+                    type="button"
+                    className="onboarding-skip"
+                    onClick={next}
+                    disabled={gogBusy}
+                  >
                     Skip for now
                   </button>
-                  <Button type="button" onClick={handleGogConnect} disabled={gogBusy}>
+                  <Button
+                    type="button"
+                    onClick={handleGogConnect}
+                    disabled={gogBusy}
+                  >
                     <PersonIcon size={14} />
                     {gogBusy ? "Opening…" : "Connect GOG"}
                   </Button>
@@ -662,8 +780,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <h2>Xbox / Game Pass</h2>
               </div>
               <p className="onboarding-step-description">
-                Sign in with your Microsoft account to import your Xbox and
-                Game Pass PC library.
+                Sign in with your Microsoft account to import your Xbox and Game
+                Pass PC library.
               </p>
 
               {xboxLinked ? (
@@ -673,19 +791,35 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     Signed in as {xboxGamertag}
                   </div>
                   <div className="onboarding-actions">
-                    <Button type="button" onClick={next}>Continue</Button>
+                    <Button type="button" onClick={next}>
+                      Continue
+                    </Button>
                   </div>
                 </>
               ) : xboxWindowOpen ? (
-                <div className="onboarding-actions" style={{ justifyContent: "center" }}>
-                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>Waiting for sign-in…</span>
+                <div
+                  className="onboarding-actions"
+                  style={{ justifyContent: "center" }}
+                >
+                  <span style={{ opacity: 0.6, fontSize: "0.9rem" }}>
+                    Waiting for sign-in…
+                  </span>
                 </div>
               ) : (
                 <div className="onboarding-actions">
-                  <button type="button" className="onboarding-skip" onClick={next} disabled={xboxBusy}>
+                  <button
+                    type="button"
+                    className="onboarding-skip"
+                    onClick={next}
+                    disabled={xboxBusy}
+                  >
                     Skip for now
                   </button>
-                  <Button type="button" onClick={handleXboxConnect} disabled={xboxBusy}>
+                  <Button
+                    type="button"
+                    onClick={handleXboxConnect}
+                    disabled={xboxBusy}
+                  >
                     <PersonIcon size={14} />
                     {xboxBusy ? "Opening…" : "Connect Xbox"}
                   </Button>
@@ -698,7 +832,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {currentStep === "notifications" && (
             <>
               <div className="onboarding-platform-hero">
-                <BellIcon size={28} className="onboarding-platform-hero__icon" />
+                <BellIcon
+                  size={28}
+                  className="onboarding-platform-hero__icon"
+                />
                 <h2>Notifications</h2>
               </div>
               <p className="onboarding-step-description">
@@ -729,7 +866,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </label>
               </div>
               <div className="onboarding-actions">
-                <Button type="button" onClick={next}>Continue</Button>
+                <Button type="button" onClick={next}>
+                  Continue
+                </Button>
               </div>
             </>
           )}
@@ -738,7 +877,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {currentStep === "startup" && (
             <>
               <div className="onboarding-platform-hero">
-                <GearIcon size={28} className="onboarding-platform-hero__icon" />
+                <GearIcon
+                  size={28}
+                  className="onboarding-platform-hero__icon"
+                />
                 <h2>Startup Behavior</h2>
               </div>
               <p className="onboarding-step-description">
@@ -748,7 +890,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <label className="onboarding-toggle">
                   <div className="onboarding-toggle__text">
                     <span>Start minimized to tray</span>
-                    <small>Launch in background without opening the window</small>
+                    <small>
+                      Launch in background without opening the window
+                    </small>
                   </div>
                   <input
                     type="checkbox"
@@ -758,7 +902,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </label>
               </div>
               <div className="onboarding-actions">
-                <Button type="button" onClick={next}>Continue</Button>
+                <Button type="button" onClick={next}>
+                  Continue
+                </Button>
               </div>
             </>
           )}
@@ -773,11 +919,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 You're all set!
                 <br />
                 <br />
-                Your libraries will sync in the background. You can connect
-                more services anytime from{" "}
-                <strong>Settings → Integrations</strong>.
+                Your libraries will sync in the background. You can connect more
+                services anytime from <strong>Settings → Integrations</strong>.
               </p>
-              <div className="onboarding-actions" style={{ justifyContent: "center" }}>
+              <div
+                className="onboarding-actions"
+                style={{ justifyContent: "center" }}
+              >
                 <Button type="button" onClick={finish}>
                   Launch GameHub
                 </Button>

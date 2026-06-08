@@ -19,13 +19,19 @@ const mergeDuplicateGames = async (_event: Electron.IpcMainInvokeEvent) => {
     byNormalized.set(key, bucket);
   }
 
-  const duplicateBuckets = [...byNormalized.values()].filter((b) => b.length > 1);
+  const duplicateBuckets = [...byNormalized.values()].filter(
+    (b) => b.length > 1
+  );
   const total = duplicateBuckets.length;
   let current = 0;
   let merged = 0;
   const mergedTitles: string[] = [];
 
-  WindowManager.sendToAppWindows("on-dedup-progress", { current, total, title: null });
+  WindowManager.sendToAppWindows("on-dedup-progress", {
+    current,
+    total,
+    title: null,
+  });
 
   for (const bucket of duplicateBuckets) {
     current++;
@@ -37,14 +43,24 @@ const mergeDuplicateGames = async (_event: Electron.IpcMainInvokeEvent) => {
     });
 
     await deduplicateTitle(representativeTitle).catch((err) => {
-      logger.warn(`mergeDuplicateGames: dedup failed for "${representativeTitle}"`, err);
+      logger.warn(
+        `mergeDuplicateGames: dedup failed for "${representativeTitle}"`,
+        err
+      );
     });
     merged += bucket.length - 1;
     mergedTitles.push(representativeTitle);
-    logger.log(`Merged ${bucket.length - 1} duplicate(s) for "${representativeTitle}"`);
+    logger.log(
+      `Merged ${bucket.length - 1} duplicate(s) for "${representativeTitle}"`
+    );
   }
 
-  WindowManager.sendToAppWindows("on-dedup-progress", { current: total, total, title: null, done: true });
+  WindowManager.sendToAppWindows("on-dedup-progress", {
+    current: total,
+    total,
+    title: null,
+    done: true,
+  });
   logger.log(`mergeDuplicateGames: ${merged} duplicates removed`);
   return { merged, mergedTitles };
 };

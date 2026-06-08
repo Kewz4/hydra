@@ -1,4 +1,11 @@
-import { useCallback, useContext, useEffect, useMemo, useState, useRef } from "react";
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
@@ -296,9 +303,21 @@ export function RepacksModal({
 
   const ACHIEVEMENT_CRACKERS = useMemo(
     () => [
-      "CODEX", "GOLDBERG", "EMPRESS", "SKIDROW", "FLT", "RAZOR1911",
-      "RLD", "RUNE", "ONLINEFIX", "CREAMAPI", "3DM", "RLE",
-      "SMARTSTEAMEMU", "DODI", "FITGIRL",
+      "CODEX",
+      "GOLDBERG",
+      "EMPRESS",
+      "SKIDROW",
+      "FLT",
+      "RAZOR1911",
+      "RLD",
+      "RUNE",
+      "ONLINEFIX",
+      "CREAMAPI",
+      "3DM",
+      "RLE",
+      "SMARTSTEAMEMU",
+      "DODI",
+      "FITGIRL",
     ],
     []
   );
@@ -333,10 +352,10 @@ export function RepacksModal({
         >
           <div className="repacks-modal__hypervisor-info">
             <p>
-              Some games use <strong>VMProtect</strong> or similar DRM that detects
-              when a hypervisor (virtual machine) is running on your CPU. A HyperVisor
-              crack bypasses this detection — but it requires specific BIOS and Windows
-              settings.
+              Some games use <strong>VMProtect</strong> or similar DRM that
+              detects when a hypervisor (virtual machine) is running on your
+              CPU. A HyperVisor crack bypasses this detection — but it requires
+              specific BIOS and Windows settings.
             </p>
             <h4>Setup steps</h4>
             <ol>
@@ -345,14 +364,15 @@ export function RepacksModal({
                 features on or off" and uncheck all Hyper-V entries. Restart.
               </li>
               <li>
-                <strong>Disable Device Guard / Credential Guard</strong> — in Group
-                Policy: Computer Configuration → Administrative Templates → System →
-                Device Guard → turn off "Turn on Virtualization Based Security".
+                <strong>Disable Device Guard / Credential Guard</strong> — in
+                Group Policy: Computer Configuration → Administrative Templates
+                → System → Device Guard → turn off "Turn on Virtualization Based
+                Security".
               </li>
               <li>
-                <strong>Enable Virtualization in BIOS</strong> — enter BIOS/UEFI,
-                find the CPU settings and enable Intel VT-x or AMD-V (sometimes
-                labelled "SVM Mode").
+                <strong>Enable Virtualization in BIOS</strong> — enter
+                BIOS/UEFI, find the CPU settings and enable Intel VT-x or AMD-V
+                (sometimes labelled "SVM Mode").
               </li>
               <li>
                 Reboot and launch the game. The crack intercepts the hypervisor
@@ -360,8 +380,8 @@ export function RepacksModal({
               </li>
             </ol>
             <p className="repacks-modal__hypervisor-note">
-              Note: disabling Hyper-V will prevent WSL2, Windows Sandbox, and Android
-              subsystem from running while it is off.
+              Note: disabling Hyper-V will prevent WSL2, Windows Sandbox, and
+              Android subsystem from running while it is off.
             </p>
           </div>
         </Modal>
@@ -389,7 +409,10 @@ export function RepacksModal({
         title={t("download_options_title")}
         description={
           sharedLink
-            ? t("shared_link_description", { defaultValue: "📤 Shared by a friend — pick a download source below" })
+            ? t("shared_link_description", {
+                defaultValue:
+                  "📤 Shared by a friend — pick a download source below",
+              })
             : t("repacks_modal_description")
         }
         onClose={onClose}
@@ -450,71 +473,103 @@ export function RepacksModal({
           </div>
         </div>
 
-        {game && (() => {
-          const hasSteamConnected = Boolean(userPreferences?.steamId);
-          const altShops = game.alternativeShops ?? [];
-          const isGogGame = game.shop === "gog" || altShops.some(s => s.shop === "gog");
-          const isEpicGame = game.shop === "epic" || altShops.some(s => s.shop === "epic");
-          const isOwnedOnSteam = game.shop === "steam" && hasSteamConnected && !(game as any)._synthesized;
-          const hasPlatformOptions = isOwnedOnSteam || isGogGame || isEpicGame;
+        {game &&
+          (() => {
+            const hasSteamConnected = Boolean(userPreferences?.steamId);
+            const altShops = game.alternativeShops ?? [];
+            const isGogGame =
+              game.shop === "gog" || altShops.some((s) => s.shop === "gog");
+            const isEpicGame =
+              game.shop === "epic" || altShops.some((s) => s.shop === "epic");
+            const isOwnedOnSteam =
+              game.shop === "steam" &&
+              hasSteamConnected &&
+              !(game as any)._synthesized;
+            const hasPlatformOptions =
+              isOwnedOnSteam || isGogGame || isEpicGame;
 
-          if (!hasPlatformOptions) return null;
+            if (!hasPlatformOptions) return null;
 
-          const epicObjectId = game.shop === "epic" ? game.objectId : altShops.find(s => s.shop === "epic")?.objectId;
-          const gogObjectId = game.shop === "gog" ? game.objectId : altShops.find(s => s.shop === "gog")?.objectId;
+            const epicObjectId =
+              game.shop === "epic"
+                ? game.objectId
+                : altShops.find((s) => s.shop === "epic")?.objectId;
+            const gogObjectId =
+              game.shop === "gog"
+                ? game.objectId
+                : altShops.find((s) => s.shop === "gog")?.objectId;
 
-          return (
-            <div className="repacks-modal__platform-options">
-              <p className="repacks-modal__platform-options-label">
-                {t("own_this_game", { defaultValue: "You own this game — download officially" })}
-              </p>
-              <div className="repacks-modal__platform-buttons">
-                {isOwnedOnSteam && (
-                  <button
-                    type="button"
-                    className="repacks-modal__platform-button repacks-modal__platform-button--steam"
-                    onClick={() => {
-                      window.electron.openGame(game.shop, game.objectId, `steam://install/${game.objectId}`, null);
-                      onClose();
-                    }}
-                  >
-                    <SteamLogo className="repacks-modal__platform-icon" />
-                    <span>{"Download with Steam"}</span>
-                  </button>
-                )}
-                {isEpicGame && epicObjectId && (
-                  <button
-                    type="button"
-                    className="repacks-modal__platform-button repacks-modal__platform-button--epic"
-                    onClick={async () => {
-                      setProcessModal({ launcher: "legendary", objectId: epicObjectId, title: game.title ?? epicObjectId });
-                      window.electron.downloadViaLegendary(epicObjectId).catch(() => {});
-                    }}
-                  >
-                    <EpicLogo className="repacks-modal__platform-icon" />
-                    <span>{"Download with Epic Games"}</span>
-                  </button>
-                )}
-                {isGogGame && gogObjectId && (
-                  <button
-                    type="button"
-                    className="repacks-modal__platform-button repacks-modal__platform-button--gog"
-                    onClick={async () => {
-                      setProcessModal({ launcher: "gogdl", objectId: gogObjectId, title: game.title ?? gogObjectId });
-                      window.electron.downloadViaGogdl(gogObjectId).catch(() => {});
-                    }}
-                  >
-                    <GogLogo className="repacks-modal__platform-icon" />
-                    <span>{"Download with GOG"}</span>
-                  </button>
-                )}
+            return (
+              <div className="repacks-modal__platform-options">
+                <p className="repacks-modal__platform-options-label">
+                  {t("own_this_game", {
+                    defaultValue: "You own this game — download officially",
+                  })}
+                </p>
+                <div className="repacks-modal__platform-buttons">
+                  {isOwnedOnSteam && (
+                    <button
+                      type="button"
+                      className="repacks-modal__platform-button repacks-modal__platform-button--steam"
+                      onClick={() => {
+                        window.electron.openGame(
+                          game.shop,
+                          game.objectId,
+                          `steam://install/${game.objectId}`,
+                          null
+                        );
+                        onClose();
+                      }}
+                    >
+                      <SteamLogo className="repacks-modal__platform-icon" />
+                      <span>{"Download with Steam"}</span>
+                    </button>
+                  )}
+                  {isEpicGame && epicObjectId && (
+                    <button
+                      type="button"
+                      className="repacks-modal__platform-button repacks-modal__platform-button--epic"
+                      onClick={async () => {
+                        setProcessModal({
+                          launcher: "legendary",
+                          objectId: epicObjectId,
+                          title: game.title ?? epicObjectId,
+                        });
+                        window.electron
+                          .downloadViaLegendary(epicObjectId)
+                          .catch(() => {});
+                      }}
+                    >
+                      <EpicLogo className="repacks-modal__platform-icon" />
+                      <span>{"Download with Epic Games"}</span>
+                    </button>
+                  )}
+                  {isGogGame && gogObjectId && (
+                    <button
+                      type="button"
+                      className="repacks-modal__platform-button repacks-modal__platform-button--gog"
+                      onClick={async () => {
+                        setProcessModal({
+                          launcher: "gogdl",
+                          objectId: gogObjectId,
+                          title: game.title ?? gogObjectId,
+                        });
+                        window.electron
+                          .downloadViaGogdl(gogObjectId)
+                          .catch(() => {});
+                      }}
+                    >
+                      <GogLogo className="repacks-modal__platform-icon" />
+                      <span>{"Download with GOG"}</span>
+                    </button>
+                  )}
+                </div>
+                <div className="repacks-modal__or-divider">
+                  <span>— OR —</span>
+                </div>
               </div>
-              <div className="repacks-modal__or-divider">
-                <span>— OR —</span>
-              </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
 
         <div className="repacks-modal__repacks">
           {filteredRepacks.length === 0 ? (
@@ -578,7 +633,9 @@ export function RepacksModal({
                     {repackSupportsAchievements(repack.title) && (
                       <span className="repacks-modal__badge repacks-modal__badge--achievements">
                         <TrophyIcon size={12} />
-                        {t("achievements_supported", { defaultValue: "Achievements" })}
+                        {t("achievements_supported", {
+                          defaultValue: "Achievements",
+                        })}
                       </span>
                     )}
                     {repackIsHyperVisor(repack.title) && (

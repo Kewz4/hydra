@@ -2,7 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components";
 import { useToast } from "@renderer/hooks";
-import { AlertIcon, CheckCircleFillIcon, DownloadIcon, PlusIcon } from "@primer/octicons-react";
+import {
+  AlertIcon,
+  CheckCircleFillIcon,
+  DownloadIcon,
+  PlusIcon,
+} from "@primer/octicons-react";
 
 interface BattleNetGameDef {
   productCode: string;
@@ -38,7 +43,9 @@ export function SettingsBattleNet() {
 
   useEffect(() => {
     refreshInstalled();
-    const unsub = window.electron.onBattleNetInstallProgress(setBnetInstallProgress);
+    const unsub = window.electron.onBattleNetInstallProgress(
+      setBnetInstallProgress
+    );
     unsubRef.current = unsub;
     return () => unsub();
   }, []);
@@ -90,7 +97,14 @@ export function SettingsBattleNet() {
 
       {!bnetInstalled && (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", opacity: 0.7 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              opacity: 0.7,
+            }}
+          >
             <AlertIcon size={16} />
             <span>{t("battlenet_not_installed")}</span>
           </div>
@@ -98,7 +112,12 @@ export function SettingsBattleNet() {
             type="button"
             onClick={handleInstallBattleNet}
             disabled={isInstallingBnet}
-            style={{ display: "flex", alignItems: "center", gap: "6px", width: "fit-content" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              width: "fit-content",
+            }}
           >
             <DownloadIcon size={14} />
             {isInstallingBnet
@@ -124,7 +143,9 @@ export function SettingsBattleNet() {
             }}
           >
             {allGames.map((game) => {
-              const isDetected = detected.some((d) => d.productCode === game.productCode);
+              const isDetected = detected.some(
+                (d) => d.productCode === game.productCode
+              );
               const isChecked = selected.has(game.productCode);
 
               return (
@@ -139,7 +160,9 @@ export function SettingsBattleNet() {
                     padding: "8px 12px",
                     borderRadius: "8px",
                     border: `1px solid ${isChecked ? "var(--color-accent, #5e81f4)" : "rgba(255,255,255,0.1)"}`,
-                    background: isChecked ? "rgba(94,129,244,0.15)" : "rgba(255,255,255,0.03)",
+                    background: isChecked
+                      ? "rgba(94,129,244,0.15)"
+                      : "rgba(255,255,255,0.03)",
                     cursor: "pointer",
                     textAlign: "left",
                     color: "inherit",
@@ -148,15 +171,38 @@ export function SettingsBattleNet() {
                   <img
                     src={game.iconUrl}
                     alt={game.title}
-                    style={{ width: 32, height: 32, borderRadius: 4, objectFit: "contain" }}
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 4,
+                      objectFit: "contain",
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
                   />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: "0.875em", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <div
+                      style={{
+                        fontSize: "0.875em",
+                        fontWeight: 500,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       {game.title}
                     </div>
                     {isDetected && (
-                      <div style={{ fontSize: "0.75em", opacity: 0.6, display: "flex", alignItems: "center", gap: "3px" }}>
+                      <div
+                        style={{
+                          fontSize: "0.75em",
+                          opacity: 0.6,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "3px",
+                        }}
+                      >
                         <CheckCircleFillIcon size={10} />
                         {t("installed")}
                       </div>

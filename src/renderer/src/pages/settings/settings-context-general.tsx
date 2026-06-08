@@ -58,10 +58,22 @@ export function SettingsContextGeneral({
 
   const { showSuccessToast, showErrorToast } = useToast();
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
-  const [metadataProgress, setMetadataProgress] = useState<{ current: number; total: number; title: string | null } | null>(null);
+  const [metadataProgress, setMetadataProgress] = useState<{
+    current: number;
+    total: number;
+    title: string | null;
+  } | null>(null);
   const [deduping, setDeduping] = useState(false);
-  const [dedupProgress, setDedupProgress] = useState<{ current: number; total: number; title: string | null } | null>(null);
-  const [syncModal, setSyncModal] = useState<{ heading: string; summary: string; results: LibrarySyncResult[] } | null>(null);
+  const [dedupProgress, setDedupProgress] = useState<{
+    current: number;
+    total: number;
+    title: string | null;
+  } | null>(null);
+  const [syncModal, setSyncModal] = useState<{
+    heading: string;
+    summary: string;
+    results: LibrarySyncResult[];
+  } | null>(null);
 
   const [form, setForm] = useState({
     downloadsPath: "",
@@ -321,22 +333,28 @@ export function SettingsContextGeneral({
       <div className="settings-context-panel__group">
         <h3>Library</h3>
         <p style={{ margin: 0, opacity: 0.7, fontSize: "0.875rem" }}>
-          Fetch artwork and metadata from SteamGridDB for all library games missing cover images.
+          Fetch artwork and metadata from SteamGridDB for all library games
+          missing cover images.
         </p>
         <Button
           onClick={async () => {
             setGeneratingMetadata(true);
             setMetadataProgress(null);
             const unsub = window.electron.onMetadataProgress((p) => {
-              setMetadataProgress({ current: p.current, total: p.total, title: p.title });
+              setMetadataProgress({
+                current: p.current,
+                total: p.total,
+                title: p.title,
+              });
             });
             try {
               const result = await window.electron.generateMissingMetadata();
               setSyncModal({
                 heading: "Metadata Generation Complete",
-                summary: result.updated > 0
-                  ? `Updated ${result.updated} game${result.updated !== 1 ? "s" : ""}, skipped ${result.skipped} (already had artwork).`
-                  : `No new metadata found. All ${result.skipped} games already have artwork.`,
+                summary:
+                  result.updated > 0
+                    ? `Updated ${result.updated} game${result.updated !== 1 ? "s" : ""}, skipped ${result.skipped} (already had artwork).`
+                    : `No new metadata found. All ${result.skipped} games already have artwork.`,
                 results: result.results.map((r) => ({
                   title: r.title,
                   coverUrl: r.coverUrl,
@@ -359,22 +377,37 @@ export function SettingsContextGeneral({
         {generatingMetadata && metadataProgress && (
           <div style={{ fontSize: "0.8rem", opacity: 0.7, marginTop: 4 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{
-                flex: 1, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden"
-              }}>
-                <div style={{
-                  height: "100%",
-                  width: `${metadataProgress.total > 0 ? Math.round((metadataProgress.current / metadataProgress.total) * 100) : 0}%`,
-                  background: "var(--color-muted-purple, #7b68ee)",
-                  transition: "width 0.2s",
-                }} />
+              <div
+                style={{
+                  flex: 1,
+                  height: 4,
+                  background: "rgba(255,255,255,0.1)",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${metadataProgress.total > 0 ? Math.round((metadataProgress.current / metadataProgress.total) * 100) : 0}%`,
+                    background: "var(--color-muted-purple, #7b68ee)",
+                    transition: "width 0.2s",
+                  }}
+                />
               </div>
               <span style={{ whiteSpace: "nowrap" }}>
                 {metadataProgress.current}/{metadataProgress.total}
               </span>
             </div>
             {metadataProgress.title && (
-              <p style={{ margin: "4px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 {metadataProgress.title}
               </p>
             )}
@@ -386,15 +419,20 @@ export function SettingsContextGeneral({
             setDeduping(true);
             setDedupProgress(null);
             const unsub = window.electron.onDedupProgress((p) => {
-              setDedupProgress({ current: p.current, total: p.total, title: p.title });
+              setDedupProgress({
+                current: p.current,
+                total: p.total,
+                title: p.title,
+              });
             });
             try {
               const result = await window.electron.mergeDuplicateGames();
               setSyncModal({
                 heading: "Duplicate Check Complete",
-                summary: result.merged > 0
-                  ? `Merged ${result.merged} duplicate game${result.merged !== 1 ? "s" : ""}.`
-                  : "No duplicates found.",
+                summary:
+                  result.merged > 0
+                    ? `Merged ${result.merged} duplicate game${result.merged !== 1 ? "s" : ""}.`
+                    : "No duplicates found.",
                 results: result.mergedTitles.map((title) => ({
                   title,
                   coverUrl: null,
@@ -416,22 +454,37 @@ export function SettingsContextGeneral({
         {deduping && dedupProgress && (
           <div style={{ fontSize: "0.8rem", opacity: 0.7, marginTop: 4 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{
-                flex: 1, height: 4, background: "rgba(255,255,255,0.1)", borderRadius: 2, overflow: "hidden"
-              }}>
-                <div style={{
-                  height: "100%",
-                  width: `${dedupProgress.total > 0 ? Math.round((dedupProgress.current / dedupProgress.total) * 100) : 0}%`,
-                  background: "var(--color-muted-purple, #7b68ee)",
-                  transition: "width 0.2s",
-                }} />
+              <div
+                style={{
+                  flex: 1,
+                  height: 4,
+                  background: "rgba(255,255,255,0.1)",
+                  borderRadius: 2,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${dedupProgress.total > 0 ? Math.round((dedupProgress.current / dedupProgress.total) * 100) : 0}%`,
+                    background: "var(--color-muted-purple, #7b68ee)",
+                    transition: "width 0.2s",
+                  }}
+                />
               </div>
               <span style={{ whiteSpace: "nowrap" }}>
                 {dedupProgress.current}/{dedupProgress.total}
               </span>
             </div>
             {dedupProgress.title && (
-              <p style={{ margin: "4px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <p
+                style={{
+                  margin: "4px 0 0",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
                 Checking: {dedupProgress.title}
               </p>
             )}

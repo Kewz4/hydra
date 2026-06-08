@@ -52,13 +52,8 @@ export function App() {
 
   const { clearDownload, setLastPacket, lastPacket } = useDownload();
 
-
-  const {
-    fetchUserDetails,
-    updateUserDetails,
-    clearUserDetails,
-  } = useUserDetails();
-
+  const { fetchUserDetails, updateUserDetails, clearUserDetails } =
+    useUserDetails();
 
   const dispatch = useAppDispatch();
 
@@ -70,7 +65,9 @@ export function App() {
   );
 
   const toast = useAppSelector((state) => state.toast);
-  const userPreferences = useAppSelector((state) => state.userPreferences.value);
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [prefsChecked, setPrefsChecked] = useState(false);
 
@@ -155,7 +152,6 @@ export function App() {
     }
   }, [clearDownload, lastPacket?.gameId, library]);
 
-
   useEffect(() => {
     const onClick = async (event: MouseEvent) => {
       const userPreferences = await window.electron.getUserPreferences();
@@ -187,7 +183,9 @@ export function App() {
             article as keyof typeof articleMapping
           ] ?? articleMapping["en"]?.[article as keyof typeof articleMapping];
 
-        if (articleId) { /* article lookup preserved for future use */ }
+        if (articleId) {
+          /* article lookup preserved for future use */
+        }
       }
     };
 
@@ -215,7 +213,6 @@ export function App() {
     if (userDetails) {
       updateUserDetails(userDetails);
     }
-
 
     if (!document.getElementById("external-resources")) {
       const $script = document.createElement("script");
@@ -363,9 +360,7 @@ export function App() {
   }, [dispatch]);
 
   const showOnboarding =
-    prefsChecked &&
-    !onboardingDone &&
-    !userPreferences?.onboardingComplete;
+    prefsChecked && !onboardingDone && !userPreferences?.onboardingComplete;
 
   if (showOnboarding) {
     return <Onboarding onComplete={() => setOnboardingDone(true)} />;
@@ -375,7 +370,9 @@ export function App() {
     <>
       {window.electron.platform === "win32" && (
         <div className="title-bar">
-          <GameHubIcon style={{ width: 18, height: 18, color: "#ffffff", flexShrink: 0 }} />
+          <GameHubIcon
+            style={{ width: 18, height: 18, color: "#ffffff", flexShrink: 0 }}
+          />
           <h4>GameHub</h4>
         </div>
       )}
@@ -388,7 +385,6 @@ export function App() {
         onClose={handleToastClose}
         duration={toast.duration}
       />
-
 
       <ArchiveDeletionModal
         visible={showArchiveDeletionModal}
@@ -411,7 +407,6 @@ export function App() {
           </section>
         </article>
       </main>
-
     </>
   );
 }

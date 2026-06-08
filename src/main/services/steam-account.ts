@@ -17,7 +17,9 @@ export interface SteamPlayerSummary {
 // Simple tag extractor for Steam's predictable XML — strips CDATA wrappers
 function extractXmlTag(xml: string, tag: string): string {
   // Use (?=[ >]) lookahead so <steamID> does NOT match <steamID64>
-  const match = xml.match(new RegExp(`<${tag}(?=[ >])[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i"));
+  const match = xml.match(
+    new RegExp(`<${tag}(?=[ >])[^>]*>([\\s\\S]*?)<\\/${tag}>`, "i")
+  );
   if (!match) return "";
   let value = match[1].trim();
   // Strip CDATA: <![CDATA[text]]> → text
@@ -35,7 +37,9 @@ function extractAllXmlBlocks(xml: string, tag: string): string[] {
  * Fetch owned games from the public Steam community XML endpoint.
  * Requires the profile's game list to be set to public.
  */
-async function getSteamOwnedGamesPublic(steamId: string): Promise<SteamOwnedGame[]> {
+async function getSteamOwnedGamesPublic(
+  steamId: string
+): Promise<SteamOwnedGame[]> {
   const response = await axios.get<string>(
     `https://steamcommunity.com/profiles/${steamId}/games?xml=1`,
     { responseType: "text", timeout: 15_000 }
@@ -50,20 +54,27 @@ async function getSteamOwnedGamesPublic(steamId: string): Promise<SteamOwnedGame
 
   const gameBlocks = extractAllXmlBlocks(xml, "game");
 
-  return gameBlocks.map((block): SteamOwnedGame => {
-    const appid = parseInt(extractXmlTag(block, "appID"), 10);
-    const name = extractXmlTag(block, "name");
-    // hoursOnRecord is a formatted string like "1,234" — convert to minutes
-    const hoursStr = extractXmlTag(block, "hoursOnRecord").replace(/,/g, "");
-    const playtime_forever = hoursStr ? Math.round(parseFloat(hoursStr) * 60) : 0;
-    return { appid, name, img_icon_url: "", playtime_forever };
-  }).filter((g) => g.appid > 0 && g.name);
+  return gameBlocks
+    .map((block): SteamOwnedGame => {
+      const appid = parseInt(extractXmlTag(block, "appID"), 10);
+      const name = extractXmlTag(block, "name");
+      // hoursOnRecord is a formatted string like "1,234" — convert to minutes
+      const hoursStr = extractXmlTag(block, "hoursOnRecord").replace(/,/g, "");
+      const playtime_forever = hoursStr
+        ? Math.round(parseFloat(hoursStr) * 60)
+        : 0;
+      return { appid, name, img_icon_url: "", playtime_forever };
+    })
+    .filter((g) => g.appid > 0 && g.name);
 }
 
 /**
  * Fetch owned games via the Steam Web API (requires API key, returns richer data).
  */
-async function getSteamOwnedGamesWithKey(steamId: string, apiKey: string): Promise<SteamOwnedGame[]> {
+async function getSteamOwnedGamesWithKey(
+  steamId: string,
+  apiKey: string
+): Promise<SteamOwnedGame[]> {
   const response = await axios.get(
     "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/",
     {
@@ -87,7 +98,9 @@ export const getSteamOwnedGames = async (
   if (apiKey?.trim()) {
     try {
       const games = await getSteamOwnedGamesWithKey(steamId, apiKey.trim());
-      logger.log(`Fetched ${games.length} owned Steam games via Web API for ${steamId}`);
+      logger.log(
+        `Fetched ${games.length} owned Steam games via Web API for ${steamId}`
+      );
       return games;
     } catch (err) {
       logger.warn("Steam Web API failed, falling back to community XML", err);
@@ -95,14 +108,18 @@ export const getSteamOwnedGames = async (
   }
 
   const games = await getSteamOwnedGamesPublic(steamId);
-  logger.log(`Fetched ${games.length} owned Steam games via community XML for ${steamId}`);
+  logger.log(
+    `Fetched ${games.length} owned Steam games via community XML for ${steamId}`
+  );
   return games;
 };
 
 /**
  * Fetch player summary from the public Steam community XML endpoint.
  */
-async function getSteamPlayerSummaryPublic(steamId: string): Promise<SteamPlayerSummary | null> {
+async function getSteamPlayerSummaryPublic(
+  steamId: string
+): Promise<SteamPlayerSummary | null> {
   const response = await axios.get<string>(
     `https://steamcommunity.com/profiles/${steamId}/?xml=1`,
     { responseType: "text", timeout: 10_000 }
@@ -131,10 +148,14 @@ export const getSteamPlayerSummary = async (
           timeout: 10_000,
         }
       );
-      const players: SteamPlayerSummary[] = response.data?.response?.players ?? [];
+      const players: SteamPlayerSummary[] =
+        response.data?.response?.players ?? [];
       if (players[0]) return players[0];
     } catch (err) {
-      logger.warn("Steam Web API player summary failed, falling back to community XML", err);
+      logger.warn(
+        "Steam Web API player summary failed, falling back to community XML",
+        err
+      );
     }
   }
 

@@ -32,9 +32,16 @@ export function DownloadProcessModal({
       return;
     }
 
-    const handler = (value: { objectId: string; line: string; isError: boolean }) => {
+    const handler = (value: {
+      objectId: string;
+      line: string;
+      isError: boolean;
+    }) => {
       if (value.objectId !== objectId) return;
-      setLines((prev) => [...prev, { text: value.line, isError: value.isError }]);
+      setLines((prev) => [
+        ...prev,
+        { text: value.line, isError: value.isError },
+      ]);
       if (value.line.startsWith("✓") || value.line.startsWith("✗")) {
         setIsDone(true);
       }
@@ -87,21 +94,33 @@ export function DownloadProcessModal({
         {lines.map((l, i) => (
           <span
             key={i}
-            style={{ color: l.isError ? "var(--color-danger, #f87171)" : "inherit" }}
+            style={{
+              color: l.isError ? "var(--color-danger, #f87171)" : "inherit",
+            }}
           >
             {l.text}
           </span>
         ))}
       </div>
 
-      <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+      <div
+        style={{
+          marginTop: 12,
+          display: "flex",
+          justifyContent: "flex-end",
+          gap: 8,
+        }}
+      >
         {isDone ? (
           <Button type="button" onClick={onClose}>
             Close
           </Button>
         ) : (
-          <span style={{ fontSize: "0.8rem", opacity: 0.6, alignSelf: "center" }}>
-            Download in progress — you can close this window, it will continue in the background.
+          <span
+            style={{ fontSize: "0.8rem", opacity: 0.6, alignSelf: "center" }}
+          >
+            Download in progress — you can close this window, it will continue
+            in the background.
           </span>
         )}
       </div>

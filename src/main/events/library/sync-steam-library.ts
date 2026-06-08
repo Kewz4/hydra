@@ -6,7 +6,6 @@ import { logger } from "@main/services";
 import { fetchBestAssets } from "@main/helpers/fetch-best-assets";
 import { deduplicateTitle } from "@main/helpers/deduplicate-title";
 
-
 const syncSteamLibrary = async (
   _event: Electron.IpcMainInvokeEvent,
   steamId: string,
@@ -41,15 +40,21 @@ const syncSteamLibrary = async (
     // Fetch best assets in background so sync is not blocked
     setImmediate(async () => {
       try {
-        const assets = await fetchBestAssets("steam", objectId, ownedGame.name, {
-          iconUrl: steamIconUrl,
-          libraryHeroImageUrl: gameAssets?.libraryHeroImageUrl ?? steamHeroUrl,
-          libraryImageUrl: gameAssets?.libraryImageUrl ?? null,
-          coverImageUrl: gameAssets?.coverImageUrl ?? steamIconUrl,
-          logoImageUrl: gameAssets?.logoImageUrl ?? null,
-          logoPosition: gameAssets?.logoPosition ?? null,
-          downloadSources: gameAssets?.downloadSources ?? [],
-        });
+        const assets = await fetchBestAssets(
+          "steam",
+          objectId,
+          ownedGame.name,
+          {
+            iconUrl: steamIconUrl,
+            libraryHeroImageUrl:
+              gameAssets?.libraryHeroImageUrl ?? steamHeroUrl,
+            libraryImageUrl: gameAssets?.libraryImageUrl ?? null,
+            coverImageUrl: gameAssets?.coverImageUrl ?? steamIconUrl,
+            logoImageUrl: gameAssets?.logoImageUrl ?? null,
+            logoPosition: gameAssets?.logoPosition ?? null,
+            downloadSources: gameAssets?.downloadSources ?? [],
+          }
+        );
         await gamesShopAssetsSublevel.put(gameKey, {
           objectId,
           shop: "steam" as const,
@@ -64,7 +69,7 @@ const syncSteamLibrary = async (
 
     const game = {
       title: ownedGame.name,
-      iconUrl: steamIconUrl ?? (gameAssets?.iconUrl ?? null),
+      iconUrl: steamIconUrl ?? gameAssets?.iconUrl ?? null,
       libraryHeroImageUrl: gameAssets?.libraryHeroImageUrl ?? steamHeroUrl,
       logoImageUrl: gameAssets?.logoImageUrl ?? null,
       objectId,

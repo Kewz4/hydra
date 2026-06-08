@@ -88,7 +88,7 @@ const downloadGameArtifact = async (
   _event: Electron.IpcMainInvokeEvent,
   objectId: string,
   shop: GameShop,
-  gameArtifactId: string  // Uploadcare UUID
+  gameArtifactId: string // Uploadcare UUID
 ) => {
   try {
     const game = await gamesSublevel.get(levelKeys.game(shop, objectId));
@@ -128,7 +128,9 @@ const downloadGameArtifact = async (
     restoreLudusaviBackup(
       backupPath,
       objectId,
-      normalizePath(CloudSync.getWindowsLikeUserProfilePath(effectiveWinePrefixPath)),
+      normalizePath(
+        CloudSync.getWindowsLikeUserProfilePath(effectiveWinePrefixPath)
+      ),
       effectiveWinePrefixPath,
       effectiveWinePrefixPath
     );
