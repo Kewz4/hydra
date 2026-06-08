@@ -1,5 +1,5 @@
 import { UserGame } from "@types";
-import HydraIcon from "@renderer/assets/icons/gamehub.svg?react";
+import GameHubIcon from "@renderer/assets/icons/gamehub.svg?react";
 import { useFormat, useToast } from "@renderer/hooks";
 import { useNavigate } from "react-router-dom";
 import { useCallback, useContext, useEffect, useState } from "react";
@@ -206,7 +206,7 @@ export function UserLibraryGameCard({
                             transform: `translateY(${-100 * (statIndex % getStatsItemCount())}%)`,
                           }}
                         >
-                          <HydraIcon width={16} height={16} />
+                          <GameHubIcon width={16} height={16} />
                           {formatAchievementPoints(
                             game.achievementsPointsEarnedSum
                           )}

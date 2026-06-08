@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import HydraIcon from "@renderer/assets/icons/gamehub.svg?react";
+import GameHubIcon from "@renderer/assets/icons/gamehub.svg?react";
 import { UserAchievement } from "@types";
 import { useSubscription } from "@renderer/hooks/use-subscription";
 import { useUserDetails } from "@renderer/hooks";
@@ -30,7 +30,7 @@ export function AchievementPanel({ achievements }: AchievementPanelProps) {
       <div className="achievement-panel">
         <div className="achievement-panel__content">
           {t("earned_points")}{" "}
-          <HydraIcon className="achievement-panel__content-icon" />
+          <GameHubIcon className="achievement-panel__content-icon" />
           ??? / ???
         </div>
         <button
@@ -50,7 +50,7 @@ export function AchievementPanel({ achievements }: AchievementPanelProps) {
     <div className="achievement-panel">
       <div className="achievement-panel__content">
         {t("earned_points")}{" "}
-        <HydraIcon className="achievement-panel__content-icon" />
+        <GameHubIcon className="achievement-panel__content-icon" />
         {achievementsPointsEarnedSum} / {achievementsPointsTotal}
       </div>
     </div>

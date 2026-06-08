@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import HydraIcon from "@renderer/assets/icons/gamehub.svg?react";
+import GameHubIcon from "@renderer/assets/icons/gamehub.svg?react";
 import "./installer.scss";
 
 type Step = "mode" | "installing" | "done";
@@ -96,7 +96,7 @@ export default function Installer() {
       <div className="installer__titlebar" />
 
       <div className="installer__logo">
-        <HydraIcon className="installer__logo-icon" />
+        <GameHubIcon className="installer__logo-icon" />
         <span className="installer__logo-text">GameHub</span>
       </div>
 
