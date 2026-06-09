@@ -16,7 +16,7 @@ export function needsSetup(): boolean {
 export function getInstallerDefaults() {
   return {
     defaultInstallDir: path.join(
-      process.env.PROGRAMFILES || "C:\\Program Files",
+      process.env.LOCALAPPDATA || process.env.APPDATA || "C:\\Users\\Public",
       "GameHub"
     ),
     exeDir: path.dirname(process.execPath),
@@ -46,6 +46,7 @@ async function copyDirRecursive(
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
+      if (entry.name === "data") continue;
       await copyDirRecursive(srcPath, destPath, onFile);
     } else {
       onFile?.(entry.name);
@@ -98,8 +99,10 @@ export async function setupInstall(
   let copied = 0;
   const countFiles = (dir: string) => {
     for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (e.isDirectory()) countFiles(path.join(dir, e.name));
-      else total++;
+      if (e.isDirectory()) {
+        if (e.name === "data") continue;
+        countFiles(path.join(dir, e.name));
+      } else total++;
     }
   };
   countFiles(srcDir);
