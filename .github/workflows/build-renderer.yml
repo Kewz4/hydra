@@ -43,4 +43,3 @@ jobs:
         env:
           RENDERER_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL }}
           RENDERER_VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
-
