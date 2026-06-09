@@ -65,7 +65,10 @@ export class UpdateManager {
 
     // Re-emit cached events so the renderer never misses them due to timing
     if (this.pendingUpdateInfo) {
-      this.sendEvent({ type: "update-available", info: this.pendingUpdateInfo });
+      this.sendEvent({
+        type: "update-available",
+        info: this.pendingUpdateInfo,
+      });
     }
     if (this.updateDownloaded) {
       this.sendEvent({ type: "update-downloaded" });

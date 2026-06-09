@@ -53,7 +53,9 @@ export function SettingsGeneral() {
   const [canInstallCommonRedist, setCanInstallCommonRedist] = useState(false);
   const [installingCommonRedist, setInstallingCommonRedist] = useState(false);
   const [checkingForUpdates, setCheckingForUpdates] = useState(false);
-  const [updateCheckResult, setUpdateCheckResult] = useState<string | null>(null);
+  const [updateCheckResult, setUpdateCheckResult] = useState<string | null>(
+    null
+  );
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
   const [metadataProgress, setMetadataProgress] = useState<{
     current: number;
@@ -562,7 +564,9 @@ export function SettingsGeneral() {
             const isAutoInstall = await window.electron.checkForUpdates();
             const unsubscribe = window.electron.onAutoUpdaterEvent((event) => {
               if (event.type === "update-available") {
-                setUpdateCheckResult(`Update available: v${event.info.version}`);
+                setUpdateCheckResult(
+                  `Update available: v${event.info.version}`
+                );
               } else if (event.type === "update-downloaded") {
                 setUpdateCheckResult("Update downloaded — restart to install.");
               }
@@ -570,8 +574,8 @@ export function SettingsGeneral() {
             });
             if (!isAutoInstall) {
               setTimeout(() => {
-                setUpdateCheckResult((prev) =>
-                  prev ?? "No update found (or check in progress)."
+                setUpdateCheckResult(
+                  (prev) => prev ?? "No update found (or check in progress)."
                 );
               }, 8000);
             }
