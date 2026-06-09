@@ -9,6 +9,7 @@ import {
 import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import { logger } from "@main/services";
+import { WindowManager } from "@main/services/window-manager";
 
 const REDIRECT_API =
   "https://www.epicgames.com/id/api/redirect" +
@@ -47,6 +48,9 @@ const openLegendaryAuthWindow = async (
       width: 640,
       height: 800,
       title: "Sign in to Epic Games",
+      ...(WindowManager.mainWindow
+        ? { parent: WindowManager.mainWindow, modal: true }
+        : {}),
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,

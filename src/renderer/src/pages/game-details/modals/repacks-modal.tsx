@@ -24,6 +24,10 @@ import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import type { DownloadSource, Game, GameRepack } from "@types";
 
 import { DownloadSettingsModal } from "./download-settings-modal";
+import {
+  EpicGogDownloadModal,
+  type EpicGogPlatform,
+} from "./epic-gog-download-modal";
 import { gameDetailsContext } from "@renderer/context";
 import { Downloader } from "@shared";
 import { orderBy } from "lodash-es";
@@ -290,6 +294,10 @@ export function RepacksModal({
 
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showHyperVisorModal, setShowHyperVisorModal] = useState(false);
+  const [epicGogModal, setEpicGogModal] = useState<{
+    platform: EpicGogPlatform;
+    objectId: string;
+  } | null>(null);
 
   const ACHIEVEMENT_CRACKERS = useMemo(
     () => [
@@ -384,6 +392,27 @@ export function RepacksModal({
         startDownload={startDownload}
         repack={repack}
       />
+
+      {epicGogModal && (
+        <EpicGogDownloadModal
+          visible={true}
+          platform={epicGogModal.platform}
+          onClose={() => setEpicGogModal(null)}
+          onConfirm={(customPath) => {
+            if (epicGogModal.platform === "epic") {
+              window.electron
+                .downloadViaLegendary(epicGogModal.objectId, customPath)
+                .catch(() => {});
+            } else {
+              window.electron
+                .downloadViaGogdl(epicGogModal.objectId, customPath)
+                .catch(() => {});
+            }
+            onClose();
+            navigate("/downloads");
+          }}
+        />
+      )}
 
       <Modal
         visible={visible}
@@ -517,21 +546,9 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--epic"
-                      onClick={async () => {
-                        const result = await window.electron.showOpenDialog({
-                          properties: ["openDirectory", "createDirectory"],
-                          title:
-                            "Choose install folder (optional — cancel to use default)",
-                        });
-                        const customPath = result.canceled
-                          ? undefined
-                          : result.filePaths[0];
-                        window.electron
-                          .downloadViaLegendary(epicObjectId, customPath)
-                          .catch(() => {});
-                        onClose();
-                        navigate("/downloads");
-                      }}
+                      onClick={() =>
+                        setEpicGogModal({ platform: "epic", objectId: epicObjectId })
+                      }
                     >
                       <EpicLogo className="repacks-modal__platform-icon" />
                       <span>{"Download with Epic Games"}</span>
@@ -541,21 +558,9 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--gog"
-                      onClick={async () => {
-                        const result = await window.electron.showOpenDialog({
-                          properties: ["openDirectory", "createDirectory"],
-                          title:
-                            "Choose install folder (optional — cancel to use default)",
-                        });
-                        const customPath = result.canceled
-                          ? undefined
-                          : result.filePaths[0];
-                        window.electron
-                          .downloadViaGogdl(gogObjectId, customPath)
-                          .catch(() => {});
-                        onClose();
-                        navigate("/downloads");
-                      }}
+                      onClick={() =>
+                        setEpicGogModal({ platform: "gog", objectId: gogObjectId })
+                      }
                     >
                       <GogLogo className="repacks-modal__platform-icon" />
                       <span>{"Download with GOG"}</span>

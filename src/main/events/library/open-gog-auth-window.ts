@@ -2,6 +2,7 @@ import { BrowserWindow } from "electron";
 import { registerEvent } from "../register-event";
 import { GOG_AUTH_URL, exchangeGogCode } from "@main/services/gog-account";
 import { logger } from "@main/services";
+import { WindowManager } from "@main/services/window-manager";
 
 const openGogAuthWindow = async (
   _event: Electron.IpcMainInvokeEvent
@@ -11,6 +12,9 @@ const openGogAuthWindow = async (
       width: 600,
       height: 700,
       title: "Sign in to GOG",
+      ...(WindowManager.mainWindow
+        ? { parent: WindowManager.mainWindow, modal: true }
+        : {}),
       webPreferences: { nodeIntegration: false, contextIsolation: true },
     });
 
