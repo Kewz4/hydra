@@ -116,6 +116,7 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
         logoImageUrl: assets.logoImageUrl,
         logoPosition: assets.logoPosition,
         downloadSources: assets.downloadSources ?? [],
+        updatedAt: Date.now(),
       })
       .catch(() => {});
     await createGame(game).catch(() => {});
