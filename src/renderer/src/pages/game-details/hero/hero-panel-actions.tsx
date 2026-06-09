@@ -352,7 +352,8 @@ export function HeroPanelActions() {
       /^(steam|legendary|goggalaxy|msxbox|battlenet):\/\//.test(
         game.executablePath
       );
-    const isSteamProtocol = game.executablePath?.startsWith("steam://") ?? false;
+    const isSteamProtocol =
+      game.executablePath?.startsWith("steam://") ?? false;
     const showRepackDownloadForLibraryGame =
       isProtocolLaunch && (repacks.length > 0 || isSteamProtocol);
 
