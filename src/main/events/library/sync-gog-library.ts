@@ -10,6 +10,9 @@ import {
   refreshGogToken,
   getGogOwnedGameIds,
   getGogGameDetails,
+  getGogGameClientId,
+  getGogGamePlaytimeMs,
+  getGogUserInfo,
 } from "@main/services/gog-account";
 import { createGame } from "@main/services/library-sync";
 import { logger } from "@main/services";
@@ -36,6 +39,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
       { valueEncoding: "json" }
     );
 
+    const userInfo = await getGogUserInfo(tokens.access_token);
     const ownedIds = await getGogOwnedGameIds(tokens.access_token);
 
     let added = 0;
@@ -55,7 +59,34 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
           const gameKey = levelKeys.game("gog", objectId);
 
           const existing = await gamesSublevel.get(gameKey).catch(() => null);
-          if (existing && !existing.isDeleted) return;
+
+          // Always refresh playtime from GOG API for existing games too
+          if (existing && !existing.isDeleted && userInfo) {
+            const clientId = await getGogGameClientId(objectId).catch(
+              () => null
+            );
+            if (clientId) {
+              const gogPlaytimeMs = await getGogGamePlaytimeMs(
+                tokens.access_token,
+                userInfo.userId,
+                clientId
+              );
+              if (gogPlaytimeMs > (existing.playTimeInMilliseconds ?? 0)) {
+                await gamesSublevel.put(gameKey, {
+                  ...existing,
+                  playTimeInMilliseconds: gogPlaytimeMs,
+                  lastTimePlayed: existing.lastTimePlayed ?? new Date(),
+                });
+              }
+            }
+            return;
+          }
+
+          if (existing && existing.isDeleted) {
+            /* fall through to re-add */
+          } else if (existing) {
+            return;
+          }
 
           const details = await getGogGameDetails(productId);
           if (!details) return;
@@ -93,6 +124,21 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
             libraryHeroImageUrl: gogHeroUrl,
           });
 
+          // Fetch playtime from GOG for new games
+          let gogPlaytimeMs = 0;
+          if (userInfo) {
+            const clientId = await getGogGameClientId(objectId).catch(
+              () => null
+            );
+            if (clientId) {
+              gogPlaytimeMs = await getGogGamePlaytimeMs(
+                tokens.access_token,
+                userInfo.userId,
+                clientId
+              );
+            }
+          }
+
           const game = {
             title: details.title,
             iconUrl: assets.iconUrl,
@@ -102,8 +148,8 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
             shop: "gog" as const,
             remoteId: null,
             isDeleted: false,
-            playTimeInMilliseconds: 0,
-            lastTimePlayed: null,
+            playTimeInMilliseconds: gogPlaytimeMs,
+            lastTimePlayed: gogPlaytimeMs > 0 ? new Date() : null,
             addedToLibraryAt: new Date(),
             automaticCloudSync: true,
             executablePath: null,

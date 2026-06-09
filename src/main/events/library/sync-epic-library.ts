@@ -36,8 +36,20 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
     const objectId = epicGame.app_name;
     const gameKey = levelKeys.game("epic", objectId);
 
+    const epicPlaytimeMs = (epicGame.playtime ?? 0) * 60 * 1000;
+
     const existing = await gamesSublevel.get(gameKey).catch(() => null);
-    if (existing && !existing.isDeleted) continue;
+    if (existing && !existing.isDeleted) {
+      // Update playtime if Epic reports more than we currently have
+      if (epicPlaytimeMs > (existing.playTimeInMilliseconds ?? 0)) {
+        await gamesSublevel.put(gameKey, {
+          ...existing,
+          playTimeInMilliseconds: epicPlaytimeMs,
+          lastTimePlayed: existing.lastTimePlayed ?? new Date(),
+        });
+      }
+      continue;
+    }
 
     // Check for same game from another shop — attach as alternativeShop instead of duplicating
     const titleMatch = await findGameByTitle(epicGame.app_title);
@@ -84,8 +96,8 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
       shop: "epic" as const,
       remoteId: null,
       isDeleted: false,
-      playTimeInMilliseconds: 0,
-      lastTimePlayed: null,
+      playTimeInMilliseconds: epicPlaytimeMs,
+      lastTimePlayed: epicPlaytimeMs > 0 ? new Date() : null,
       addedToLibraryAt: new Date(),
       automaticCloudSync: true,
       executablePath,

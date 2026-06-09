@@ -103,6 +103,29 @@ export interface GogRemoteAchievement {
   date_unlocked: string | null;
 }
 
+export const getGogGamePlaytimeMs = async (
+  accessToken: string,
+  userId: string,
+  clientId: string
+): Promise<number> => {
+  try {
+    // GOG reports sessions as pages; fetch up to 500 sessions (most users have far fewer)
+    const response = await axios.get(
+      `https://gameplay.gog.com/clients/${clientId}/users/${userId}/sessions`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: { limit: 500 },
+      }
+    );
+    const items: { time?: number }[] = response.data?.items ?? [];
+    // Each session has `time` in seconds
+    const totalSeconds = items.reduce((sum, s) => sum + (s.time ?? 0), 0);
+    return totalSeconds * 1000;
+  } catch {
+    return 0;
+  }
+};
+
 export const getGogGameClientId = async (
   productId: string
 ): Promise<string | null> => {

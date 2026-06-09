@@ -14,6 +14,8 @@ export interface LegendaryGame {
   is_installed: boolean;
   install_path?: string;
   key_images?: { type: string; url: string }[];
+  // playtime in minutes as reported by Epic's servers (present when legendary is authenticated)
+  playtime?: number;
 }
 
 export interface LegendaryStatus {
