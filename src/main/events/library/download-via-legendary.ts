@@ -5,6 +5,7 @@ import type { UserPreferences } from "@types";
 import {
   spawnLegendaryInstall,
   findLegendaryBinary,
+  getLegendaryInstalledExePath,
 } from "@main/services/legendary";
 import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { Downloader } from "@shared";
@@ -112,9 +113,12 @@ async function startLegendaryDownloadInternal(
       activeLegendaryDownloads.delete(gameKey);
       const game = await gamesSublevel.get(gameKey).catch(() => null);
       if (game) {
+        const nativeExe = getLegendaryInstalledExePath(objectId);
+        if (nativeExe) sendLog(objectId, `Tracked exe: ${nativeExe}`);
         await gamesSublevel.put(gameKey, {
           ...game,
           executablePath: `legendary://run/${objectId}`,
+          nativeExecutablePath: nativeExe ?? null,
         });
       }
       const completeRecord = {

@@ -93,6 +93,51 @@ export const getGogOwnedGameIds = async (
   return response.data?.owned ?? [];
 };
 
+export interface GogRemoteAchievement {
+  achievement_key: string;
+  name: string;
+  description: string;
+  image_url_locked: string;
+  image_url_unlocked: string;
+  is_visible: boolean;
+  date_unlocked: string | null;
+}
+
+export const getGogGameClientId = async (
+  productId: string
+): Promise<string | null> => {
+  try {
+    const response = await axios.get(
+      `https://content-system.gog.com/products/${productId}/os/windows/builds`,
+      { params: { generation: 2 } }
+    );
+    return (
+      response.data?.items?.[0]?.client_id_2 ??
+      response.data?.items?.[0]?.client_id ??
+      null
+    );
+  } catch {
+    return null;
+  }
+};
+
+export const getGogRemoteAchievements = async (
+  accessToken: string,
+  userId: string,
+  clientId: string
+): Promise<GogRemoteAchievement[]> => {
+  try {
+    const response = await axios.get(
+      `https://gameplay.gog.com/clients/${clientId}/users/${userId}/achievements`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    return response.data?.items ?? [];
+  } catch (err) {
+    logger.error("getGogRemoteAchievements failed", err);
+    return [];
+  }
+};
+
 export const getGogGameDetails = async (
   productId: number
 ): Promise<{

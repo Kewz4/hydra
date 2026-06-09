@@ -57,6 +57,7 @@ export interface Game {
   winePrefixPath?: string | null;
   protonPath?: string | null;
   executablePath?: string | null;
+  nativeExecutablePath?: string | null;
   launchOptions?: string | null;
   autoRunMangohud?: boolean | null;
   autoRunGamemode?: boolean | null;

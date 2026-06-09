@@ -216,8 +216,12 @@ export const watchProcesses = async () => {
 
   for (const game of games) {
     const gameKey = levelKeys.game(game.shop, game.objectId);
-    const executablePath = game.executablePath;
-    if (!executablePath) {
+    // nativeExecutablePath is set for Legendary/GOG games so we can track their real process
+    const executablePath = game.nativeExecutablePath ?? game.executablePath;
+    const isProtocolUrl = executablePath
+      ? /^[\w]+:\/\//.test(executablePath)
+      : false;
+    if (!executablePath || isProtocolUrl) {
       if (gameExecutables[game.objectId]) {
         await findGamePathByProcess(processMap, winePrefixMap, game.objectId);
       }

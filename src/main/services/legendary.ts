@@ -156,6 +156,20 @@ export const getLegendaryConfigPath = (): string => {
   return configPath;
 };
 
+export const getLegendaryInstalledExePath = (appName: string): string | null => {
+  try {
+    const installedJson = path.join(getLegendaryConfigPath(), "installed.json");
+    if (!fs.existsSync(installedJson)) return null;
+    const installed = JSON.parse(fs.readFileSync(installedJson, "utf8"));
+    const entry = installed[appName];
+    if (!entry?.install_path || !entry?.executable) return null;
+    const exePath = path.join(entry.install_path, entry.executable);
+    return fs.existsSync(exePath) ? exePath : null;
+  } catch {
+    return null;
+  }
+};
+
 const legendaryBaseArgs = (): string[] => [];
 
 const legendaryEnv = (): NodeJS.ProcessEnv => ({

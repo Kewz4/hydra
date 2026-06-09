@@ -22,6 +22,12 @@ import { db, gamesSublevel, levelKeys } from "@main/level";
 import { WindowManager } from "../window-manager";
 import { setTimeout } from "node:timers/promises";
 import { Wine } from "../wine";
+import {
+  refreshGogToken,
+  getGogUserInfo,
+  getGogGameClientId,
+  getGogRemoteAchievements,
+} from "../gog-account";
 
 const fileStats: Map<string, number> = new Map();
 const fltFiles: Map<string, Set<string>> = new Map();
@@ -181,6 +187,43 @@ const processAchievementFileDiff = async (
   return 0;
 };
 
+const syncGogAchievements = async (game: Game): Promise<number> => {
+  try {
+    const prefs = await db
+      .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+        valueEncoding: "json",
+      })
+      .catch(() => null);
+    if (!prefs?.gogRefreshToken) return 0;
+
+    const tokens = await refreshGogToken(prefs.gogRefreshToken);
+    const userInfo = await getGogUserInfo(tokens.access_token);
+    if (!userInfo) return 0;
+
+    const clientId = await getGogGameClientId(game.objectId);
+    if (!clientId) return 0;
+
+    const remoteAchievements = await getGogRemoteAchievements(
+      tokens.access_token,
+      userInfo.userId,
+      clientId
+    );
+
+    const unlockedAchievements: UnlockedAchievement[] = remoteAchievements
+      .filter((a) => !!a.date_unlocked)
+      .map((a) => ({
+        name: a.achievement_key,
+        unlockTime: Math.floor(new Date(a.date_unlocked!).getTime() / 1000),
+      }));
+
+    if (unlockedAchievements.length === 0) return 0;
+    return mergeAchievements(game, unlockedAchievements, false);
+  } catch (err) {
+    achievementsLogger.error("GOG achievement sync failed", game.objectId, err);
+    return 0;
+  }
+};
+
 export class AchievementWatcherManager {
   private static _hasFinishedPreSearch = false;
 
@@ -230,11 +273,15 @@ export class AchievementWatcherManager {
       }
     }
 
-    const newAchievements = await mergeAchievements(
+    let newAchievements = await mergeAchievements(
       game,
       unlockedAchievements,
       false
     );
+
+    if (game.shop === "gog") {
+      newAchievements += await syncGogAchievements(game);
+    }
 
     if (newAchievements > 0) {
       this.notifyCombinedAchievementsUnlocked(1, newAchievements);
@@ -415,6 +462,15 @@ export class AchievementWatcherManager {
           totalNewGamesWithAchievements,
           totalNewAchievements
         );
+      }
+
+      // Sync GOG achievements from API for all GOG games
+      const gogGames = (
+        await gamesSublevel.values().all()
+      ).filter((g) => !g.isDeleted && g.shop === "gog");
+
+      for (const gogGame of gogGames) {
+        await syncGogAchievements(gogGame).catch(() => {});
       }
     } catch (err) {
       achievementsLogger.error("Error on preSearchAchievements", err);
