@@ -352,8 +352,9 @@ export function HeroPanelActions() {
       /^(steam|legendary|goggalaxy|msxbox|battlenet):\/\//.test(
         game.executablePath
       );
+    const isSteamProtocol = game.executablePath?.startsWith("steam://") ?? false;
     const showRepackDownloadForLibraryGame =
-      repacks.length > 0 && isProtocolLaunch;
+      isProtocolLaunch && (repacks.length > 0 || isSteamProtocol);
 
     return (
       <div className="hero-panel-actions__container">

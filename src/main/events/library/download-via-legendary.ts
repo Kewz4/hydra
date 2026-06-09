@@ -68,6 +68,9 @@ async function startLegendaryDownloadInternal(
 
   const savedProgress = existingDownload?.progress ?? 0;
   let currentRecord = { ...initialRecord };
+  // alive is set to false on pause/cancel so pending async callbacks don't
+  // write stale data back to the DB or re-broadcast stale progress events.
+  let alive = true;
 
   sendLog(objectId, `Starting Legendary install for ${objectId}…`);
   sendLog(objectId, `Download path: ${downloadPath}`);
@@ -77,6 +80,7 @@ async function startLegendaryDownloadInternal(
     downloadPath,
     legendaryBinaryPath,
     async (progress, downloadedMB, totalMB, speedMBs, etaMs) => {
+      if (!alive) return;
       // Don't let progress go backward (Legendary re-verifies files on resume)
       const effectiveProgress = Math.max(
         progress,
@@ -98,6 +102,7 @@ async function startLegendaryDownloadInternal(
         status: "active",
       };
       await downloadsSublevel.put(gameKey, currentRecord).catch(() => {});
+      if (!alive) return;
       WindowManager.sendToAppWindows("on-download-progress", {
         gameId: gameKey,
         progress: effectiveProgress,
@@ -116,6 +121,7 @@ async function startLegendaryDownloadInternal(
       });
     },
     async () => {
+      if (!alive) return;
       sendLog(objectId, "✓ Download complete!");
       activeLegendaryDownloads.delete(gameKey);
       const game = await gamesSublevel.get(gameKey).catch(() => null);
@@ -147,6 +153,7 @@ async function startLegendaryDownloadInternal(
       });
     },
     async (err) => {
+      if (!alive) return;
       sendLog(objectId, `✗ Error: ${err}`, true);
       activeLegendaryDownloads.delete(gameKey);
       logger.error("Legendary download failed", { objectId, err });
@@ -156,7 +163,10 @@ async function startLegendaryDownloadInternal(
     (line, isError) => sendLog(objectId, line, isError)
   );
 
-  activeLegendaryDownloads.set(gameKey, cancel);
+  activeLegendaryDownloads.set(gameKey, () => {
+    alive = false;
+    cancel();
+  });
   return { ok: true };
 }
 

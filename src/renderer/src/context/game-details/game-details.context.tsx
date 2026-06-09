@@ -469,10 +469,7 @@ export function GameDetailsContextProvider({
 
         // For non-Steam games with no repacks, search the Hydra catalogue
         // by title to find the Steam equivalent and fetch its repacks
-        if (
-          (!downloads || downloads.length === 0) &&
-          shop !== "steam"
-        ) {
+        if ((!downloads || downloads.length === 0) && shop !== "steam") {
           try {
             const steamId = await window.electron.hydraApi
               .post<{

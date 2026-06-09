@@ -70,6 +70,9 @@ async function startGogdlDownloadInternal(
 
   const savedProgress = existingDownload?.progress ?? 0;
   let currentRecord = { ...initialRecord };
+  // alive is set to false on pause/cancel so pending async callbacks don't
+  // write stale data back to the DB or re-broadcast stale progress events.
+  let alive = true;
 
   sendLog(objectId, `Binary: ${binaryPath}`);
   sendLog(objectId, `Download path: ${downloadPath}`);
@@ -81,6 +84,7 @@ async function startGogdlDownloadInternal(
     refreshToken,
     binaryPath,
     async (progress, downloadedMB, totalMB, speedMBs, etaMs) => {
+      if (!alive) return;
       // Don't let progress go backward (gogdl re-verifies files on resume)
       const effectiveProgress = Math.max(
         progress,
@@ -102,6 +106,7 @@ async function startGogdlDownloadInternal(
         status: "active",
       };
       await downloadsSublevel.put(gameKey, currentRecord).catch(() => {});
+      if (!alive) return;
       WindowManager.sendToAppWindows("on-download-progress", {
         gameId: gameKey,
         progress: effectiveProgress,
@@ -120,6 +125,7 @@ async function startGogdlDownloadInternal(
       });
     },
     async () => {
+      if (!alive) return;
       sendLog(objectId, "✓ Download complete!");
       activeGogdlDownloads.delete(gameKey);
       const game = await gamesSublevel.get(gameKey).catch(() => null);
@@ -148,6 +154,7 @@ async function startGogdlDownloadInternal(
       });
     },
     async (err) => {
+      if (!alive) return;
       sendLog(objectId, `✗ Error: ${err}`, true);
       activeGogdlDownloads.delete(gameKey);
       logger.error("gogdl download failed", { objectId, err });
@@ -157,7 +164,10 @@ async function startGogdlDownloadInternal(
     (line, isError) => sendLog(objectId, line, isError)
   );
 
-  activeGogdlDownloads.set(gameKey, cancel);
+  activeGogdlDownloads.set(gameKey, () => {
+    alive = false;
+    cancel();
+  });
   return { ok: true };
 }
 

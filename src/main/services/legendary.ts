@@ -283,7 +283,7 @@ export function spawnLegendaryInstall(
   let lastDownloadedMB = 0;
   let lastSpeedMBs = 0;
   let lastEtaMs = 0;
-  const completed = false;
+  let completed = false;
   let killIntentional = false;
 
   const handleLine = (line: string, isStderr: boolean) => {
@@ -341,6 +341,7 @@ export function spawnLegendaryInstall(
     if (stdoutBuffer.trim()) handleLine(stdoutBuffer, false);
     if (!completed) {
       if (code === 0) {
+        completed = true;
         onComplete();
       } else if (code !== null) {
         onError(`Legendary exited with code ${code}`);
