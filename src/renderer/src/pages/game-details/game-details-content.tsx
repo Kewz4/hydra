@@ -1,15 +1,8 @@
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   computeHardwareRating,
   type HardwareInfo,
-  type HardwareRating,
+  type RatingResult,
 } from "@renderer/helpers/hardware-comparison";
 import { PencilIcon } from "@primer/octicons-react";
 import { useTranslation } from "react-i18next";
@@ -117,12 +110,11 @@ export function GameDetailsContent() {
       .catch(() => {});
   }, []);
 
-  const hardwareRating = useMemo((): HardwareRating => {
-    if (!hardwareInfo || !shopDetails?.pc_requirements) return "unknown";
-    const min = (shopDetails.pc_requirements as Record<string, string>).minimum;
-    const rec = (shopDetails.pc_requirements as Record<string, string>)
-      .recommended;
-    return computeHardwareRating(hardwareInfo, min, rec);
+  const hwRating = useMemo((): RatingResult | null => {
+    if (!hardwareInfo || !shopDetails?.pc_requirements) return null;
+    const reqs = shopDetails.pc_requirements as Record<string, string>;
+    const result = computeHardwareRating(hardwareInfo, reqs.minimum, reqs.recommended);
+    return result.rating === "unknown" ? null : result;
   }, [hardwareInfo, shopDetails]);
 
   // game !== null means the game is in the user's library
@@ -205,17 +197,12 @@ export function GameDetailsContent() {
                   </span>
                 )}
 
-                {hardwareRating !== "unknown" && (
+                {hwRating && (
                   <span
-                    className={`game-details__hw-badge game-details__hw-badge--${hardwareRating}`}
+                    className={`game-details__hw-badge game-details__hw-badge--${hwRating.rating}`}
+                    title={hwRating.detail}
                   >
-                    {hardwareRating === "perfect" &&
-                      "Your PC will run this perfectly"}
-                    {hardwareRating === "good" &&
-                      "Your PC should run this well"}
-                    {hardwareRating === "low" && "Your PC will run this on low"}
-                    {hardwareRating === "struggle" &&
-                      "Your PC will struggle with this"}
+                    {hwRating.headline}
                   </span>
                 )}
 
