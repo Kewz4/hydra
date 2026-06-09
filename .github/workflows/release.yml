@@ -106,9 +106,27 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
         run: node scripts/upload-build.cjs
 
+      - name: Read package version
+        id: pkg_version
+        shell: bash
+        run: echo "version=$(node -p \"require('./package.json').version\")" >> $GITHUB_OUTPUT
+
+      - name: Create and push version tag
+        if: matrix.os == 'ubuntu-latest'
+        shell: bash
+        run: |
+          TAG="v${{ steps.pkg_version.outputs.version }}"
+          git config user.email "noreply@github.com"
+          git config user.name "GitHub Actions"
+          git tag -f "$TAG"
+          git push origin "$TAG" --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.pkg_version.outputs.version }}
           draft: false
           generate_release_notes: true
           files: |
