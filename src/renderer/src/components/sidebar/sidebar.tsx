@@ -560,7 +560,11 @@ export function Sidebar() {
             <ul className="sidebar__menu">
               {routes.map(({ nameKey, path, render }) => {
                 const isDownloads = path === "/downloads";
-                const isDownloading = isDownloads && !!lastPacket;
+                const hasActiveDownload = library.some(
+                  (g) => g.download?.status === "active"
+                );
+                const isDownloading =
+                  isDownloads && !!lastPacket && hasActiveDownload;
 
                 const queueCount = isDownloads
                   ? library.filter(

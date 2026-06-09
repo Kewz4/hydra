@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { changeLanguage } from "i18next";
 import { orderBy } from "lodash-es";
@@ -63,6 +63,12 @@ export function SettingsContextGeneral({
     total: number;
     title: string | null;
   } | null>(null);
+  const [checkingForUpdates, setCheckingForUpdates] = useState(false);
+  const [updateCheckResult, setUpdateCheckResult] = useState<string | null>(
+    null
+  );
+  const updateUnsubRef = useRef<(() => void) | null>(null);
+
   const [deduping, setDeduping] = useState(false);
   const [dedupProgress, setDedupProgress] = useState<{
     current: number;
@@ -491,6 +497,54 @@ export function SettingsContextGeneral({
           </div>
         )}
       </div>
+
+      <h2 className="settings-general__section-title">
+        {t("updates", { defaultValue: "Updates" })}
+      </h2>
+      <Button
+        theme="outline"
+        onClick={async () => {
+          updateUnsubRef.current?.();
+          setCheckingForUpdates(true);
+          setUpdateCheckResult(null);
+          try {
+            const isAutoInstall = await window.electron.checkForUpdates();
+            updateUnsubRef.current = window.electron.onAutoUpdaterEvent(
+              (event) => {
+                if (event.type === "update-available") {
+                  setUpdateCheckResult(
+                    `Update available: v${event.info.version}`
+                  );
+                } else if (event.type === "update-downloaded") {
+                  setUpdateCheckResult(
+                    "Update downloaded — restart to install."
+                  );
+                }
+                updateUnsubRef.current?.();
+              }
+            );
+            if (!isAutoInstall) {
+              setTimeout(() => {
+                setUpdateCheckResult(
+                  (prev) => prev ?? "No new update found."
+                );
+              }, 8000);
+            }
+          } finally {
+            setCheckingForUpdates(false);
+          }
+        }}
+        disabled={checkingForUpdates}
+      >
+        {checkingForUpdates
+          ? t("checking_for_updates", { defaultValue: "Checking…" })
+          : t("check_for_updates", { defaultValue: "Check for Updates" })}
+      </Button>
+      {updateCheckResult && (
+        <p style={{ marginTop: 8, opacity: 0.8, fontSize: "0.85rem" }}>
+          {updateCheckResult}
+        </p>
+      )}
 
       <DownloadDirectoryReplacementModal
         visible={downloadDirectoryReplacement !== null}

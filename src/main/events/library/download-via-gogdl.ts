@@ -135,7 +135,7 @@ async function startGogdlDownloadInternal(
           downloadedMB * 1024 * 1024,
           currentRecord.bytesDownloaded
         ),
-        fileSize: totalMB * 1024 * 1024,
+        fileSize: Math.max(totalMB * 1024 * 1024, currentRecord.fileSize ?? 0),
         status: "active",
       };
       await downloadsSublevel.put(gameKey, currentRecord).catch(() => {});

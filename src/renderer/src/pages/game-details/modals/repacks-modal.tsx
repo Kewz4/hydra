@@ -517,9 +517,16 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--epic"
-                      onClick={() => {
+                      onClick={async () => {
+                        const result = await window.electron.showOpenDialog({
+                          properties: ["openDirectory", "createDirectory"],
+                          title: "Choose install folder (optional — cancel to use default)",
+                        });
+                        const customPath = result.canceled
+                          ? undefined
+                          : result.filePaths[0];
                         window.electron
-                          .downloadViaLegendary(epicObjectId)
+                          .downloadViaLegendary(epicObjectId, customPath)
                           .catch(() => {});
                         onClose();
                         navigate("/downloads");
@@ -533,9 +540,16 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--gog"
-                      onClick={() => {
+                      onClick={async () => {
+                        const result = await window.electron.showOpenDialog({
+                          properties: ["openDirectory", "createDirectory"],
+                          title: "Choose install folder (optional — cancel to use default)",
+                        });
+                        const customPath = result.canceled
+                          ? undefined
+                          : result.filePaths[0];
                         window.electron
-                          .downloadViaGogdl(gogObjectId)
+                          .downloadViaGogdl(gogObjectId, customPath)
                           .catch(() => {});
                         onClose();
                         navigate("/downloads");

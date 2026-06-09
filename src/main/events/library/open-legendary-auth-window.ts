@@ -105,6 +105,9 @@ const openLegendaryAuthWindow = async (
     win.webContents.on("did-navigate", (_e, url) => tryExtract(url));
     win.webContents.on("did-navigate-in-page", (_e, url) => tryExtract(url));
     win.webContents.on("dom-ready", () => tryExtract(win.webContents.getURL()));
+    win.webContents.on("did-finish-load", () =>
+      tryExtract(win.webContents.getURL())
+    );
 
     win.on("closed", () => {
       if (!handled) resolve({ success: false });

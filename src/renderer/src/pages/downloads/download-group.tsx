@@ -1093,7 +1093,7 @@ export function DownloadGroup({
                   <div className="download-group__simple-meta">
                     <div className="download-group__simple-meta-row">
                       <Badge>
-                        {DOWNLOADER_NAME[Number(game.download!.downloader)]}
+                        {DOWNLOADER_NAME[game.download!.downloader]}
                       </Badge>
                     </div>
                     <div className="download-group__simple-meta-row">
