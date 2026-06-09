@@ -150,7 +150,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [startMinimized, setStartMinimized] = useState(false);
 
   const currentStep = ALL_STEPS[stepIndex];
-  const _currentStepIndex = ALL_STEPS.indexOf(currentStep);
+  void ALL_STEPS.indexOf(currentStep);
 
   useEffect(() => {
     window.electron.getDefaultDownloadsPath().then((p) => {

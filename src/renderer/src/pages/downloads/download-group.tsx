@@ -869,7 +869,7 @@ export function DownloadGroup({
             handleCancelClick(
               game.shop,
               game.objectId,
-              game.download?.downloader
+              game.download?.downloader as string | undefined
             );
           },
           icon: <XCircleIcon />,
@@ -923,7 +923,7 @@ export function DownloadGroup({
           handleCancelClick(
             game.shop,
             game.objectId,
-            game.download?.downloader
+            game.download?.downloader as string | undefined
           );
         },
         icon: <XCircleIcon />,

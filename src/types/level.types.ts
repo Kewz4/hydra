@@ -180,6 +180,8 @@ export interface UserPreferences {
   xboxTokenExpiry?: string | null;
   xboxGamertag?: string | null;
   xboxHasGamePass?: boolean | null;
+  uploadcarePublicKey?: string | null;
+  uploadcareSecretKey?: string | null;
   xboxXuid?: string | null;
   cloudSyncUserId?: string | null;
   onboardingComplete?: boolean;

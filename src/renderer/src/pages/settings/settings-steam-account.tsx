@@ -53,7 +53,7 @@ export function SettingsSteamAccount() {
 
     if (savedSteamId) {
       window.electron
-        .getSteamPlayerSummary(savedSteamId, userPreferences?.steamApiKey)
+        .getSteamPlayerSummary(savedSteamId, userPreferences?.steamApiKey ?? undefined)
         .then((summary) => {
           if (summary) setLinkedAccount(summary);
         })

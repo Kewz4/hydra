@@ -180,10 +180,11 @@ export default function CloudSaves() {
                   className="cloud-saves__game-header"
                   onClick={() =>
                     navigate(
-                      buildGameDetailsPath(
-                        first.shop as GameShop,
-                        first.objectId
-                      )
+                      buildGameDetailsPath({
+                        shop: first.shop as GameShop,
+                        objectId: first.objectId,
+                        title: first.gameTitle ?? first.objectId,
+                      })
                     )
                   }
                 >

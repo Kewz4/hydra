@@ -471,8 +471,7 @@ export function GameDetailsContextProvider({
         // by title to find the Steam equivalent and fetch its repacks
         if (
           (!downloads || downloads.length === 0) &&
-          shop !== "steam" &&
-          shop !== "custom"
+          shop !== "steam"
         ) {
           try {
             const steamId = await window.electron.hydraApi

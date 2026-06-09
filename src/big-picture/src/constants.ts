@@ -21,4 +21,6 @@ export const DOWNLOADER_NAME: Record<Downloader, string> = {
   [Downloader.Rootz]: "Rootz",
   [Downloader.Premiumize]: "Premiumize",
   [Downloader.AllDebrid]: "AllDebrid",
+  [Downloader.Legendary]: "Legendary",
+  [Downloader.Gogdl]: "GOGDL",
 };
