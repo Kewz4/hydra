@@ -5,6 +5,10 @@ import path from "node:path";
 import fs from "node:fs";
 import url from "node:url";
 
+// Ensure app name matches productName so electron-updater uses
+// "GameHub-updater" instead of "hydralauncher-updater" for its temp dir.
+app.setName("GameHub");
+
 // Detect portable mode: electron-builder NSIS portable sets PORTABLE_EXECUTABLE_DIR;
 // our custom installer writes a "portable" marker file next to the exe.
 // Also redirect on first run (no .gamehub-setup marker) so Roaming is never
