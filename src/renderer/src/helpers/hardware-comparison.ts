@@ -177,7 +177,9 @@ function parseRequirements(html: string | undefined): ParsedReqs {
   const cpu = cpuScore(cpuLine ? cpuLine[1] : "");
 
   // GPU: look for "Graphics:" or "GPU:" or "Video:" line
-  const gpuLine = text.match(/(?:Graphics|GPU|Video Card|Video)\s*:?\s*([^\n<]{5,80})/i);
+  const gpuLine = text.match(
+    /(?:Graphics|GPU|Video Card|Video)\s*:?\s*([^\n<]{5,80})/i
+  );
   const gpu = gpuScore(gpuLine ? gpuLine[1] : "");
 
   return {

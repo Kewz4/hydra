@@ -120,7 +120,8 @@ export function GameDetailsContent() {
   const hardwareRating = useMemo((): HardwareRating => {
     if (!hardwareInfo || !shopDetails?.pc_requirements) return "unknown";
     const min = (shopDetails.pc_requirements as Record<string, string>).minimum;
-    const rec = (shopDetails.pc_requirements as Record<string, string>).recommended;
+    const rec = (shopDetails.pc_requirements as Record<string, string>)
+      .recommended;
     return computeHardwareRating(hardwareInfo, min, rec);
   }, [hardwareInfo, shopDetails]);
 
