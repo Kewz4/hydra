@@ -773,15 +773,11 @@ export function DownloadGroup({
 
   const handleConfirmCancel = useCallback(async () => {
     if (gameToCancelShop && gameToCancelObjectId) {
-      if (gameToCancelDownloader === Downloader.Legendary) {
-        await window.electron.cancelLegendaryDownload(gameToCancelObjectId);
-        updateLibrary();
-      } else if (gameToCancelDownloader === Downloader.Gogdl) {
-        await window.electron.cancelGogdlDownload(gameToCancelObjectId);
-        updateLibrary();
-      } else {
-        await cancelDownload(gameToCancelShop, gameToCancelObjectId);
-      }
+      await window.electron.cancelGameDownload(
+        gameToCancelShop,
+        gameToCancelObjectId
+      );
+      updateLibrary();
     }
     setCancelModalVisible(false);
     setGameToCancelShop(null);
@@ -790,8 +786,6 @@ export function DownloadGroup({
   }, [
     gameToCancelShop,
     gameToCancelObjectId,
-    gameToCancelDownloader,
-    cancelDownload,
     updateLibrary,
   ]);
 

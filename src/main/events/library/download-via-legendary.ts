@@ -65,6 +65,7 @@ async function startLegendaryDownloadInternal(
   });
   WindowManager.sendToAppWindows("on-downloads-updated");
 
+  const savedProgress = existingDownload?.progress ?? 0;
   let currentRecord = { ...initialRecord };
 
   sendLog(objectId, `Starting Legendary install for ${objectId}…`);
@@ -75,21 +76,23 @@ async function startLegendaryDownloadInternal(
     downloadPath,
     legendaryBinaryPath,
     async (progress, downloadedMB, totalMB, speedMBs, etaMs) => {
+      // Don't let progress go backward (Legendary re-verifies files on resume)
+      const effectiveProgress = Math.max(progress, savedProgress, currentRecord.progress);
       sendLog(
         objectId,
-        `↓ ${(progress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`
+        `↓ ${(effectiveProgress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`
       );
       currentRecord = {
         ...currentRecord,
-        progress,
-        bytesDownloaded: downloadedMB * 1024 * 1024,
+        progress: effectiveProgress,
+        bytesDownloaded: Math.max(downloadedMB * 1024 * 1024, currentRecord.bytesDownloaded),
         fileSize: totalMB * 1024 * 1024,
         status: "active",
       };
       await downloadsSublevel.put(gameKey, currentRecord).catch(() => {});
       WindowManager.sendToAppWindows("on-download-progress", {
         gameId: gameKey,
-        progress,
+        progress: effectiveProgress,
         downloadSpeed: speedMBs * 1024 * 1024,
         timeRemaining:
           etaMs > 0

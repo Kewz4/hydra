@@ -345,9 +345,20 @@ export function HeroPanelActions() {
     });
 
   if (game) {
+    // Show "Download options" for library games that launch via a platform protocol
+    // (steam://, legendary://, etc.) so users can still access catalogue repacks
+    const isProtocolLaunch =
+      game.executablePath != null &&
+      /^(steam|legendary|goggalaxy|msxbox|battlenet):\/\//.test(
+        game.executablePath
+      );
+    const showRepackDownloadForLibraryGame =
+      repacks.length > 0 && isProtocolLaunch;
+
     return (
       <div className="hero-panel-actions__container">
         {gameActionButton()}
+        {showRepackDownloadForLibraryGame && showDownloadOptionsButton}
         {alternativeShopLaunchButtons}
         <div className="hero-panel-actions__separator" />
         <Button
