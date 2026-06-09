@@ -499,13 +499,11 @@ export default function Library() {
       );
     if (storeFilter === "epic")
       return filteredLibrary.filter(
-        (g) =>
-          g.shop === "epic" && g.executablePath?.startsWith("legendary://")
+        (g) => g.shop === "epic" && g.executablePath?.startsWith("legendary://")
       );
     if (storeFilter === "gog")
       return filteredLibrary.filter(
-        (g) =>
-          g.shop === "gog" && g.executablePath?.startsWith("goggalaxy://")
+        (g) => g.shop === "gog" && g.executablePath?.startsWith("goggalaxy://")
       );
     if (storeFilter === "xbox")
       return filteredLibrary.filter(
