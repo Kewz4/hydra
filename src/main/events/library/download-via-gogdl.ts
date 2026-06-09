@@ -1,6 +1,7 @@
 import { registerEvent } from "../register-event";
-import { WindowManager, logger } from "@main/services";
+import { DownloadOrchestrator, WindowManager, logger } from "@main/services";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
+import { isActiveLikeDownload } from "../../types";
 import type { UserPreferences } from "@types";
 import {
   spawnGogdlInstall,
@@ -34,6 +35,37 @@ async function startGogdlDownloadInternal(
   const existingDownload = await downloadsSublevel
     .get(gameKey)
     .catch(() => null);
+
+  // If another download is already active, queue this one instead of overriding
+  const allDownloads = await downloadsSublevel.values().all();
+  const hasActiveOther = allDownloads.some(
+    (d) => isActiveLikeDownload(d) && levelKeys.game(d.shop, d.objectId) !== gameKey
+  );
+  if (hasActiveOther) {
+    const queuedRecord = {
+      ...(existingDownload ?? {}),
+      shop: "gog" as const,
+      objectId,
+      uri: `gogdl://install/${objectId}`,
+      folderName: null,
+      downloadPath,
+      progress: existingDownload?.progress ?? 0,
+      downloader: Downloader.Gogdl,
+      bytesDownloaded: existingDownload?.bytesDownloaded ?? 0,
+      fileSize: existingDownload?.fileSize ?? null,
+      shouldSeed: false,
+      status: "paused" as const,
+      queued: true,
+      timestamp: existingDownload?.timestamp ?? Date.now(),
+      extracting: false,
+      automaticallyExtract: false,
+      automaticallyDeleteArchiveFiles: false,
+    };
+    await downloadsSublevel.put(gameKey, queuedRecord);
+    WindowManager.sendToAppWindows("on-downloads-updated");
+    return { ok: true };
+  }
+
   const initialRecord = {
     ...(existingDownload ?? {}),
     shop: "gog" as const,
@@ -152,6 +184,7 @@ async function startGogdlDownloadInternal(
         isCheckingFiles: false,
         download: completeRecord,
       });
+      DownloadOrchestrator.startNextQueuedDownload().catch(() => {});
     },
     async (err) => {
       if (!alive) return;
@@ -160,6 +193,7 @@ async function startGogdlDownloadInternal(
       logger.error("gogdl download failed", { objectId, err });
       await downloadsSublevel.del(gameKey).catch(() => {});
       WindowManager.sendToAppWindows("on-downloads-updated");
+      DownloadOrchestrator.startNextQueuedDownload().catch(() => {});
     },
     (line, isError) => sendLog(objectId, line, isError)
   );
@@ -180,6 +214,7 @@ export async function cancelGogdlDownloadByKey(gameKey: string) {
   activeGogdlDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
   WindowManager.sendToAppWindows("on-downloads-updated");
+  DownloadOrchestrator.startNextQueuedDownload().catch(() => {});
   return { ok: true };
 }
 

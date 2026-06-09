@@ -94,34 +94,39 @@ export async function setupInstall(
 ): Promise<void> {
   const srcDir = path.dirname(process.execPath);
 
-  // Count files for progress
-  let total = 0;
-  let copied = 0;
-  const countFiles = (dir: string) => {
-    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-      if (e.isDirectory()) {
-        if (e.name === "data") continue;
-        countFiles(path.join(dir, e.name));
-      } else total++;
-    }
-  };
-  countFiles(srcDir);
+  // Disable Electron's ASAR interception so app.asar is copied as a raw file
+  process.noAsar = true;
+  try {
+    let total = 0;
+    let copied = 0;
+    const countFiles = (dir: string) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (e.isDirectory()) {
+          if (e.name === "data") continue;
+          countFiles(path.join(dir, e.name));
+        } else total++;
+      }
+    };
+    countFiles(srcDir);
 
-  onProgress(0, "Preparing…");
+    onProgress(0, "Preparing…");
 
-  await copyDirRecursive(srcDir, destDir, (name) => {
-    copied++;
-    onProgress(Math.round((copied / total) * 85), name);
-  });
+    await copyDirRecursive(srcDir, destDir, (name) => {
+      copied++;
+      onProgress(Math.round((copied / total) * 85), name);
+    });
 
-  onProgress(88, "Creating shortcuts…");
-  const newExe = path.join(destDir, path.basename(process.execPath));
-  createShortcuts(newExe);
+    onProgress(88, "Creating shortcuts…");
+    const newExe = path.join(destDir, path.basename(process.execPath));
+    createShortcuts(newExe);
 
-  onProgress(95, "Finishing up…");
-  writeSetupMarker(destDir);
+    onProgress(95, "Finishing up…");
+    writeSetupMarker(destDir);
 
-  onProgress(100, "Done");
+    onProgress(100, "Done");
+  } finally {
+    process.noAsar = false;
+  }
 }
 
 export function setupPortable(): void {

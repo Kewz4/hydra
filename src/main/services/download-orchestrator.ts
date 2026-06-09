@@ -118,7 +118,7 @@ export class DownloadOrchestrator {
     return { downloads, layoutState };
   }
 
-  private static async startNextQueuedDownload(downloads?: Download[]) {
+  public static async startNextQueuedDownload(downloads?: Download[]) {
     const currentDownloads = downloads ?? (await this.getAllDownloads());
     const layoutState =
       await getNormalizedDownloadLayoutState(currentDownloads);

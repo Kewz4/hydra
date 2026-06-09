@@ -52,6 +52,8 @@ export function SettingsGeneral() {
 
   const [canInstallCommonRedist, setCanInstallCommonRedist] = useState(false);
   const [installingCommonRedist, setInstallingCommonRedist] = useState(false);
+  const [checkingForUpdates, setCheckingForUpdates] = useState(false);
+  const [updateCheckResult, setUpdateCheckResult] = useState<string | null>(null);
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
   const [metadataProgress, setMetadataProgress] = useState<{
     current: number;
@@ -546,6 +548,47 @@ export function SettingsGeneral() {
             </p>
           )}
         </div>
+      )}
+
+      <h2 className="settings-general__section-title">Updates</h2>
+      <p className="settings-general__common-redist-description">
+        Check if a new version of GameHub is available.
+      </p>
+      <Button
+        onClick={async () => {
+          setCheckingForUpdates(true);
+          setUpdateCheckResult(null);
+          try {
+            const isAutoInstall = await window.electron.checkForUpdates();
+            const unsubscribe = window.electron.onAutoUpdaterEvent((event) => {
+              if (event.type === "update-available") {
+                setUpdateCheckResult(`Update available: v${event.info.version}`);
+              } else if (event.type === "update-downloaded") {
+                setUpdateCheckResult("Update downloaded — restart to install.");
+              }
+              unsubscribe();
+            });
+            if (!isAutoInstall) {
+              setTimeout(() => {
+                setUpdateCheckResult((prev) =>
+                  prev ?? "No update found (or check in progress)."
+                );
+              }, 8000);
+            }
+          } finally {
+            setCheckingForUpdates(false);
+          }
+        }}
+        className="settings-general__common-redist-button"
+        type="button"
+        disabled={checkingForUpdates}
+      >
+        {checkingForUpdates ? "Checking…" : "Check for Updates"}
+      </Button>
+      {updateCheckResult && (
+        <p className="settings-general__common-redist-description">
+          {updateCheckResult}
+        </p>
       )}
 
       <h2 className="settings-general__section-title">Debugging</h2>

@@ -11,6 +11,8 @@ const sendEventsForDebug = false;
 export class UpdateManager {
   private static hasNotified = false;
   private static newVersion = "";
+  private static pendingUpdateInfo: UpdateInfo | null = null;
+  private static updateDownloaded = false;
 
   private static mockValuesForDebug() {
     this.sendEvent({ type: "update-available", info: { version: "3.3.1" } });
@@ -45,10 +47,12 @@ export class UpdateManager {
     autoUpdater
       .removeAllListeners()
       .on("update-available", (info: UpdateInfo) => {
-        this.sendEvent({ type: "update-available", info });
+        this.pendingUpdateInfo = info;
         this.newVersion = info.version;
+        this.sendEvent({ type: "update-available", info });
       })
       .on("update-downloaded", () => {
+        this.updateDownloaded = true;
         this.sendEvent({ type: "update-downloaded" });
 
         if (!this.hasNotified) {
@@ -58,6 +62,14 @@ export class UpdateManager {
       });
 
     const isAutoInstallAvailable = await this.isAutoInstallEnabled();
+
+    // Re-emit cached events so the renderer never misses them due to timing
+    if (this.pendingUpdateInfo) {
+      this.sendEvent({ type: "update-available", info: this.pendingUpdateInfo });
+    }
+    if (this.updateDownloaded) {
+      this.sendEvent({ type: "update-downloaded" });
+    }
 
     if (app.isPackaged) {
       autoUpdater.autoDownload = isAutoInstallAvailable;
