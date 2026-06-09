@@ -571,11 +571,7 @@ export function computeHardwareRating(
 
   // Build a composite score for each tier (GPU-weighted since it's most important for gaming)
   // Weights: GPU 60%, CPU 25%, RAM 15%
-  const ratio = (
-    user: number,
-    req: number | null,
-    fallback = 1
-  ): number => {
+  const ratio = (user: number, req: number | null, fallback = 1): number => {
     if (!req || !user) return fallback;
     return user / req;
   };

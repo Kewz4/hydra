@@ -113,7 +113,11 @@ export function GameDetailsContent() {
   const hwRating = useMemo((): RatingResult | null => {
     if (!hardwareInfo || !shopDetails?.pc_requirements) return null;
     const reqs = shopDetails.pc_requirements as Record<string, string>;
-    const result = computeHardwareRating(hardwareInfo, reqs.minimum, reqs.recommended);
+    const result = computeHardwareRating(
+      hardwareInfo,
+      reqs.minimum,
+      reqs.recommended
+    );
     return result.rating === "unknown" ? null : result;
   }, [hardwareInfo, shopDetails]);
 
