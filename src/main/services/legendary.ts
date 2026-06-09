@@ -339,8 +339,12 @@ export function spawnLegendaryInstall(
     if (killIntentional) return;
     if (stderrBuffer.trim()) handleLine(stderrBuffer, true);
     if (stdoutBuffer.trim()) handleLine(stdoutBuffer, false);
-    if (!completed && code !== 0 && code !== null) {
-      onError(`Legendary exited with code ${code}`);
+    if (!completed) {
+      if (code === 0) {
+        onComplete();
+      } else if (code !== null) {
+        onError(`Legendary exited with code ${code}`);
+      }
     }
   });
 

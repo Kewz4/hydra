@@ -121,6 +121,7 @@ async function getXstsToken(
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 /** Check if the authenticated user has an active Game Pass PC subscription */
 async function _checkGamePass(
   uhs: string,

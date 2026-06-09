@@ -346,7 +346,7 @@ export interface GameArtifact {
 }
 
 export interface GameArtifactWithGame extends GameArtifact {
-  shop: import("./level.types").GameShop;
+  shop: import("./game.types").GameShop;
   objectId: string;
   gameTitle: string;
   gameIconUrl: string | null;
