@@ -719,6 +719,12 @@ declare global {
       minWidth?: number,
       minHeight?: number
     ) => Promise<void>;
+    getHardwareInfo: () => Promise<{
+      cpu: string;
+      gpu: string;
+      ramMB: number;
+      diskFreeGB: number;
+    }>;
 
     /* Big Picture Window */
     openBigPictureWindow: () => Promise<void>;

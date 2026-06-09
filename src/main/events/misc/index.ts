@@ -16,5 +16,6 @@ import "./open-main-window";
 import "./reset-common-redist-preflight";
 import "./save-temp-file";
 import "./show-item-in-folder";
+import "./get-hardware-info";
 import "./set-window-size";
 import "./show-open-dialog";

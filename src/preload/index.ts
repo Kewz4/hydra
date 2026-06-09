@@ -992,6 +992,7 @@ contextBridge.exposeInMainWorld("electron", {
     minWidth?: number,
     minHeight?: number
   ) => ipcRenderer.invoke("setWindowSize", width, height, minWidth, minHeight),
+  getHardwareInfo: () => ipcRenderer.invoke("getHardwareInfo"),
 
   /* LevelDB Generic CRUD */
   leveldb: {
