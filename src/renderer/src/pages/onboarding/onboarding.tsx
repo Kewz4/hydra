@@ -349,8 +349,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <>
               <h1>Welcome to GameHub</h1>
               <p>
-                Your all-in-one game launcher. Let&apos;s get you set up in just a
-                few steps — you can change everything later in Settings.
+                Your all-in-one game launcher. Let&apos;s get you set up in just
+                a few steps — you can change everything later in Settings.
               </p>
               <Button type="button" onClick={next}>
                 Get Started
@@ -793,7 +793,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
               <p className="onboarding-step-description">
                 GameHub will install Legendary automatically if needed. Your
-                Epic library will sync and you&apos;ll be able to download games.
+                Epic library will sync and you&apos;ll be able to download
+                games.
               </p>
 
               {epicLinked ? (
@@ -975,7 +976,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
               </div>
               <div className="onboarding-toggles">
-                <label className="onboarding-toggle" aria-label="Download completed">
+                <label
+                  className="onboarding-toggle"
+                  aria-label="Download completed"
+                >
                   <div className="onboarding-toggle__text">
                     <span>Download completed</span>
                     <small>Notify when a download finishes</small>
@@ -986,7 +990,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     onChange={(e) => setDownloadNotifs(e.target.checked)}
                   />
                 </label>
-                <label className="onboarding-toggle" aria-label="Achievement unlocked">
+                <label
+                  className="onboarding-toggle"
+                  aria-label="Achievement unlocked"
+                >
                   <div className="onboarding-toggle__text">
                     <span>Achievement unlocked</span>
                     <small>Show a pop-up when you unlock an achievement</small>
@@ -1019,7 +1026,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
               </div>
               <div className="onboarding-toggles">
-                <label className="onboarding-toggle" aria-label="Start minimized to tray">
+                <label
+                  className="onboarding-toggle"
+                  aria-label="Start minimized to tray"
+                >
                   <div className="onboarding-toggle__text">
                     <span>Start minimized to tray</span>
                     <small>
