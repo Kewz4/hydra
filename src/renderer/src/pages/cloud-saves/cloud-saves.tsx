@@ -29,7 +29,7 @@ function formatDate(iso: string): string {
 }
 
 export default function CloudSaves() {
-  const { t } = useTranslation("game_details");
+  const { t: _t } = useTranslation("game_details");
   const navigate = useNavigate();
   const { showSuccessToast, showErrorToast } = useToast();
 
@@ -138,14 +138,14 @@ export default function CloudSaves() {
         <h3>How cloud saves work</h3>
         <ul>
           <li>
-            <strong>Automatic saves</strong> — When you enable "Automatic cloud
-            sync" for a game, GameHub backs up your save files each time you
-            launch or close the game. No action needed.
+            <strong>Automatic saves</strong> — When you enable &quot;Automatic
+            cloud sync&quot; for a game, GameHub backs up your save files each
+            time you launch or close the game. No action needed.
           </li>
           <li>
-            <strong>Manual saves</strong> — Open any game's detail page, go to
-            the Cloud Sync panel, and click "Create Backup" any time you want a
-            snapshot.
+            <strong>Manual saves</strong> — Open any game&apos;s detail page, go
+            to the Cloud Sync panel, and click &quot;Create Backup&quot; any
+            time you want a snapshot.
           </li>
           <li>
             <strong>Restoring</strong> — Click <em>Restore</em> on any backup

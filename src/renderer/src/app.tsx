@@ -161,7 +161,7 @@ export function App() {
 
   useEffect(() => {
     const onClick = async (event: MouseEvent) => {
-      const userPreferences = await window.electron.getUserPreferences();
+      await window.electron.getUserPreferences();
       const language = userPreferences?.language ?? "en";
 
       const articleMapping = {
@@ -214,7 +214,7 @@ export function App() {
       dispatch(setProfileBackground(profileBackground));
     }
 
-    const userPreferences = await window.electron.getUserPreferences();
+    await window.electron.getUserPreferences();
     const userDetails = await fetchUserDetails().catch(() => null);
 
     if (userDetails) {

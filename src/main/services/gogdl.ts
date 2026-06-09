@@ -38,7 +38,9 @@ export const findGogdlBinary = (customPath?: string | null): string | null => {
     );
     const bin = stdout.trim().split("\n")[0].trim();
     if (bin && fs.existsSync(bin)) return bin;
-  } catch {}
+  } catch {
+    // intentional
+  }
   return null;
 };
 
@@ -296,6 +298,8 @@ export function spawnGogdlInstall(
       } else {
         child.kill("SIGKILL");
       }
-    } catch {}
+    } catch {
+      // intentional
+    }
   };
 }

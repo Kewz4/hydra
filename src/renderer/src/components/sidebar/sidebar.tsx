@@ -87,7 +87,7 @@ export function Sidebar() {
     return sortBy(library, (game) => game.title);
   }, [library]);
 
-  const { hasActiveSubscription, userDetails } = useUserDetails();
+  const { userDetails } = useUserDetails();
 
   const { lastPacket, progress, eta } = useDownload();
 

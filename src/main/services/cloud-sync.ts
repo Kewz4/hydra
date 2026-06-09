@@ -1,4 +1,4 @@
-import { levelKeys, gamesSublevel, db } from "@main/level";
+import { levelKeys, gamesSublevel } from "@main/level";
 import path from "node:path";
 import * as tar from "tar";
 import crypto from "node:crypto";

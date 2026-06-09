@@ -553,7 +553,7 @@ export function DownloadGroup({
     lastPacket,
     pauseDownload: pauseDownloadOriginal,
     resumeDownload: resumeDownloadOriginal,
-    cancelDownload,
+    cancelDownload: _cancelDownload,
     isGameDeleting,
     pauseSeeding,
     resumeSeeding,
@@ -617,7 +617,7 @@ export function DownloadGroup({
   const [gameToCancelObjectId, setGameToCancelObjectId] = useState<
     string | null
   >(null);
-  const [gameToCancelDownloader, setGameToCancelDownloader] = useState<
+  const [_gameToCancelDownloader, setGameToCancelDownloader] = useState<
     string | null
   >(null);
   const [gameActionTypes, setGameActionTypes] = useState<

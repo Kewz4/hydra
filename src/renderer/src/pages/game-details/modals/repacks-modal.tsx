@@ -89,7 +89,10 @@ export function RepacksModal({
   const { formatDate } = useDate();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { showSuccessToast, showErrorToast } = useToast();
+  const {
+    showSuccessToast: _showSuccessToast,
+    showErrorToast: _showErrorToast,
+  } = useToast();
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
@@ -347,19 +350,20 @@ export function RepacksModal({
             <h4>Setup steps</h4>
             <ol>
               <li>
-                <strong>Disable Hyper-V in Windows</strong> — open "Turn Windows
-                features on or off" and uncheck all Hyper-V entries. Restart.
+                <strong>Disable Hyper-V in Windows</strong> — open &quot;Turn
+                Windows features on or off&quot; and uncheck all Hyper-V
+                entries. Restart.
               </li>
               <li>
                 <strong>Disable Device Guard / Credential Guard</strong> — in
                 Group Policy: Computer Configuration → Administrative Templates
-                → System → Device Guard → turn off "Turn on Virtualization Based
-                Security".
+                → System → Device Guard → turn off &quot;Turn on Virtualization
+                Based Security&quot;.
               </li>
               <li>
                 <strong>Enable Virtualization in BIOS</strong> — enter
                 BIOS/UEFI, find the CPU settings and enable Intel VT-x or AMD-V
-                (sometimes labelled "SVM Mode").
+                (sometimes labelled &quot;SVM Mode&quot;).
               </li>
               <li>
                 Reboot and launch the game. The crack intercepts the hypervisor

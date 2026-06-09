@@ -79,7 +79,9 @@ export const findLegendaryBinary = (
   for (const candidate of getPlatformSearchPaths()) {
     try {
       if (fs.existsSync(candidate)) return candidate;
-    } catch {}
+    } catch {
+      // intentional
+    }
   }
 
   // Try PATH via which/where
@@ -91,7 +93,9 @@ export const findLegendaryBinary = (
     );
     const bin = stdout.trim().split("\n")[0].trim();
     if (bin && fs.existsSync(bin)) return bin;
-  } catch {}
+  } catch {
+    // intentional
+  }
 
   return null;
 };
@@ -351,7 +355,9 @@ export function spawnLegendaryInstall(
       } else {
         child.kill("SIGKILL");
       }
-    } catch {}
+    } catch {
+      // intentional
+    }
   };
 }
 

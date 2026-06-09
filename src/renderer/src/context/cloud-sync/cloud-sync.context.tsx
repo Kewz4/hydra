@@ -80,7 +80,7 @@ export function CloudSyncContextProvider({
   const [uploadingBackup, setUploadingBackup] = useState(false);
   const [showCloudSyncFilesModal, setShowCloudSyncFilesModal] = useState(false);
   const [loadingPreview, setLoadingPreview] = useState(false);
-  const [freezingArtifact, setFreezingArtifact] = useState(false);
+  const [freezingArtifact] = useState(false);
 
   const { showSuccessToast, showErrorToast } = useToast();
 

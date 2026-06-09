@@ -122,7 +122,10 @@ async function getXstsToken(
 }
 
 /** Check if the authenticated user has an active Game Pass PC subscription */
-async function checkGamePass(uhs: string, xstsToken: string): Promise<boolean> {
+async function _checkGamePass(
+  uhs: string,
+  xstsToken: string
+): Promise<boolean> {
   try {
     // Game Pass PC subscription product ID: CFQ7TTC0KGQ8
     const res = await axios.get(
