@@ -103,7 +103,13 @@ export function SettingsEpicAccount() {
         showErrorToast(t("epic_auth_failed"));
       }
     },
-    [showSuccessToast, showErrorToast, t, refreshStatus, userPreferences?.legendaryBinaryPath]
+    [
+      showSuccessToast,
+      showErrorToast,
+      t,
+      refreshStatus,
+      userPreferences?.legendaryBinaryPath,
+    ]
   );
 
   const handleSignOut = async () => {

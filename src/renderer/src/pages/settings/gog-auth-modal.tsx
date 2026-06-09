@@ -1,6 +1,11 @@
 import { useEffect, useRef } from "react";
 import { Modal } from "@renderer/components";
 
+interface WebviewElement extends HTMLElement {
+  src: string;
+  getURL(): string;
+}
+
 const GOG_CLIENT_ID = "46899977096215655";
 const GOG_REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
 
@@ -29,7 +34,7 @@ export function GogAuthModal({
     if (!visible || !containerRef.current) return;
     handledRef.current = false;
 
-    const wv = document.createElement("webview") as Electron.WebviewTag;
+    const wv = document.createElement("webview") as unknown as WebviewElement;
     wv.src = GOG_AUTH_URL;
     wv.style.width = "100%";
     wv.style.height = "560px";

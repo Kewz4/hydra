@@ -1,6 +1,12 @@
 import { useEffect, useRef } from "react";
 import { Modal } from "@renderer/components";
 
+interface WebviewElement extends HTMLElement {
+  src: string;
+  getURL(): string;
+  executeJavaScript(code: string): Promise<string>;
+}
+
 const REDIRECT_API =
   "https://www.epicgames.com/id/api/redirect" +
   "?clientId=34a02cf8f4414e29b15921876da36f9a&responseType=code";
@@ -29,7 +35,7 @@ export function EpicAuthModal({
     if (!visible || !containerRef.current) return;
     handledRef.current = false;
 
-    const wv = document.createElement("webview") as Electron.WebviewTag;
+    const wv = document.createElement("webview") as unknown as WebviewElement;
     wv.src = EPIC_LOGIN_URL;
     wv.style.width = "100%";
     wv.style.height = "560px";

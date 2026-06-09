@@ -177,8 +177,12 @@ declare global {
       success: boolean;
       account?: string;
     }>;
-    completeEpicAuth: (code: string) => Promise<{ success: boolean; account?: string }>;
-    completeGogAuth: (code: string) => Promise<{ refresh_token: string; username: string } | null>;
+    completeEpicAuth: (
+      code: string
+    ) => Promise<{ success: boolean; account?: string }>;
+    completeGogAuth: (
+      code: string
+    ) => Promise<{ refresh_token: string; username: string } | null>;
     syncEpicLibrary: () => Promise<{
       total: number;
       added: number;

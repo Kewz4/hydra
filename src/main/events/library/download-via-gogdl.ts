@@ -218,7 +218,9 @@ export async function cancelGogdlDownloadByKey(gameKey: string) {
       require("node:child_process").execSync("taskkill /F /IM gogdl.exe", {
         stdio: "ignore",
       });
-    } catch (_e) { /* ignore */ }
+    } catch (_e) {
+      /* ignore */
+    }
   }
   activeGogdlDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
@@ -235,7 +237,9 @@ export async function pauseGogdlDownload(gameKey: string) {
       require("node:child_process").execSync("taskkill /F /IM gogdl.exe", {
         stdio: "ignore",
       });
-    } catch (_e) { /* ignore */ }
+    } catch (_e) {
+      /* ignore */
+    }
   }
   activeGogdlDownloads.delete(gameKey);
   const record = await downloadsSublevel.get(gameKey).catch(() => null);

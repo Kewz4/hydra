@@ -123,13 +123,7 @@ export function SettingsGogAccount() {
         setIsConnecting(false);
       }
     },
-    [
-      showErrorToast,
-      showSuccessToast,
-      t,
-      updateUserPreferences,
-      fetchUserInfo,
-    ]
+    [showErrorToast, showSuccessToast, t, updateUserPreferences, fetchUserInfo]
   );
 
   const handleDisconnect = async () => {

@@ -441,7 +441,8 @@ export class WindowManager {
       authWindow.webContents.on("did-finish-load", () => {
         // Inject GameHub branding over Hydra auth page
         authWindow.webContents
-          .insertCSS(`
+          .insertCSS(
+            `
             /* Hide Hydra logos and brand elements */
             img[src*="hydra" i],
             img[alt*="hydra" i],
@@ -459,11 +460,13 @@ export class WindowManager {
             a, button {
               color: inherit;
             }
-          `)
+          `
+          )
           .catch(() => {});
 
         authWindow.webContents
-          .executeJavaScript(`
+          .executeJavaScript(
+            `
             (function() {
               function patchText(root) {
                 const walker = document.createTreeWalker(
@@ -494,7 +497,8 @@ export class WindowManager {
               });
               obs.observe(document.body, { childList: true, subtree: true });
             })();
-          `)
+          `
+          )
           .catch(() => {});
       });
 
