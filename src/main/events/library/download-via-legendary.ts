@@ -9,7 +9,7 @@ import {
 } from "@main/services/legendary";
 import { getDownloadsPath } from "../helpers/get-downloads-path";
 import { Downloader } from "@shared";
-import { isActiveLikeDownload } from "../../types";
+import { isActiveLikeDownload } from "../../../types";
 
 function sendLog(objectId: string, line: string, isError = false) {
   WindowManager.sendToAppWindows("on-legendary-process-log", {
@@ -37,7 +37,8 @@ async function startLegendaryDownloadInternal(
   // If another download is already active, queue this one instead of overriding
   const allDownloads = await downloadsSublevel.values().all();
   const hasActiveOther = allDownloads.some(
-    (d) => isActiveLikeDownload(d) && levelKeys.game(d.shop, d.objectId) !== gameKey
+    (d) =>
+      isActiveLikeDownload(d) && levelKeys.game(d.shop, d.objectId) !== gameKey
   );
   if (hasActiveOther) {
     const queuedRecord = {

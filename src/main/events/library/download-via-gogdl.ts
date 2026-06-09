@@ -1,7 +1,7 @@
 import { registerEvent } from "../register-event";
 import { DownloadOrchestrator, WindowManager, logger } from "@main/services";
 import { db, downloadsSublevel, gamesSublevel, levelKeys } from "@main/level";
-import { isActiveLikeDownload } from "../../types";
+import { isActiveLikeDownload } from "../../../types";
 import type { UserPreferences } from "@types";
 import {
   spawnGogdlInstall,
@@ -39,7 +39,8 @@ async function startGogdlDownloadInternal(
   // If another download is already active, queue this one instead of overriding
   const allDownloads = await downloadsSublevel.values().all();
   const hasActiveOther = allDownloads.some(
-    (d) => isActiveLikeDownload(d) && levelKeys.game(d.shop, d.objectId) !== gameKey
+    (d) =>
+      isActiveLikeDownload(d) && levelKeys.game(d.shop, d.objectId) !== gameKey
   );
   if (hasActiveOther) {
     const queuedRecord = {
