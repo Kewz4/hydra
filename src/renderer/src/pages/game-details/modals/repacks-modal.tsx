@@ -520,7 +520,8 @@ export function RepacksModal({
                       onClick={async () => {
                         const result = await window.electron.showOpenDialog({
                           properties: ["openDirectory", "createDirectory"],
-                          title: "Choose install folder (optional — cancel to use default)",
+                          title:
+                            "Choose install folder (optional — cancel to use default)",
                         });
                         const customPath = result.canceled
                           ? undefined
@@ -543,7 +544,8 @@ export function RepacksModal({
                       onClick={async () => {
                         const result = await window.electron.showOpenDialog({
                           properties: ["openDirectory", "createDirectory"],
-                          title: "Choose install folder (optional — cancel to use default)",
+                          title:
+                            "Choose install folder (optional — cancel to use default)",
                         });
                         const customPath = result.canceled
                           ? undefined

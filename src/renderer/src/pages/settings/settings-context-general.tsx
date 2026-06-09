@@ -525,9 +525,7 @@ export function SettingsContextGeneral({
             );
             if (!isAutoInstall) {
               setTimeout(() => {
-                setUpdateCheckResult(
-                  (prev) => prev ?? "No new update found."
-                );
+                setUpdateCheckResult((prev) => prev ?? "No new update found.");
               }, 8000);
             }
           } finally {
