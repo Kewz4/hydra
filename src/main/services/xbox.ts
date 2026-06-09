@@ -121,62 +121,6 @@ async function getXstsToken(
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-/** Check if the authenticated user has an active Game Pass PC subscription */
-async function _checkGamePass(
-  uhs: string,
-  xstsToken: string
-): Promise<boolean> {
-  try {
-    // Game Pass PC subscription product ID: CFQ7TTC0KGQ8
-    const res = await axios.get(
-      "https://displaycatalog.mp.microsoft.com/v7.0/products/CFQ7TTC0KGQ8",
-      {
-        params: {
-          market: "US",
-          languages: "en-us",
-          "MS-CV": "F.1",
-          actionFilter: "Purchase",
-        },
-        headers: {
-          Authorization: `XBL3.0 x=${uhs};${xstsToken}`,
-        },
-        timeout: 10000,
-      }
-    );
-    // If we can fetch the Game Pass product with the user's auth and
-    // it has an "Owned" or subscription status, they have it.
-    // Simpler heuristic: if the product is accessible, check entitlements.
-    const product = res.data?.Products?.[0];
-    if (!product) return false;
-
-    // Check if the user has an active subscription via availability
-    const availabilities = product.DisplaySkuAvailabilities ?? [];
-    for (const sku of availabilities) {
-      for (const avail of sku.Availabilities ?? []) {
-        if (avail.Actions?.includes("Fulfill")) return true;
-      }
-    }
-    return false;
-  } catch {
-    // Fallback: try the Game Pass catalog endpoint — if we can access it as
-    // an authenticated user, assume they have access
-    try {
-      const res = await axios.get(
-        "https://catalog.gamepass.com/sigls/v2?id=fdd9e2a7-0fee-49f6-ad69-4354098401ff&language=en-us&market=US",
-        {
-          headers: { Authorization: `XBL3.0 x=${uhs};${xstsToken}` },
-          timeout: 8000,
-        }
-      );
-      // A proper subscription shows personalised/entitled items
-      return Array.isArray(res.data) && res.data.length > 0;
-    } catch {
-      return false;
-    }
-  }
-}
-
 // ──────────────────────────────────────────────────────────
 // Public: full sign-in flow
 // ──────────────────────────────────────────────────────────

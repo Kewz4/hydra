@@ -46,7 +46,8 @@ export function setConsoleWindowSender(
   _consoleWindowSend = fn;
 }
 
-const ipcTransport: log.Transport = (message) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ipcTransport: any = (message: log.LogMessage) => {
   if (!_consoleWindowSend) return;
   const text = message.data
     .map((d) => (typeof d === "string" ? d : JSON.stringify(d)))

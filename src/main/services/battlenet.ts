@@ -1,3 +1,5 @@
+import fs from "node:fs";
+
 export interface BattleNetGame {
   productCode: string;
   title: string;
