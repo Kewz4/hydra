@@ -191,16 +191,20 @@ const downloadViaLegendary = async (
 
 registerEvent("downloadViaLegendary", downloadViaLegendary);
 
-const cancelLegendaryDownload = async (
-  _event: Electron.IpcMainInvokeEvent,
-  objectId: string
-) => {
-  const gameKey = levelKeys.game("epic", objectId);
+export async function cancelLegendaryDownloadByKey(gameKey: string) {
   activeLegendaryDownloads.get(gameKey)?.();
   activeLegendaryDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
   WindowManager.sendToAppWindows("on-downloads-updated");
   return { ok: true };
+}
+
+const cancelLegendaryDownload = async (
+  _event: Electron.IpcMainInvokeEvent,
+  objectId: string
+) => {
+  const gameKey = levelKeys.game("epic", objectId);
+  return cancelLegendaryDownloadByKey(gameKey);
 };
 
 registerEvent("cancelLegendaryDownload", cancelLegendaryDownload);

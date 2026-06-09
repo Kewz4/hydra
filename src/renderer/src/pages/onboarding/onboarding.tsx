@@ -8,12 +8,13 @@ import {
   LinkExternalIcon,
   BellIcon,
   GearIcon,
+  FileDirectoryIcon,
 } from "@primer/octicons-react";
 import SteamLogo from "@renderer/assets/steam-logo.svg?react";
 import EpicLogo from "@renderer/assets/epic-logo.svg?react";
 import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
-import GameHubIcon from "@renderer/assets/icons/gamehub.svg?react";
+import gamehubIcon from "@renderer/assets/icons/gamehub.png";
 import { AuthPage } from "@shared";
 import { orderBy } from "lodash-es";
 import languageResources from "@locales";
@@ -45,7 +46,32 @@ const ALL_STEPS: StepId[] = [
   "startup",
   "done",
 ];
-const INTEGRATION_STEPS: StepId[] = ["steam", "epic", "gog", "xbox"];
+
+const NAV_STEPS: StepId[] = [
+  "language",
+  "install-path",
+  "account",
+  "steam",
+  "epic",
+  "gog",
+  "xbox",
+  "notifications",
+  "startup",
+];
+
+const STEP_LABELS: Record<StepId, string> = {
+  welcome: "Welcome",
+  language: "Language",
+  "install-path": "Install Path",
+  account: "Account",
+  steam: "Steam",
+  epic: "Epic Games",
+  gog: "GOG",
+  xbox: "Xbox",
+  notifications: "Notifications",
+  startup: "Startup",
+  done: "Done",
+};
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -66,7 +92,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   );
 
   useEffect(() => {
-    window.electron.setWindowSize(860, 620, 860, 620).catch(() => {});
+    window.electron.setWindowSize(960, 620, 960, 620).catch(() => {});
     return () => {
       window.electron.setWindowSize(1200, 860, 1024, 860).catch(() => {});
     };
@@ -74,7 +100,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
   const [stepIndex, setStepIndex] = useState(0);
 
-  // Language
   const languageOptions = orderBy(
     Object.entries(languageResources).map(([option, value]) => ({
       option,
@@ -86,15 +111,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     userPreferences?.language ?? "en"
   );
 
-  // Install path
   const [installPath, setInstallPath] = useState("");
   const [defaultInstallPath, setDefaultInstallPath] = useState("");
 
-  // Account
   const [accountWindowOpen, setAccountWindowOpen] = useState(false);
   const [accountLinked, setAccountLinked] = useState(false);
 
-  // Steam
   const [steamInput, setSteamInput] = useState("");
   const [steamApiKey, setSteamApiKey] = useState("");
   const [steamLinked, setSteamLinked] = useState(false);
@@ -106,19 +128,16 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     avatarfull: string;
   } | null>(null);
 
-  // Epic
   const [epicBusy, setEpicBusy] = useState(false);
   const [epicWindowOpen, setEpicWindowOpen] = useState(false);
   const [epicLinked, setEpicLinked] = useState(false);
   const [epicAccount, setEpicAccount] = useState<string | null>(null);
 
-  // GOG
   const [gogBusy, setGogBusy] = useState(false);
   const [gogWindowOpen, setGogWindowOpen] = useState(false);
   const [gogLinked, setGogLinked] = useState(false);
   const [gogUsername, setGogUsername] = useState<string | null>(null);
 
-  // Xbox
   const [xboxBusy, setXboxBusy] = useState(false);
   const [xboxWindowOpen, setXboxWindowOpen] = useState(false);
   const [xboxLinked, setXboxLinked] = useState(!!userPreferences?.xboxGamertag);
@@ -126,14 +145,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     userPreferences?.xboxGamertag ?? null
   );
 
-  // Notifications
   const [downloadNotifs, setDownloadNotifs] = useState(true);
   const [achievementNotifs, setAchievementNotifs] = useState(true);
-
-  // Startup
   const [startMinimized, setStartMinimized] = useState(false);
 
   const currentStep = ALL_STEPS[stepIndex];
+  const currentStepIndex = ALL_STEPS.indexOf(currentStep);
 
   useEffect(() => {
     window.electron.getDefaultDownloadsPath().then((p) => {
@@ -142,7 +159,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     });
   }, []);
 
-  // Watch for sign-in while account window is open
   useEffect(() => {
     if (!accountWindowOpen) return;
     const unsub = window.electron.onSignIn(() => {
@@ -259,8 +275,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (result?.success) {
         setEpicLinked(true);
         setEpicAccount(result.account ?? "Epic");
-
-        // Sync Epic library in background
         window.electron.syncEpicLibrary().catch(() => {});
       }
     } catch {
@@ -282,16 +296,12 @@ export function Onboarding({ onComplete }: OnboardingProps) {
         });
         setGogLinked(true);
         setGogUsername(result.username ?? "GOG User");
-
-        // Install gogdl in background if not present
         const gogdlStatus = await window.electron
           .getGogdlStatus()
           .catch(() => ({ binaryFound: false }));
         if (!gogdlStatus.binaryFound) {
           window.electron.installGogdl().catch(() => {});
         }
-
-        // Sync GOG library in background
         window.electron.syncGogLibrary().catch(() => {});
       }
     } catch {
@@ -318,77 +328,166 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     }
   };
 
-  const dotSteps = INTEGRATION_STEPS;
-  const showDots =
-    currentStep !== "welcome" &&
-    currentStep !== "language" &&
-    currentStep !== "install-path" &&
-    currentStep !== "account" &&
-    currentStep !== "notifications" &&
-    currentStep !== "startup" &&
-    currentStep !== "done";
+  const isWelcome = currentStep === "welcome";
+  const isDone = currentStep === "done";
+  const showSidebar = !isWelcome && !isDone;
+
+  const navStepIsDone = (s: StepId) =>
+    NAV_STEPS.indexOf(s) < NAV_STEPS.indexOf(currentStep as StepId);
+  const navStepIsActive = (s: StepId) => currentStep === s;
+
+  if (isWelcome || isDone) {
+    return (
+      <div className="onboarding-overlay">
+        <div className="onboarding-splash">
+          <img
+            src={gamehubIcon}
+            alt="GameHub"
+            className="onboarding-splash__logo"
+          />
+          {isWelcome ? (
+            <>
+              <h1>Welcome to GameHub</h1>
+              <p>
+                Your all-in-one game launcher. Let's get you set up in just a
+                few steps — you can change everything later in Settings.
+              </p>
+              <Button type="button" onClick={next}>
+                Get Started
+              </Button>
+            </>
+          ) : (
+            <>
+              <h1>You're all set!</h1>
+              <p>
+                Your libraries will sync in the background. Connect more
+                services anytime from{" "}
+                <strong>Settings → Integrations</strong>.
+              </p>
+              <Button type="button" onClick={finish}>
+                Launch GameHub
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="onboarding-overlay">
-      <div className="onboarding-card">
-        <div className="onboarding-logo">
-          <GameHubIcon className="onboarding-logo__icon" />
-          <h1>GameHub</h1>
-          {currentStep === "welcome" && <p>Your all-in-one game launcher</p>}
-        </div>
+      <div className="onboarding-layout">
+        {/* ── Left sidebar ── */}
+        {showSidebar && (
+          <aside className="onboarding-sidebar">
+            <div className="onboarding-sidebar__brand">
+              <img
+                src={gamehubIcon}
+                alt="GameHub"
+                className="onboarding-sidebar__logo"
+              />
+              <h2 className="onboarding-sidebar__app-name">GameHub</h2>
+              <p className="onboarding-sidebar__tagline">
+                Your all-in-one game launcher
+              </p>
+            </div>
 
-        {showDots && (
-          <div className="onboarding-steps">
-            {dotSteps.map((s) => {
-              const isActive = currentStep === s;
-              const isDone =
-                dotSteps.indexOf(s) < dotSteps.indexOf(currentStep as StepId);
-              return (
+            <nav className="onboarding-sidebar__nav">
+              <div className="onboarding-sidebar__section-label">Setup</div>
+              {(["language", "install-path", "account"] as StepId[]).map(
+                (s) => (
+                  <div
+                    key={s}
+                    className={[
+                      "onboarding-nav-item",
+                      navStepIsActive(s) ? "onboarding-nav-item--active" : "",
+                      navStepIsDone(s) ? "onboarding-nav-item--done" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <span className="onboarding-nav-item__dot">
+                      {navStepIsDone(s) ? "✓" : ""}
+                    </span>
+                    <span className="onboarding-nav-item__label">
+                      {STEP_LABELS[s]}
+                    </span>
+                  </div>
+                )
+              )}
+
+              <div className="onboarding-sidebar__section-label">
+                Platforms
+              </div>
+              {(["steam", "epic", "gog", "xbox"] as StepId[]).map((s) => {
+                const PlatformIcon = {
+                  steam: SteamLogo,
+                  epic: EpicLogo,
+                  gog: GogLogo,
+                  xbox: XboxLogo,
+                }[s];
+                return (
+                  <div
+                    key={s}
+                    className={[
+                      "onboarding-nav-item",
+                      navStepIsActive(s) ? "onboarding-nav-item--active" : "",
+                      navStepIsDone(s) ? "onboarding-nav-item--done" : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                  >
+                    <span className="onboarding-nav-item__dot">
+                      {navStepIsDone(s) ? "✓" : ""}
+                    </span>
+                    <span className="onboarding-nav-item__label">
+                      {STEP_LABELS[s]}
+                    </span>
+                    <PlatformIcon className="onboarding-nav-item__platform-icon" />
+                  </div>
+                );
+              })}
+
+              <div className="onboarding-sidebar__section-label">
+                Preferences
+              </div>
+              {(["notifications", "startup"] as StepId[]).map((s) => (
                 <div
                   key={s}
                   className={[
-                    "onboarding-step-dot",
-                    isActive ? "onboarding-step-dot--active" : "",
-                    isDone ? "onboarding-step-dot--done" : "",
+                    "onboarding-nav-item",
+                    navStepIsActive(s) ? "onboarding-nav-item--active" : "",
+                    navStepIsDone(s) ? "onboarding-nav-item--done" : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
-                />
-              );
-            })}
-          </div>
+                >
+                  <span className="onboarding-nav-item__dot">
+                    {navStepIsDone(s) ? "✓" : ""}
+                  </span>
+                  <span className="onboarding-nav-item__label">
+                    {STEP_LABELS[s]}
+                  </span>
+                </div>
+              ))}
+            </nav>
+          </aside>
         )}
 
-        <div className="onboarding-body">
-          {/* ── Welcome ── */}
-          {currentStep === "welcome" && (
-            <>
-              <p className="onboarding-step-description">
-                Let's get you set up quickly. We'll configure a few basics,
-                optionally connect your accounts, then you're in. You can change
-                everything later in Settings.
-              </p>
-              <div className="onboarding-actions">
-                <Button type="button" onClick={next}>
-                  Get Started
-                </Button>
-              </div>
-            </>
-          )}
-
+        {/* ── Right content ── */}
+        <div className="onboarding-content">
           {/* ── Language ── */}
           {currentStep === "language" && (
             <>
-              <div className="onboarding-platform-hero">
-                <GearIcon
-                  size={32}
-                  className="onboarding-platform-hero__icon"
-                />
-                <h2>Language</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <GearIcon size={20} />
+                </div>
+                <div>
+                  <h2>Language</h2>
+                  <p>Choose the language GameHub should use</p>
+                </div>
               </div>
-              <p className="onboarding-step-description">
-                Choose the language GameHub should use.
-              </p>
               <div className="onboarding-select-list">
                 {languageOptions.map(({ option, nativeName }) => (
                   <button
@@ -422,15 +521,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Install Path ── */}
           {currentStep === "install-path" && (
             <>
-              <div className="onboarding-platform-hero">
-                <GearIcon
-                  size={32}
-                  className="onboarding-platform-hero__icon"
-                />
-                <h2>Default Install Folder</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <FileDirectoryIcon size={20} />
+                </div>
+                <div>
+                  <h2>Default Install Folder</h2>
+                  <p>Where should GameHub download and install games?</p>
+                </div>
               </div>
               <p className="onboarding-step-description">
-                Where should GameHub download and install games by default?
+                You can override this per-download later. Leave blank to use the
+                default.
               </p>
               <div className="onboarding-path-row">
                 <TextField
@@ -464,13 +566,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── GameHub Account ── */}
           {currentStep === "account" && (
             <>
-              <div className="onboarding-platform-hero">
-                <GameHubIcon className="onboarding-platform-hero__logo" />
-                <h2>GameHub Account</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <PersonIcon size={20} />
+                </div>
+                <div>
+                  <h2>GameHub Account</h2>
+                  <p>Optional — enables cloud saves and profiles</p>
+                </div>
               </div>
               <p className="onboarding-step-description">
                 Sign in or create a GameHub account to enable cloud saves,
-                profiles, and cross-device sync. Completely optional.
+                profiles, and cross-device sync.
               </p>
 
               {accountLinked ? (
@@ -515,9 +622,14 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Steam ── */}
           {currentStep === "steam" && (
             <>
-              <div className="onboarding-platform-hero">
-                <SteamLogo className="onboarding-platform-hero__logo" />
-                <h2>Steam</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <SteamLogo style={{ width: 20, height: 20 }} />
+                </div>
+                <div>
+                  <h2>Steam</h2>
+                  <p>Import your Steam library and enable achievement tracking</p>
+                </div>
               </div>
 
               {steamLinked ? (
@@ -567,14 +679,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </>
               ) : (
                 <>
-                  <p className="onboarding-step-description">
-                    Sign in with Steam to import your library automatically, or
-                    enter your Steam ID manually.
-                  </p>
-
                   <div
                     className="onboarding-actions"
-                    style={{ marginBottom: "12px" }}
+                    style={{ justifyContent: "flex-start", marginTop: 0 }}
                   >
                     <Button
                       type="button"
@@ -595,16 +702,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     </Button>
                   </div>
 
-                  <p
-                    style={{
-                      margin: "0 0 8px",
-                      opacity: 0.45,
-                      textAlign: "center",
-                      fontSize: "0.85rem",
-                    }}
-                  >
-                    or enter manually
-                  </p>
+                  <div className="onboarding-divider">or enter manually</div>
 
                   <form
                     className="onboarding-form"
@@ -685,13 +783,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Epic ── */}
           {currentStep === "epic" && (
             <>
-              <div className="onboarding-platform-hero">
-                <EpicLogo className="onboarding-platform-hero__logo" />
-                <h2>Epic Games</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <EpicLogo style={{ width: 20, height: 20 }} />
+                </div>
+                <div>
+                  <h2>Epic Games</h2>
+                  <p>Connect via Legendary (open-source CLI)</p>
+                </div>
               </div>
               <p className="onboarding-step-description">
-                Connect your Epic Games account via Legendary (open-source CLI).
-                GameHub will install it automatically.
+                GameHub will install Legendary automatically if needed. Your
+                Epic library will sync and you'll be able to download games.
               </p>
 
               {epicLinked ? (
@@ -741,12 +844,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── GOG ── */}
           {currentStep === "gog" && (
             <>
-              <div className="onboarding-platform-hero">
-                <GogLogo className="onboarding-platform-hero__logo" />
-                <h2>GOG</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <GogLogo style={{ width: 20, height: 20 }} />
+                </div>
+                <div>
+                  <h2>GOG</h2>
+                  <p>Import your DRM-free GOG library</p>
+                </div>
               </div>
               <p className="onboarding-step-description">
-                Connect your GOG account to import your DRM-free library.
+                Connect your GOG account to import your library and enable
+                downloading GOG games directly through GameHub.
               </p>
 
               {gogLinked ? (
@@ -796,13 +905,18 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Xbox ── */}
           {currentStep === "xbox" && (
             <>
-              <div className="onboarding-platform-hero">
-                <XboxLogo className="onboarding-platform-hero__logo" />
-                <h2>Xbox / Game Pass</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <XboxLogo style={{ width: 20, height: 20 }} />
+                </div>
+                <div>
+                  <h2>Xbox / Game Pass</h2>
+                  <p>Import your Xbox and Game Pass PC library</p>
+                </div>
               </div>
               <p className="onboarding-step-description">
                 Sign in with your Microsoft account to import your Xbox and Game
-                Pass PC library.
+                Pass PC library into GameHub.
               </p>
 
               {xboxLinked ? (
@@ -852,16 +966,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Notifications ── */}
           {currentStep === "notifications" && (
             <>
-              <div className="onboarding-platform-hero">
-                <BellIcon
-                  size={28}
-                  className="onboarding-platform-hero__icon"
-                />
-                <h2>Notifications</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <BellIcon size={20} />
+                </div>
+                <div>
+                  <h2>Notifications</h2>
+                  <p>Choose which alerts GameHub should show</p>
+                </div>
               </div>
-              <p className="onboarding-step-description">
-                Choose which notifications GameHub should show you.
-              </p>
               <div className="onboarding-toggles">
                 <label className="onboarding-toggle">
                   <div className="onboarding-toggle__text">
@@ -897,16 +1010,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           {/* ── Startup ── */}
           {currentStep === "startup" && (
             <>
-              <div className="onboarding-platform-hero">
-                <GearIcon
-                  size={28}
-                  className="onboarding-platform-hero__icon"
-                />
-                <h2>Startup Behavior</h2>
+              <div className="onboarding-step-header">
+                <div className="onboarding-step-header__icon">
+                  <GearIcon size={20} />
+                </div>
+                <div>
+                  <h2>Startup Behavior</h2>
+                  <p>How GameHub behaves when your computer starts</p>
+                </div>
               </div>
-              <p className="onboarding-step-description">
-                How should GameHub behave when your computer starts?
-              </p>
               <div className="onboarding-toggles">
                 <label className="onboarding-toggle">
                   <div className="onboarding-toggle__text">
@@ -925,30 +1037,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               <div className="onboarding-actions">
                 <Button type="button" onClick={next}>
                   Continue
-                </Button>
-              </div>
-            </>
-          )}
-
-          {/* ── Done ── */}
-          {currentStep === "done" && (
-            <>
-              <p
-                className="onboarding-step-description"
-                style={{ textAlign: "center", fontSize: "1rem" }}
-              >
-                You're all set!
-                <br />
-                <br />
-                Your libraries will sync in the background. You can connect more
-                services anytime from <strong>Settings → Integrations</strong>.
-              </p>
-              <div
-                className="onboarding-actions"
-                style={{ justifyContent: "center" }}
-              >
-                <Button type="button" onClick={finish}>
-                  Launch GameHub
                 </Button>
               </div>
             </>

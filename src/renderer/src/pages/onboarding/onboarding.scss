@@ -6,36 +6,172 @@
   z-index: 9999;
   background: var(--color-background, #0e0e14);
   display: flex;
+  align-items: stretch;
+  justify-content: center;
+  overflow: hidden;
+}
+
+// ── Two-column layout ────────────────────────────────────────────────────────
+
+.onboarding-layout {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+// ── Left sidebar ─────────────────────────────────────────────────────────────
+
+.onboarding-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: rgba(255, 255, 255, 0.03);
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 20px;
+  overflow-y: auto;
+
+  &__brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 0 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    margin-bottom: 16px;
+  }
+
+  &__logo {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  }
+
+  &__app-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  &__tagline {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    margin: 0;
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  &__nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 0 10px;
+    flex: 1;
+  }
+
+  &__section-label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.25);
+    padding: 12px 10px 4px;
+  }
+}
+
+.onboarding-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.35);
+  cursor: default;
+  transition: background 0.15s, color 0.15s;
+
+  &__dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 10px;
+    transition: all 0.2s;
+  }
+
+  &__label {
+    flex: 1;
+  }
+
+  &__platform-icon {
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+
+  &--active {
+    background: rgba(94, 129, 244, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+
+    .onboarding-nav-item__dot {
+      border-color: var(--color-accent, #5e81f4);
+      background: var(--color-accent, #5e81f4);
+    }
+  }
+
+  &--done {
+    color: rgba(255, 255, 255, 0.5);
+
+    .onboarding-nav-item__dot {
+      border-color: rgba(94, 129, 244, 0.5);
+      background: rgba(94, 129, 244, 0.15);
+      color: rgba(94, 129, 244, 0.9);
+    }
+  }
+}
+
+// ── Right content panel ───────────────────────────────────────────────────────
+
+.onboarding-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 32px 36px;
+  gap: 20px;
+}
+
+// ── Welcome / Done full-panel splash ─────────────────────────────────────────
+
+.onboarding-splash {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px;
-  overflow: auto;
-}
+  gap: 16px;
+  text-align: center;
 
-.onboarding-card {
-  width: 100%;
-  max-width: 520px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.onboarding-logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-
-  &__icon {
-    width: 72px;
-    height: 72px;
-    color: #ffffff;
-    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.15));
+  &__logo {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    margin-bottom: 8px;
   }
 
   h1 {
-    font-size: 1.75rem;
+    font-size: 2rem;
     font-weight: 700;
     margin: 0;
     background: linear-gradient(135deg, #e2e2e2, #9090a0);
@@ -47,69 +183,57 @@
   p {
     margin: 0;
     opacity: 0.6;
-    font-size: 0.9rem;
-    text-align: center;
+    font-size: 0.95rem;
+    max-width: 320px;
+    line-height: 1.6;
   }
 }
 
-.onboarding-steps {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
-}
-
-.onboarding-step-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  transition: all 0.2s;
-
-  &--active {
-    width: 24px;
-    border-radius: 4px;
-    background: var(--color-accent, #5e81f4);
-  }
-
-  &--done {
-    background: rgba(94, 129, 244, 0.4);
-  }
-}
-
-.onboarding-body {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+// ── Step header ───────────────────────────────────────────────────────────────
 
 .onboarding-step-header {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 
-  svg {
+  &__icon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
     flex-shrink: 0;
-    opacity: 0.9;
   }
 
   h2 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  p {
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.45);
   }
 }
 
+// ── Step description ──────────────────────────────────────────────────────────
+
 .onboarding-step-description {
   margin: 0;
-  opacity: 0.7;
+  opacity: 0.65;
   font-size: 0.875rem;
-  line-height: 1.5;
+  line-height: 1.6;
 }
+
+// ── Form elements ─────────────────────────────────────────────────────────────
 
 .onboarding-form {
   display: flex;
@@ -117,83 +241,13 @@
   gap: 12px;
 }
 
-.onboarding-connected-badge {
+.onboarding-path-row {
   display: flex;
-  align-items: center;
   gap: 8px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: rgba(94, 129, 244, 0.1);
-  border: 1px solid rgba(94, 129, 244, 0.25);
-  font-size: 0.875rem;
-  color: rgba(255, 255, 255, 0.9);
-}
+  align-items: flex-end;
 
-.onboarding-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  justify-content: flex-end;
-  padding-top: 4px;
-}
-
-.onboarding-skip {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: rgba(255, 255, 255, 0.45);
-  font-size: 0.85rem;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: color 0.15s;
-
-  &:hover {
-    color: rgba(255, 255, 255, 0.7);
-  }
-}
-
-.onboarding-platform-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: calc(globals.$spacing-unit * 1.5);
-  margin-bottom: calc(globals.$spacing-unit * 2);
-
-  h2 {
-    margin: 0;
-    font-size: 1.4rem;
-    font-weight: 700;
-  }
-
-  &__logo {
-    width: 64px;
-    height: 64px;
-    color: #ffffff;
-  }
-}
-
-.onboarding-link {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--color-accent, #5e81f4);
-  font-size: inherit;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-
-  &:hover {
-    opacity: 0.8;
-  }
-}
-
-.onboarding-platform-hero {
-  &__icon {
-    color: rgba(255, 255, 255, 0.7);
-    margin-bottom: 4px;
+  > *:first-child {
+    flex: 1;
   }
 }
 
@@ -201,7 +255,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 220px;
+  max-height: 240px;
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -231,16 +285,6 @@
     background: rgba(94, 129, 244, 0.15);
     border-color: rgba(94, 129, 244, 0.35);
     color: #fff;
-  }
-}
-
-.onboarding-path-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-
-  > *:first-child {
-    flex: 1;
   }
 }
 
@@ -283,5 +327,116 @@
     flex-shrink: 0;
     cursor: pointer;
     accent-color: var(--color-accent, #5e81f4);
+  }
+}
+
+// ── Platform connect card ─────────────────────────────────────────────────────
+
+.onboarding-platform-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  &__logo {
+    width: 40px;
+    height: 40px;
+    color: #ffffff;
+    flex-shrink: 0;
+  }
+
+  &__info {
+    flex: 1;
+
+    h3 {
+      margin: 0 0 3px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    p {
+      margin: 0;
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.45);
+    }
+  }
+}
+
+// ── Connected badge ───────────────────────────────────────────────────────────
+
+.onboarding-connected-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(94, 129, 244, 0.1);
+  border: 1px solid rgba(94, 129, 244, 0.25);
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+// ── Actions row ───────────────────────────────────────────────────────────────
+
+.onboarding-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.onboarding-skip {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: color 0.15s;
+
+  &:hover {
+    color: rgba(255, 255, 255, 0.65);
+  }
+}
+
+.onboarding-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-accent, #5e81f4);
+  font-size: inherit;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+// ── Steam manual form divider ─────────────────────────────────────────────────
+
+.onboarding-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.78rem;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
   }
 }

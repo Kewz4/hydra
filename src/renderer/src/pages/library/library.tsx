@@ -471,44 +471,32 @@ export default function Library() {
 
   const storeFilteredLibrary = useMemo(() => {
     if (storeFilter === "all") return filteredLibrary;
-    if (storeFilter === "local")
-      return filteredLibrary.filter(
-        (g) =>
-          !g.executablePath ||
-          (!g.executablePath.includes("://") &&
-            !g.executablePath.startsWith("steam://") &&
-            !g.executablePath.startsWith("legendary://") &&
-            !g.executablePath.startsWith("goggalaxy://") &&
-            !g.executablePath.startsWith("msxbox://"))
-      );
+
+    // Platform filters — match by shop regardless of exe state
+    if (storeFilter === "steam")
+      return filteredLibrary.filter((g) => g.shop === "steam");
+    if (storeFilter === "epic")
+      return filteredLibrary.filter((g) => g.shop === "epic");
+    if (storeFilter === "gog")
+      return filteredLibrary.filter((g) => g.shop === "gog");
+    if (storeFilter === "xbox")
+      return filteredLibrary.filter((g) => g.shop === "xbox");
+
+    // Retigga = custom games OR games with a file-path exe (installed repacks)
+    //           OR games currently being downloaded as repacks
+    // Excludes games whose exe is an official protocol (those belong to platform filters)
     if (storeFilter === "retigga")
       return filteredLibrary.filter((g) => {
         if (g.shop === "custom") return true;
         const exe = g.executablePath;
-        if (!exe) return true;
-        return (
-          !exe.startsWith("steam://") &&
-          !exe.startsWith("legendary://") &&
-          !exe.startsWith("goggalaxy://") &&
-          !exe.startsWith("msxbox://")
-        );
+        if (exe?.startsWith("steam://")) return false;
+        if (exe?.startsWith("legendary://")) return false;
+        if (exe?.startsWith("goggalaxy://")) return false;
+        if (exe?.startsWith("msxbox://")) return false;
+        // Has an installed file-path exe, or an active download record
+        return (exe != null && !exe.includes("://")) || g.download != null;
       });
-    if (storeFilter === "steam")
-      return filteredLibrary.filter(
-        (g) => g.shop === "steam" && g.executablePath?.startsWith("steam://")
-      );
-    if (storeFilter === "epic")
-      return filteredLibrary.filter(
-        (g) => g.shop === "epic" && g.executablePath?.startsWith("legendary://")
-      );
-    if (storeFilter === "gog")
-      return filteredLibrary.filter(
-        (g) => g.shop === "gog" && g.executablePath?.startsWith("goggalaxy://")
-      );
-    if (storeFilter === "xbox")
-      return filteredLibrary.filter(
-        (g) => g.shop === "xbox" && g.executablePath?.startsWith("msxbox://")
-      );
+
     return filteredLibrary.filter((g) => g.shop === storeFilter);
   }, [filteredLibrary, storeFilter]);
 

@@ -54,6 +54,18 @@ async function startGogdlDownloadInternal(
     automaticallyDeleteArchiveFiles: false,
   };
   await downloadsSublevel.put(gameKey, initialRecord);
+  // Immediately broadcast saved progress so the UI doesn't flash back to 0%
+  WindowManager.sendToAppWindows("on-download-progress", {
+    gameId: gameKey,
+    progress: initialRecord.progress,
+    downloadSpeed: 0,
+    timeRemaining: 0,
+    numPeers: 0,
+    numSeeds: 0,
+    isDownloadingMetadata: false,
+    isCheckingFiles: false,
+    download: initialRecord,
+  });
   WindowManager.sendToAppWindows("on-downloads-updated");
 
   let currentRecord = { ...initialRecord };
@@ -142,6 +154,14 @@ async function startGogdlDownloadInternal(
 // ---------------------------------------------------------------------------
 // Pause / resume
 // ---------------------------------------------------------------------------
+
+export async function cancelGogdlDownloadByKey(gameKey: string) {
+  activeGogdlDownloads.get(gameKey)?.();
+  activeGogdlDownloads.delete(gameKey);
+  await downloadsSublevel.del(gameKey).catch(() => {});
+  WindowManager.sendToAppWindows("on-downloads-updated");
+  return { ok: true };
+}
 
 export async function pauseGogdlDownload(gameKey: string) {
   activeGogdlDownloads.get(gameKey)?.();
