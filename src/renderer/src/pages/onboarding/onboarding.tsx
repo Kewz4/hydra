@@ -65,6 +65,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     (state) => state.userPreferences.value
   );
 
+  useEffect(() => {
+    window.electron.setWindowSize(860, 620, 860, 620).catch(() => {});
+    return () => {
+      window.electron.setWindowSize(1200, 860, 1024, 860).catch(() => {});
+    };
+  }, []);
+
   const [stepIndex, setStepIndex] = useState(0);
 
   // Language

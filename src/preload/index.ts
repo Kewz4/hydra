@@ -986,6 +986,12 @@ contextBridge.exposeInMainWorld("electron", {
   closeGameLauncherWindow: () => ipcRenderer.invoke("closeGameLauncherWindow"),
   openMainWindow: () => ipcRenderer.invoke("openMainWindow"),
   isMainWindowOpen: () => ipcRenderer.invoke("isMainWindowOpen"),
+  setWindowSize: (
+    width: number,
+    height: number,
+    minWidth?: number,
+    minHeight?: number
+  ) => ipcRenderer.invoke("setWindowSize", width, height, minWidth, minHeight),
 
   /* LevelDB Generic CRUD */
   leveldb: {

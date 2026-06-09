@@ -4,8 +4,6 @@ import {
   useEffect,
   useMemo,
   useState,
-  useRef,
-  createPortal,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -295,10 +293,6 @@ export function RepacksModal({
 
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [showHyperVisorModal, setShowHyperVisorModal] = useState(false);
-  const [flyingThumb, setFlyingThumb] = useState<{
-    src: string;
-    fromRect: DOMRect;
-  } | null>(null);
 
   const ACHIEVEMENT_CRACKERS = useMemo(
     () => [
@@ -392,27 +386,6 @@ export function RepacksModal({
         startDownload={startDownload}
         repack={repack}
       />
-
-      {flyingThumb &&
-        createPortal(
-          <img
-            src={flyingThumb.src}
-            alt=""
-            style={{
-              position: "fixed",
-              left: flyingThumb.fromRect.left,
-              top: flyingThumb.fromRect.top,
-              width: flyingThumb.fromRect.width,
-              height: flyingThumb.fromRect.height,
-              objectFit: "cover",
-              borderRadius: "8px",
-              pointerEvents: "none",
-              zIndex: 99999,
-              animation: "flyToSidebar 0.6s cubic-bezier(0.4,0,0.2,1) forwards",
-            }}
-          />,
-          document.body
-        )}
 
       <Modal
         visible={visible}
@@ -546,22 +519,12 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--epic"
-                      onClick={async (e) => {
+                      onClick={() => {
                         window.electron
                           .downloadViaLegendary(epicObjectId)
                           .catch(() => {});
-                        const rect = (
-                          e.currentTarget as HTMLElement
-                        ).getBoundingClientRect();
-                        setFlyingThumb({
-                          src: game.libraryHeroImageUrl ?? game.iconUrl ?? "",
-                          fromRect: rect,
-                        });
-                        setTimeout(() => {
-                          setFlyingThumb(null);
-                          onClose();
-                          navigate("/downloads");
-                        }, 650);
+                        onClose();
+                        navigate("/downloads");
                       }}
                     >
                       <EpicLogo className="repacks-modal__platform-icon" />
@@ -572,22 +535,12 @@ export function RepacksModal({
                     <button
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--gog"
-                      onClick={async (e) => {
+                      onClick={() => {
                         window.electron
                           .downloadViaGogdl(gogObjectId)
                           .catch(() => {});
-                        const rect = (
-                          e.currentTarget as HTMLElement
-                        ).getBoundingClientRect();
-                        setFlyingThumb({
-                          src: game.libraryHeroImageUrl ?? game.iconUrl ?? "",
-                          fromRect: rect,
-                        });
-                        setTimeout(() => {
-                          setFlyingThumb(null);
-                          onClose();
-                          navigate("/downloads");
-                        }, 650);
+                        onClose();
+                        navigate("/downloads");
                       }}
                     >
                       <GogLogo className="repacks-modal__platform-icon" />

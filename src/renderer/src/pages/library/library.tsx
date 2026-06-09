@@ -482,14 +482,34 @@ export default function Library() {
             !g.executablePath.startsWith("msxbox://"))
       );
     if (storeFilter === "retigga")
+      return filteredLibrary.filter((g) => {
+        if (g.shop === "custom") return true;
+        const exe = g.executablePath;
+        if (!exe) return true;
+        return (
+          !exe.startsWith("steam://") &&
+          !exe.startsWith("legendary://") &&
+          !exe.startsWith("goggalaxy://") &&
+          !exe.startsWith("msxbox://")
+        );
+      });
+    if (storeFilter === "steam")
+      return filteredLibrary.filter(
+        (g) => g.shop === "steam" && g.executablePath?.startsWith("steam://")
+      );
+    if (storeFilter === "epic")
       return filteredLibrary.filter(
         (g) =>
-          g.executablePath &&
-          !g.executablePath.startsWith("steam://") &&
-          !g.executablePath.startsWith("legendary://") &&
-          !g.executablePath.startsWith("goggalaxy://") &&
-          !g.executablePath.startsWith("msxbox://") &&
-          !g.executablePath.includes("://")
+          g.shop === "epic" && g.executablePath?.startsWith("legendary://")
+      );
+    if (storeFilter === "gog")
+      return filteredLibrary.filter(
+        (g) =>
+          g.shop === "gog" && g.executablePath?.startsWith("goggalaxy://")
+      );
+    if (storeFilter === "xbox")
+      return filteredLibrary.filter(
+        (g) => g.shop === "xbox" && g.executablePath?.startsWith("msxbox://")
       );
     return filteredLibrary.filter((g) => g.shop === storeFilter);
   }, [filteredLibrary, storeFilter]);
@@ -557,8 +577,8 @@ export default function Library() {
                 { value: "epic", label: "Epic" },
                 { value: "gog", label: "GOG" },
                 { value: "xbox", label: "Xbox" },
-                { value: "custom", label: "Custom" },
                 { value: "retigga", label: "Retigga" },
+                { value: "custom", label: "Custom" },
               ] as { value: string; label: string }[]
             ).map(({ value, label }) => (
               <button

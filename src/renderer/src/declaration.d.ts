@@ -713,6 +713,12 @@ declare global {
     closeGameLauncherWindow: () => Promise<void>;
     openMainWindow: () => Promise<void>;
     isMainWindowOpen: () => Promise<boolean>;
+    setWindowSize: (
+      width: number,
+      height: number,
+      minWidth?: number,
+      minHeight?: number
+    ) => Promise<void>;
 
     /* Big Picture Window */
     openBigPictureWindow: () => Promise<void>;

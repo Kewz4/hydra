@@ -930,7 +930,7 @@ export function DownloadGroup({
       {
         label: t("cancel"),
         onClick: () => {
-          handleCancelClick(game.shop, game.objectId);
+          handleCancelClick(game.shop, game.objectId, game.download?.downloader);
         },
         icon: <XCircleIcon />,
       },

@@ -19,7 +19,7 @@ const resumeGameDownload = async (
 
   if (
     download?.downloader === Downloader.Legendary &&
-    download?.status === "paused"
+    (download?.status === "paused" || download?.status === "active")
   ) {
     const { resumeLegendaryDownload } = await import(
       "../library/download-via-legendary"
@@ -38,7 +38,7 @@ const resumeGameDownload = async (
 
   if (
     download?.downloader === Downloader.Gogdl &&
-    download?.status === "paused"
+    (download?.status === "paused" || download?.status === "active")
   ) {
     const { resumeGogdlDownload } = await import(
       "../library/download-via-gogdl"
