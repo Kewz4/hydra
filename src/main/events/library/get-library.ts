@@ -71,7 +71,6 @@ const getLibrary = async (): Promise<LibraryGame[]> => {
             }
 
             return {
-              id: key,
               // Spread gameAssets first (image URLs, downloadSources, etc.)
               ...gameAssets,
               // Game record always wins for identity/navigation fields

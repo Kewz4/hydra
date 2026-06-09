@@ -37,7 +37,7 @@ const getGameShopDetails = async (
 
   // For non-Steam games: find the canonical Steam equivalent via the catalogue
   // so the game detail page can show descriptions, publisher info, etc.
-  if (shop !== "steam" && shop !== "custom") {
+  if (shop !== "steam") {
     try {
       // First, try the Hydra API assets for this exact game to get its title
       const gameKey = levelKeys.game(shop, objectId);

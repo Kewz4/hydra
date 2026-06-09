@@ -1,6 +1,6 @@
 import { registerEvent } from "../register-event";
 import { shell } from "electron";
-import { execFile } from "node:child_process";
+import { spawn } from "node:child_process";
 import { GameShop } from "@types";
 import { launchGame } from "@main/helpers";
 import { WindowManager, logger } from "@main/services";
@@ -46,7 +46,7 @@ const openGame = async (
 
     await WindowManager.createGameLauncherWindow(shop, objectId);
 
-    execFile(binary, ["launch", appName, "--skip-version-check"], {
+    spawn(binary, ["launch", appName, "--skip-version-check"], {
       detached: true,
       stdio: "ignore",
     }).unref();
