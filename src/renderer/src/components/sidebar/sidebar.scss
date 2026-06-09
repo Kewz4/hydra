@@ -101,33 +101,42 @@
     padding: 9px globals.$spacing-unit;
   }
 
-  &__download-eta {
-    margin-left: auto;
-    font-size: 10px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.5);
-    letter-spacing: 0.02em;
+  &__icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     flex-shrink: 0;
-    font-variant-numeric: tabular-nums;
   }
 
-  &__download-bar {
-    height: 2px;
-    width: 100%;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 0 0 4px 4px;
-    overflow: hidden;
+  &__dl-badge {
+    background-color: #ffffff;
+    color: #000000;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 999px;
+    line-height: 1;
+    flex-shrink: 0;
 
-    &__fill {
-      height: 100%;
-      background: #fff;
-      border-radius: inherit;
-      transition: width 0.4s linear;
+    &--count {
+      position: absolute;
+      top: -5px;
+      right: -6px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-  }
 
-  &__menu-item--active &__download-bar {
-    background: rgba(255, 255, 255, 0.12);
+    &--eta {
+      margin-left: auto;
+      padding: 3px 7px;
+      display: inline-flex;
+      align-items: center;
+      font-variant-numeric: tabular-nums;
+    }
   }
 
   &__menu-item-button-label {

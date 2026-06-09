@@ -616,17 +616,17 @@ export function computeHardwareRating(
   } else if (minComposite >= 1.0) {
     rating = "medium";
     const gap = Math.round((1 - recComposite) * 100);
-    headline = "Your PC should run this at medium settings";
-    detail = `Your hardware meets minimum requirements but is ~${gap}% below recommended. Expect playable performance at medium settings (1080p, ~30–60 fps). ${bottleneck.name} is the main bottleneck.`;
+    headline = "Your PC should run this";
+    detail = `Your hardware meets minimum requirements but is ~${gap}% below recommended. ${bottleneck.name} is the main bottleneck.`;
   } else if (minComposite >= 0.7) {
     rating = "low";
     const gap = Math.round((1 - minComposite) * 100);
-    headline = "Your PC will run this on low settings";
-    detail = `Your hardware is ~${gap}% below minimum specs. You may achieve ~30 fps at low settings with reduced resolution. ${bottleneck.name} is holding you back most.`;
+    headline = "Your PC may not run this well";
+    detail = `Your hardware is ~${gap}% below minimum specs. ${bottleneck.name} is holding you back most — consider upgrading it.`;
   } else {
     rating = "struggle";
-    headline = "Your PC will struggle with this";
-    detail = `Your hardware is significantly below minimum requirements. The game may not run playably. Consider upgrading your ${bottleneck.name.toLowerCase()} first.`;
+    headline = "Your PC will not run this";
+    detail = `Your hardware is significantly below minimum requirements. The game likely won't run playably. Consider upgrading your ${bottleneck.name.toLowerCase()} first.`;
   }
 
   return {

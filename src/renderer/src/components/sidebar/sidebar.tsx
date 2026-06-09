@@ -561,6 +561,19 @@ export function Sidebar() {
               {routes.map(({ nameKey, path, render }) => {
                 const isDownloads = path === "/downloads";
                 const isDownloading = isDownloads && !!lastPacket;
+
+                const queueCount = isDownloads
+                  ? library.filter(
+                      (g) =>
+                        g.download?.status === "active" ||
+                        g.download?.queued === true
+                    ).length
+                  : 0;
+
+                const pct = isDownloading
+                  ? Math.round((lastPacket?.progress ?? 0) * 100)
+                  : 0;
+
                 return (
                   <li
                     key={nameKey}
@@ -570,30 +583,24 @@ export function Sidebar() {
                   >
                     <button
                       type="button"
-                      className={cn("sidebar__menu-item-button", {
-                        "sidebar__menu-item-button--downloading": isDownloading,
-                      })}
+                      className="sidebar__menu-item-button"
                       onClick={() => handleSidebarItemClick(path)}
                     >
-                      {render()}
+                      <span className="sidebar__icon-wrapper">
+                        {render()}
+                        {isDownloads && queueCount > 0 && (
+                          <span className="sidebar__dl-badge sidebar__dl-badge--count">
+                            {queueCount}
+                          </span>
+                        )}
+                      </span>
                       <span>{t(nameKey)}</span>
                       {isDownloading && (
-                        <span className="sidebar__download-eta">
-                          {Math.round((lastPacket?.progress ?? 0) * 100)}%
-                          {eta ? ` · ${eta}` : ""}
+                        <span className="sidebar__dl-badge sidebar__dl-badge--eta">
+                          {pct}%{eta ? ` · ${eta}` : ""}
                         </span>
                       )}
                     </button>
-                    {isDownloading && (
-                      <div className="sidebar__download-bar">
-                        <div
-                          className="sidebar__download-bar__fill"
-                          style={{
-                            width: `${Math.round((lastPacket?.progress ?? 0) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                    )}
                   </li>
                 );
               })}
