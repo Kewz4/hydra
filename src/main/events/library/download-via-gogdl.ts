@@ -212,6 +212,12 @@ async function startGogdlDownloadInternal(
 
 export async function cancelGogdlDownloadByKey(gameKey: string) {
   activeGogdlDownloads.get(gameKey)?.();
+  // Fallback: if not in map, kill by process name on Windows
+  if (!activeGogdlDownloads.has(gameKey) && process.platform === "win32") {
+    try {
+      require("node:child_process").execSync("taskkill /F /IM gogdl.exe", { stdio: "ignore" });
+    } catch {}
+  }
   activeGogdlDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
   WindowManager.sendToAppWindows("on-downloads-updated");
@@ -221,6 +227,12 @@ export async function cancelGogdlDownloadByKey(gameKey: string) {
 
 export async function pauseGogdlDownload(gameKey: string) {
   activeGogdlDownloads.get(gameKey)?.();
+  // Fallback: if not in map, kill by process name on Windows
+  if (!activeGogdlDownloads.has(gameKey) && process.platform === "win32") {
+    try {
+      require("node:child_process").execSync("taskkill /F /IM gogdl.exe", { stdio: "ignore" });
+    } catch {}
+  }
   activeGogdlDownloads.delete(gameKey);
   const record = await downloadsSublevel.get(gameKey).catch(() => null);
   if (record) {

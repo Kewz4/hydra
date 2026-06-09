@@ -218,6 +218,10 @@ contextBridge.exposeInMainWorld("electron", {
   getLegendaryStatus: () => ipcRenderer.invoke("getLegendaryStatus"),
   installLegendary: () => ipcRenderer.invoke("installLegendary"),
   openLegendaryAuthWindow: () => ipcRenderer.invoke("openLegendaryAuthWindow"),
+  completeEpicAuth: (code: string) =>
+    ipcRenderer.invoke("completeEpicAuth", code),
+  completeGogAuth: (code: string) =>
+    ipcRenderer.invoke("completeGogAuth", code),
   syncEpicLibrary: () => ipcRenderer.invoke("syncEpicLibrary"),
   installBattleNet: () => ipcRenderer.invoke("installBattleNet"),
   openGogAuthWindow: () => ipcRenderer.invoke("openGogAuthWindow"),

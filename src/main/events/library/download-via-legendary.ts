@@ -212,6 +212,12 @@ async function startLegendaryDownloadInternal(
 
 export async function pauseLegendaryDownload(gameKey: string) {
   activeLegendaryDownloads.get(gameKey)?.();
+  // Fallback: if not in map, kill by process name on Windows
+  if (!activeLegendaryDownloads.has(gameKey) && process.platform === "win32") {
+    try {
+      require("node:child_process").execSync("taskkill /F /IM legendary.exe", { stdio: "ignore" });
+    } catch {}
+  }
   activeLegendaryDownloads.delete(gameKey);
   const record = await downloadsSublevel.get(gameKey).catch(() => null);
   if (record) {
@@ -264,6 +270,12 @@ registerEvent("downloadViaLegendary", downloadViaLegendary);
 
 export async function cancelLegendaryDownloadByKey(gameKey: string) {
   activeLegendaryDownloads.get(gameKey)?.();
+  // Fallback: if not in map, kill by process name on Windows
+  if (!activeLegendaryDownloads.has(gameKey) && process.platform === "win32") {
+    try {
+      require("node:child_process").execSync("taskkill /F /IM legendary.exe", { stdio: "ignore" });
+    } catch {}
+  }
   activeLegendaryDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
   WindowManager.sendToAppWindows("on-downloads-updated");

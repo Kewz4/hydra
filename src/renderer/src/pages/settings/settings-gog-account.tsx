@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
+import { GogAuthModal } from "./gog-auth-modal";
 import {
   AlertIcon,
   CheckCircleFillIcon,
@@ -38,6 +39,7 @@ export function SettingsGogAccount() {
   const [isInstallingGogdl, setIsInstallingGogdl] = useState(false);
   const [gogdlInstallProgress, setGogdlInstallProgress] = useState(0);
   const gogdlProgressUnsub = useRef<(() => void) | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const fetchUserInfo = useCallback(async () => {
     if (!userPreferences?.gogRefreshToken) {
@@ -78,43 +80,57 @@ export function SettingsGogAccount() {
     }
   };
 
-  const handleConnect = async () => {
-    setIsConnecting(true);
-    try {
-      const result = await window.electron.openGogAuthWindow();
+  const handleConnect = () => {
+    setShowAuthModal(true);
+  };
+
+  const handleGogAuthResult = useCallback(
+    async (result: { refresh_token: string; username: string } | null) => {
       if (!result) {
         showErrorToast(t("gog_auth_cancelled"));
         return;
       }
-      await updateUserPreferences({ gogRefreshToken: result.refresh_token });
-      showSuccessToast(t("gog_account_linked", { username: result.username }));
-      await fetchUserInfo();
-
-      // Auto-install gogdl if not present
-      const status = await window.electron
-        .getGogdlStatus()
-        .catch(() => ({ binaryFound: false }));
-      if (!status.binaryFound) {
-        setIsInstallingGogdl(true);
-        gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(
-          setGogdlInstallProgress
+      setIsConnecting(true);
+      try {
+        await updateUserPreferences({ gogRefreshToken: result.refresh_token });
+        showSuccessToast(
+          t("gog_account_linked", { username: result.username })
         );
-        window.electron
-          .installGogdl()
-          .then(() => setGogdlFound(true))
-          .catch(() => {})
-          .finally(() => {
-            gogdlProgressUnsub.current?.();
-            setIsInstallingGogdl(false);
-            setGogdlInstallProgress(0);
-          });
+        await fetchUserInfo();
+
+        // Auto-install gogdl if not present
+        const status = await window.electron
+          .getGogdlStatus()
+          .catch(() => ({ binaryFound: false }));
+        if (!status.binaryFound) {
+          setIsInstallingGogdl(true);
+          gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(
+            setGogdlInstallProgress
+          );
+          window.electron
+            .installGogdl()
+            .then(() => setGogdlFound(true))
+            .catch(() => {})
+            .finally(() => {
+              gogdlProgressUnsub.current?.();
+              setIsInstallingGogdl(false);
+              setGogdlInstallProgress(0);
+            });
+        }
+      } catch {
+        showErrorToast(t("gog_auth_failed"));
+      } finally {
+        setIsConnecting(false);
       }
-    } catch {
-      showErrorToast(t("gog_auth_failed"));
-    } finally {
-      setIsConnecting(false);
-    }
-  };
+    },
+    [
+      showErrorToast,
+      showSuccessToast,
+      t,
+      updateUserPreferences,
+      fetchUserInfo,
+    ]
+  );
 
   const handleDisconnect = async () => {
     await updateUserPreferences({ gogRefreshToken: null });
@@ -269,13 +285,23 @@ export function SettingsGogAccount() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <p style={{ margin: 0, opacity: 0.8 }}>{t("gog_account_description")}</p>
-      <div>
-        <Button type="button" onClick={handleConnect} disabled={isConnecting}>
-          {isConnecting ? t("connecting") : t("connect_gog_account")}
-        </Button>
+    <>
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        <p style={{ margin: 0, opacity: 0.8 }}>
+          {t("gog_account_description")}
+        </p>
+        <div>
+          <Button type="button" onClick={handleConnect} disabled={isConnecting}>
+            {isConnecting ? t("connecting") : t("connect_gog_account")}
+          </Button>
+        </div>
       </div>
-    </div>
+
+      <GogAuthModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleGogAuthResult}
+      />
+    </>
   );
 }

@@ -1,8 +1,9 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, TextField } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
+import { EpicAuthModal } from "./epic-auth-modal";
 import {
   AlertIcon,
   CheckCircleFillIcon,
@@ -40,6 +41,7 @@ export function SettingsEpicAccount() {
     summary: string;
     results: LibrarySyncResult[];
   } | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const unsubRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
@@ -86,10 +88,12 @@ export function SettingsEpicAccount() {
     }
   };
 
-  const handleSignIn = async () => {
-    setStep("signing_in");
-    try {
-      const result = await window.electron.openLegendaryAuthWindow();
+  const handleSignIn = () => {
+    setShowAuthModal(true);
+  };
+
+  const handleAuthResult = useCallback(
+    async (result: { success: boolean; account?: string }) => {
       if (result.success) {
         showSuccessToast(
           t("epic_logged_in_as", { username: result.account ?? "Epic" })
@@ -98,12 +102,9 @@ export function SettingsEpicAccount() {
       } else {
         showErrorToast(t("epic_auth_failed"));
       }
-    } catch {
-      showErrorToast(t("epic_auth_failed"));
-    } finally {
-      setStep("idle");
-    }
-  };
+    },
+    [showSuccessToast, showErrorToast, t, refreshStatus, userPreferences?.legendaryBinaryPath]
+  );
 
   const handleSignOut = async () => {
     // legendary doesn't have a sign-out command; we just clear the preference
@@ -290,6 +291,12 @@ export function SettingsEpicAccount() {
           onClose={() => setSyncModal(null)}
         />
       )}
+
+      <EpicAuthModal
+        visible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthResult}
+      />
     </>
   );
 }

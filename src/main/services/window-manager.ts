@@ -57,6 +57,7 @@ export class WindowManager {
       webPreferences: {
         preload: path.join(__dirname, "../preload/index.mjs"),
         sandbox: false,
+        webviewTag: true,
       },
       show: false,
     };
@@ -438,47 +439,62 @@ export class WindowManager {
       });
 
       authWindow.webContents.on("did-finish-load", () => {
+        // Inject GameHub branding over Hydra auth page
         authWindow.webContents
-          .insertCSS(
-            `
-            /* GameHub branding overrides */
-            [class*="hydra"], [class*="Hydra"],
-            img[alt*="Hydra" i], img[alt*="hydra" i],
-            img[src*="hydra" i] { display: none !important; }
-
+          .insertCSS(`
+            /* Hide Hydra logos and brand elements */
+            img[src*="hydra" i],
+            img[alt*="hydra" i],
+            [class*="hydra-logo" i],
+            [class*="HydraLogo" i],
+            [id*="hydra-logo" i] {
+              display: none !important;
+            }
+            /* GameHub color overrides */
             :root {
-              --brand-primary: #c084fc !important;
-              --brand-secondary: #a855f7 !important;
+              --primary: #c084fc !important;
+              --accent: #a855f7 !important;
+              --color-primary: #c084fc !important;
             }
-
-            body { background: #0f0f14 !important; }
-
-            h1, h2, .app-name, .brand-name, [class*="title"] {
-              font-family: 'Space Grotesk', sans-serif !important;
+            a, button {
+              color: inherit;
             }
-
-            /* Replace any "Hydra" text nodes visible via pseudo or title */
-            title { content: "GameHub"; }
-          `
-          )
+          `)
           .catch(() => {});
 
         authWindow.webContents
-          .executeJavaScript(
-            `
-            try {
-              document.title = document.title.replace(/hydra/gi, "GameHub");
-              document.querySelectorAll("*").forEach(el => {
-                if (el.children.length === 0 && el.textContent.trim().toLowerCase() === "hydra") {
-                  el.textContent = "GameHub";
+          .executeJavaScript(`
+            (function() {
+              function patchText(root) {
+                const walker = document.createTreeWalker(
+                  root,
+                  NodeFilter.SHOW_TEXT,
+                  null
+                );
+                let node;
+                while ((node = walker.nextNode())) {
+                  if (/\\bhydra\\b/i.test(node.textContent || "")) {
+                    node.textContent = (node.textContent || "").replace(/\\bHydra Launcher\\b/gi, "GameHub").replace(/\\bHydra\\b/gi, "GameHub");
+                  }
                 }
+                // Also patch title
+                if (document.title) {
+                  document.title = document.title.replace(/Hydra/gi, "GameHub");
+                }
+              }
+              patchText(document.body);
+              const obs = new MutationObserver((mutations) => {
+                mutations.forEach((m) => {
+                  m.addedNodes.forEach((n) => {
+                    if (n.nodeType === Node.ELEMENT_NODE || n.nodeType === Node.TEXT_NODE) {
+                      patchText(n.nodeType === Node.TEXT_NODE ? n.parentElement || document.body : n as Element);
+                    }
+                  });
+                });
               });
-              document.querySelectorAll('img[alt*="hydra" i], img[src*="hydra" i]').forEach(img => {
-                img.style.display = "none";
-              });
-            } catch (_) {}
-          `
-          )
+              obs.observe(document.body, { childList: true, subtree: true });
+            })();
+          `)
           .catch(() => {});
       });
 

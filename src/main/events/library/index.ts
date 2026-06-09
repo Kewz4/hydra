@@ -78,3 +78,5 @@ import "./generate-missing-metadata";
 import "./merge-duplicate-games";
 import "./find-library-game-by-title";
 import "./get-gogdl-status";
+import "./complete-epic-auth";
+import "./complete-gog-auth";
