@@ -51,6 +51,18 @@ async function startLegendaryDownloadInternal(
     automaticallyDeleteArchiveFiles: false,
   };
   await downloadsSublevel.put(gameKey, initialRecord);
+  // Immediately broadcast saved progress so the UI doesn't flash back to 0%
+  WindowManager.sendToAppWindows("on-download-progress", {
+    gameId: gameKey,
+    progress: initialRecord.progress,
+    downloadSpeed: 0,
+    timeRemaining: 0,
+    numPeers: 0,
+    numSeeds: 0,
+    isDownloadingMetadata: false,
+    isCheckingFiles: false,
+    download: initialRecord,
+  });
   WindowManager.sendToAppWindows("on-downloads-updated");
 
   let currentRecord = { ...initialRecord };
