@@ -17,7 +17,6 @@ import {
   MenuItemConstructorOptions,
   Tray,
   app,
-  dialog,
   nativeImage,
   screen,
   shell,
@@ -409,15 +408,6 @@ export class WindowManager {
   }
 
   public static openAuthWindow(page: AuthPage, searchParams: URLSearchParams) {
-    if (!import.meta.env.MAIN_VITE_AUTH_URL) {
-      dialog.showMessageBox({
-        type: "info",
-        title: "Cloud features unavailable",
-        message:
-          "Hydra Cloud sign-in is not configured in this build. Download an official release to use cloud features.",
-      });
-      return;
-    }
     if (this.mainWindow) {
       const authWindow = new BrowserWindow({
         width: 600,

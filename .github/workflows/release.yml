@@ -53,7 +53,7 @@ jobs:
           yarn build:linux
         env:
           MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL }}
-          MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL }}
+          MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL || 'https://auth.hydralauncher.gg' }}
           MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL }}
           MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL }}
           MAIN_VITE_NIMBUS_API_URL: ${{ vars.MAIN_VITE_NIMBUS_API_URL }}
@@ -71,7 +71,7 @@ jobs:
         run: yarn build:win
         env:
           MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL }}
-          MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL }}
+          MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL || 'https://auth.hydralauncher.gg' }}
           MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL }}
           MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL }}
           MAIN_VITE_NIMBUS_API_URL: ${{ vars.MAIN_VITE_NIMBUS_API_URL }}
