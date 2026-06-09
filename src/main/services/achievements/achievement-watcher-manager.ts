@@ -465,9 +465,9 @@ export class AchievementWatcherManager {
       }
 
       // Sync GOG achievements from API for all GOG games
-      const gogGames = (
-        await gamesSublevel.values().all()
-      ).filter((g) => !g.isDeleted && g.shop === "gog");
+      const gogGames = (await gamesSublevel.values().all()).filter(
+        (g) => !g.isDeleted && g.shop === "gog"
+      );
 
       for (const gogGame of gogGames) {
         await syncGogAchievements(gogGame).catch(() => {});

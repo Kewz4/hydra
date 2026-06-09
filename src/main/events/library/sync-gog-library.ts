@@ -8,7 +8,6 @@ import {
 import type { UserPreferences } from "@types";
 import {
   refreshGogToken,
-  getGogUserInfo,
   getGogOwnedGameIds,
   getGogGameDetails,
 } from "@main/services/gog-account";

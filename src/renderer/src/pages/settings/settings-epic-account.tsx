@@ -46,7 +46,7 @@ export function SettingsEpicAccount() {
     setLegendaryPath(userPreferences?.legendaryBinaryPath ?? "");
   }, [userPreferences?.legendaryBinaryPath]);
 
-  const refreshStatus = async (path?: string | null) => {
+  const refreshStatus = async (_path?: string | null) => {
     const s = await window.electron.getLegendaryStatus().catch(() => null);
     if (s) setStatus(s);
     return s;

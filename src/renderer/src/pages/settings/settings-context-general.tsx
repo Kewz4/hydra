@@ -56,7 +56,7 @@ export function SettingsContextGeneral({
   const [downloadDirectoryReplacement, setDownloadDirectoryReplacement] =
     useState<DownloadDirectoryReplacementState | null>(null);
 
-  const { showSuccessToast, showErrorToast } = useToast();
+  const { showSuccessToast: _showSuccessToast, showErrorToast } = useToast();
   const [generatingMetadata, setGeneratingMetadata] = useState(false);
   const [metadataProgress, setMetadataProgress] = useState<{
     current: number;

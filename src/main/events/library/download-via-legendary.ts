@@ -78,7 +78,11 @@ async function startLegendaryDownloadInternal(
     legendaryBinaryPath,
     async (progress, downloadedMB, totalMB, speedMBs, etaMs) => {
       // Don't let progress go backward (Legendary re-verifies files on resume)
-      const effectiveProgress = Math.max(progress, savedProgress, currentRecord.progress);
+      const effectiveProgress = Math.max(
+        progress,
+        savedProgress,
+        currentRecord.progress
+      );
       sendLog(
         objectId,
         `↓ ${(effectiveProgress * 100).toFixed(1)}% (${downloadedMB.toFixed(1)}/${totalMB.toFixed(1)} MiB) @ ${speedMBs.toFixed(2)} MiB/s`
@@ -86,7 +90,10 @@ async function startLegendaryDownloadInternal(
       currentRecord = {
         ...currentRecord,
         progress: effectiveProgress,
-        bytesDownloaded: Math.max(downloadedMB * 1024 * 1024, currentRecord.bytesDownloaded),
+        bytesDownloaded: Math.max(
+          downloadedMB * 1024 * 1024,
+          currentRecord.bytesDownloaded
+        ),
         fileSize: totalMB * 1024 * 1024,
         status: "active",
       };

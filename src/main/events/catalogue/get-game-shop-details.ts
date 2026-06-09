@@ -5,7 +5,6 @@ import type {
   GameShop,
   ShopDetailsWithAssets,
   CatalogueSearchResult,
-  ShopAssets,
 } from "@types";
 
 import { registerEvent } from "../register-event";

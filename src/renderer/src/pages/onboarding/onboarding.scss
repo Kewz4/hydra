@@ -91,7 +91,9 @@
   font-size: 0.82rem;
   color: rgba(255, 255, 255, 0.35);
   cursor: default;
-  transition: background 0.15s, color 0.15s;
+  transition:
+    background 0.15s,
+    color 0.15s;
 
   &__dot {
     width: 20px;

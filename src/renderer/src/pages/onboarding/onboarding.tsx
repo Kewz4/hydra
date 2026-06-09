@@ -86,7 +86,7 @@ function parseSteamId(input: string): string {
 }
 
 export function Onboarding({ onComplete }: OnboardingProps) {
-  const { t, i18n } = useTranslation("settings");
+  const { t: _t, i18n } = useTranslation("settings");
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
@@ -150,7 +150,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [startMinimized, setStartMinimized] = useState(false);
 
   const currentStep = ALL_STEPS[stepIndex];
-  const currentStepIndex = ALL_STEPS.indexOf(currentStep);
+  const _currentStepIndex = ALL_STEPS.indexOf(currentStep);
 
   useEffect(() => {
     window.electron.getDefaultDownloadsPath().then((p) => {
@@ -349,7 +349,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             <>
               <h1>Welcome to GameHub</h1>
               <p>
-                Your all-in-one game launcher. Let's get you set up in just a
+                Your all-in-one game launcher. Let&apos;s get you set up in just a
                 few steps — you can change everything later in Settings.
               </p>
               <Button type="button" onClick={next}>
@@ -358,11 +358,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </>
           ) : (
             <>
-              <h1>You're all set!</h1>
+              <h1>You&apos;re all set!</h1>
               <p>
                 Your libraries will sync in the background. Connect more
-                services anytime from{" "}
-                <strong>Settings → Integrations</strong>.
+                services anytime from <strong>Settings → Integrations</strong>.
               </p>
               <Button type="button" onClick={finish}>
                 Launch GameHub
@@ -416,9 +415,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 )
               )}
 
-              <div className="onboarding-sidebar__section-label">
-                Platforms
-              </div>
+              <div className="onboarding-sidebar__section-label">Platforms</div>
               {(["steam", "epic", "gog", "xbox"] as StepId[]).map((s) => {
                 const PlatformIcon = {
                   steam: SteamLogo,
@@ -584,7 +581,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 <>
                   <div className="onboarding-connected-badge">
                     <CheckCircleFillIcon size={16} />
-                    Signed in — you're all set
+                    Signed in — you&apos;re all set
                   </div>
                   <div className="onboarding-actions">
                     <Button type="button" onClick={next}>
@@ -628,7 +625,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
                 <div>
                   <h2>Steam</h2>
-                  <p>Import your Steam library and enable achievement tracking</p>
+                  <p>
+                    Import your Steam library and enable achievement tracking
+                  </p>
                 </div>
               </div>
 
@@ -794,7 +793,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
               <p className="onboarding-step-description">
                 GameHub will install Legendary automatically if needed. Your
-                Epic library will sync and you'll be able to download games.
+                Epic library will sync and you&apos;ll be able to download games.
               </p>
 
               {epicLinked ? (
@@ -976,7 +975,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
               </div>
               <div className="onboarding-toggles">
-                <label className="onboarding-toggle">
+                <label className="onboarding-toggle" aria-label="Download completed">
                   <div className="onboarding-toggle__text">
                     <span>Download completed</span>
                     <small>Notify when a download finishes</small>
@@ -987,7 +986,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                     onChange={(e) => setDownloadNotifs(e.target.checked)}
                   />
                 </label>
-                <label className="onboarding-toggle">
+                <label className="onboarding-toggle" aria-label="Achievement unlocked">
                   <div className="onboarding-toggle__text">
                     <span>Achievement unlocked</span>
                     <small>Show a pop-up when you unlock an achievement</small>
@@ -1020,7 +1019,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
               </div>
               <div className="onboarding-toggles">
-                <label className="onboarding-toggle">
+                <label className="onboarding-toggle" aria-label="Start minimized to tray">
                   <div className="onboarding-toggle__text">
                     <span>Start minimized to tray</span>
                     <small>

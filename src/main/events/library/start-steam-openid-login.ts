@@ -10,7 +10,7 @@ const STEAM_ID_REGEX = /^https?:\/\/steamcommunity\.com\/openid\/id\/(\d+)$/;
 
 function verifyOpenId(
   params: URLSearchParams,
-  realm: string
+  _realm: string
 ): Promise<boolean> {
   return new Promise((resolve) => {
     const verifyParams = new URLSearchParams(params);

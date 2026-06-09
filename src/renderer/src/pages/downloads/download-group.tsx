@@ -783,11 +783,7 @@ export function DownloadGroup({
     setGameToCancelShop(null);
     setGameToCancelObjectId(null);
     setGameToCancelDownloader(null);
-  }, [
-    gameToCancelShop,
-    gameToCancelObjectId,
-    updateLibrary,
-  ]);
+  }, [gameToCancelShop, gameToCancelObjectId, updateLibrary]);
 
   const handleCancelModalClose = useCallback(() => {
     setCancelModalVisible(false);

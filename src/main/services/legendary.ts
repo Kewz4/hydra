@@ -156,7 +156,9 @@ export const getLegendaryConfigPath = (): string => {
   return configPath;
 };
 
-export const getLegendaryInstalledExePath = (appName: string): string | null => {
+export const getLegendaryInstalledExePath = (
+  appName: string
+): string | null => {
   try {
     const installedJson = path.join(getLegendaryConfigPath(), "installed.json");
     if (!fs.existsSync(installedJson)) return null;
@@ -275,7 +277,7 @@ export function spawnLegendaryInstall(
   let lastDownloadedMB = 0;
   let lastSpeedMBs = 0;
   let lastEtaMs = 0;
-  let completed = false;
+  const completed = false;
   let killIntentional = false;
 
   const handleLine = (line: string, isStderr: boolean) => {
