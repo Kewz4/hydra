@@ -439,7 +439,8 @@ export class WindowManager {
 
       authWindow.webContents.on("did-finish-load", () => {
         authWindow.webContents
-          .insertCSS(`
+          .insertCSS(
+            `
             /* GameHub branding overrides */
             [class*="hydra"], [class*="Hydra"],
             img[alt*="Hydra" i], img[alt*="hydra" i],
@@ -458,11 +459,13 @@ export class WindowManager {
 
             /* Replace any "Hydra" text nodes visible via pseudo or title */
             title { content: "GameHub"; }
-          `)
+          `
+          )
           .catch(() => {});
 
         authWindow.webContents
-          .executeJavaScript(`
+          .executeJavaScript(
+            `
             try {
               document.title = document.title.replace(/hydra/gi, "GameHub");
               document.querySelectorAll("*").forEach(el => {
@@ -474,7 +477,8 @@ export class WindowManager {
                 img.style.display = "none";
               });
             } catch (_) {}
-          `)
+          `
+          )
           .catch(() => {});
       });
 

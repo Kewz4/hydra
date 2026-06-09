@@ -50,7 +50,8 @@ export function EpicGogDownloadModal({
       visible={visible}
       title={title}
       description={t("choose_install_folder_optional", {
-        defaultValue: "Choose an install folder or leave blank to use the default.",
+        defaultValue:
+          "Choose an install folder or leave blank to use the default.",
       })}
       onClose={handleClose}
     >
@@ -69,7 +70,9 @@ export function EpicGogDownloadModal({
             {t("browse", { defaultValue: "Browse" })}
           </Button>
         </div>
-        <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+        <div
+          style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}
+        >
           <Button type="button" theme="outline" onClick={handleClose}>
             {t("cancel", { ns: "common", defaultValue: "Cancel" })}
           </Button>

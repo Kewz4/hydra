@@ -547,7 +547,10 @@ export function RepacksModal({
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--epic"
                       onClick={() =>
-                        setEpicGogModal({ platform: "epic", objectId: epicObjectId })
+                        setEpicGogModal({
+                          platform: "epic",
+                          objectId: epicObjectId,
+                        })
                       }
                     >
                       <EpicLogo className="repacks-modal__platform-icon" />
@@ -559,7 +562,10 @@ export function RepacksModal({
                       type="button"
                       className="repacks-modal__platform-button repacks-modal__platform-button--gog"
                       onClick={() =>
-                        setEpicGogModal({ platform: "gog", objectId: gogObjectId })
+                        setEpicGogModal({
+                          platform: "gog",
+                          objectId: gogObjectId,
+                        })
                       }
                     >
                       <GogLogo className="repacks-modal__platform-icon" />
