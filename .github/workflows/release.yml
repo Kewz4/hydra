@@ -17,6 +17,9 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
+    permissions:
+      contents: write
+
     steps:
       - name: Check out Git repository
         uses: actions/checkout@v4
@@ -112,18 +115,6 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Create and push version tag
-        if: matrix.os == 'ubuntu-latest'
-        shell: bash
-        run: |
-          TAG="v${{ steps.pkg_version.outputs.version }}"
-          git config user.email "noreply@github.com"
-          git config user.name "GitHub Actions"
-          git tag -f "$TAG"
-          git push origin "$TAG" --force
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
