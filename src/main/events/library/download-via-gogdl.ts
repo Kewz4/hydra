@@ -215,8 +215,10 @@ export async function cancelGogdlDownloadByKey(gameKey: string) {
   // Fallback: if not in map, kill by process name on Windows
   if (!activeGogdlDownloads.has(gameKey) && process.platform === "win32") {
     try {
-      require("node:child_process").execSync("taskkill /F /IM gogdl.exe", { stdio: "ignore" });
-    } catch {}
+      require("node:child_process").execSync("taskkill /F /IM gogdl.exe", {
+        stdio: "ignore",
+      });
+    } catch (_e) { /* ignore */ }
   }
   activeGogdlDownloads.delete(gameKey);
   await downloadsSublevel.del(gameKey).catch(() => {});
@@ -230,8 +232,10 @@ export async function pauseGogdlDownload(gameKey: string) {
   // Fallback: if not in map, kill by process name on Windows
   if (!activeGogdlDownloads.has(gameKey) && process.platform === "win32") {
     try {
-      require("node:child_process").execSync("taskkill /F /IM gogdl.exe", { stdio: "ignore" });
-    } catch {}
+      require("node:child_process").execSync("taskkill /F /IM gogdl.exe", {
+        stdio: "ignore",
+      });
+    } catch (_e) { /* ignore */ }
   }
   activeGogdlDownloads.delete(gameKey);
   const record = await downloadsSublevel.get(gameKey).catch(() => null);
