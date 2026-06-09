@@ -52,13 +52,13 @@ jobs:
         run: |
           yarn build:linux
         env:
-          MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL }}
+          MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL || 'https://hydra-api-us-east-1.losbroxas.org' }}
           MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL || 'https://auth.hydralauncher.gg' }}
-          MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL }}
-          MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL }}
+          MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL || 'https://checkout.hydralauncher.gg' }}
+          MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL || 'wss://ws.hydralauncher.gg' }}
           MAIN_VITE_NIMBUS_API_URL: ${{ vars.MAIN_VITE_NIMBUS_API_URL }}
-          RENDERER_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL }}
-          MAIN_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL }}
+          RENDERER_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || 'https://assets.hydralauncher.gg' }}
+          MAIN_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || 'https://assets.hydralauncher.gg' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           RENDERER_VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
@@ -70,13 +70,13 @@ jobs:
         if: matrix.os == 'windows-2022'
         run: yarn build:win
         env:
-          MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL }}
+          MAIN_VITE_API_URL: ${{ vars.MAIN_VITE_API_URL || 'https://hydra-api-us-east-1.losbroxas.org' }}
           MAIN_VITE_AUTH_URL: ${{ vars.MAIN_VITE_AUTH_URL || 'https://auth.hydralauncher.gg' }}
-          MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL }}
-          MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL }}
+          MAIN_VITE_CHECKOUT_URL: ${{ vars.MAIN_VITE_CHECKOUT_URL || 'https://checkout.hydralauncher.gg' }}
+          MAIN_VITE_WS_URL: ${{ vars.MAIN_VITE_WS_URL || 'wss://ws.hydralauncher.gg' }}
           MAIN_VITE_NIMBUS_API_URL: ${{ vars.MAIN_VITE_NIMBUS_API_URL }}
-          RENDERER_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL }}
-          MAIN_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL }}
+          RENDERER_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || 'https://assets.hydralauncher.gg' }}
+          MAIN_VITE_EXTERNAL_RESOURCES_URL: ${{ vars.EXTERNAL_RESOURCES_URL || 'https://assets.hydralauncher.gg' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           RENDERER_VITE_SENTRY_DSN: ${{ vars.SENTRY_DSN }}
