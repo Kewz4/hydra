@@ -16,11 +16,11 @@ export function needsSetup(): boolean {
   // After an NSIS auto-update, the marker gets wiped but the userData (LevelDB)
   // already exists at the default Electron path. Re-create the marker so the
   // user doesn't see the installer window again after every update.
-  const defaultUserData = path.join(
-    process.env.APPDATA ?? "",
-    "GameHub"
-  );
-  if (fs.existsSync(path.join(defaultUserData, "LOCK")) || fs.existsSync(path.join(defaultUserData, "level-db"))) {
+  const defaultUserData = path.join(process.env.APPDATA ?? "", "GameHub");
+  if (
+    fs.existsSync(path.join(defaultUserData, "LOCK")) ||
+    fs.existsSync(path.join(defaultUserData, "level-db"))
+  ) {
     try {
       fs.writeFileSync(marker, "", "utf8");
     } catch {

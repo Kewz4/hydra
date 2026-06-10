@@ -48,7 +48,13 @@ export function GameCard({ game, ...props }: GameCardProps) {
   const { numberFormatter } = useFormat();
 
   const library = useAppSelector((state) => state.library.value);
-  const PLATFORM_SCHEMES = ["steam://", "legendary://", "goggalaxy://", "msxbox://", "battlenet://"];
+  const PLATFORM_SCHEMES = [
+    "steam://",
+    "legendary://",
+    "goggalaxy://",
+    "msxbox://",
+    "battlenet://",
+  ];
   // Only show platform icons for games actually synced from a platform (not catalog-added)
   const ownedShops = library
     .filter(

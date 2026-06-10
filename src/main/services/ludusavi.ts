@@ -67,8 +67,10 @@ export class Ludusavi {
           } else {
             logger.info("[ludusavi] manifest updated successfully");
           }
-          if (stderr?.trim()) logger.verbose(`[ludusavi:manifest] ${stderr.trim()}`);
-          if (stdout?.trim()) logger.verbose(`[ludusavi:manifest] ${stdout.trim()}`);
+          if (stderr?.trim())
+            logger.verbose(`[ludusavi:manifest] ${stderr.trim()}`);
+          if (stdout?.trim())
+            logger.verbose(`[ludusavi:manifest] ${stdout.trim()}`);
           resolve();
         }
       );

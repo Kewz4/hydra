@@ -17,11 +17,19 @@ import BattleNetLogo from "@renderer/assets/battlenet-logo.svg?react";
 import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
 import GameHubLogo from "@renderer/assets/gamehub-logo.svg?react";
 
-const PLATFORM_SCHEMES = ["steam://", "legendary://", "goggalaxy://", "msxbox://", "battlenet://"];
+const PLATFORM_SCHEMES = [
+  "steam://",
+  "legendary://",
+  "goggalaxy://",
+  "msxbox://",
+  "battlenet://",
+];
 
 function isPlatformSynced(game: LibraryGame): boolean {
   if (!game.executablePath) return false;
-  return PLATFORM_SCHEMES.some((scheme) => game.executablePath!.startsWith(scheme));
+  return PLATFORM_SCHEMES.some((scheme) =>
+    game.executablePath!.startsWith(scheme)
+  );
 }
 
 const shopIcon: Record<string, JSX.Element> = {

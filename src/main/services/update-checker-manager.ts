@@ -64,7 +64,10 @@ export class UpdateCheckerManager {
       })
       .on("update-available", (info: UpdateInfo) => {
         if (info.version === app.getVersion()) {
-          this.sendEvent({ type: "not-available", currentVersion: app.getVersion() });
+          this.sendEvent({
+            type: "not-available",
+            currentVersion: app.getVersion(),
+          });
           return;
         }
         this.sendEvent({ type: "available", version: info.version });
