@@ -21,9 +21,9 @@ export function SettingsLudusaviImport() {
   const { showSuccessToast, showErrorToast } = useToast();
   const [scanning, setScanning] = useState(false);
   const [entries, setEntries] = useState<ScanEntry[]>([]);
-  const [importStates, setImportStates] = useState<
-    Record<string, ImportState>
-  >({});
+  const [importStates, setImportStates] = useState<Record<string, ImportState>>(
+    {}
+  );
   const [scannedPath, setScannedPath] = useState("");
 
   const handlePickFolder = async () => {
@@ -101,9 +101,7 @@ export function SettingsLudusaviImport() {
       </div>
 
       {scannedPath && !scanning && entries.length > 0 && (
-        <div
-          style={{ display: "flex", flexDirection: "column", gap: "8px" }}
-        >
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <p style={{ margin: 0, fontSize: "0.8rem", opacity: 0.5 }}>
             Found {entries.length} game backup{entries.length !== 1 ? "s" : ""}{" "}
             in <code>{scannedPath}</code>

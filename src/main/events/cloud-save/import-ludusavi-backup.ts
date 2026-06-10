@@ -41,10 +41,9 @@ const importLudusaviBackup = async (
     const gameBackupDir = path.dirname(backupFolderPath);
     const gameFolder = path.basename(backupFolderPath);
 
-    await tar.create(
-      { gzip: false, file: tarPath, cwd: gameBackupDir },
-      [gameFolder]
-    );
+    await tar.create({ gzip: false, file: tarPath, cwd: gameBackupDir }, [
+      gameFolder,
+    ]);
 
     const artifactId = await UploadcareSync.uploadFile(tarPath, {
       userId,
