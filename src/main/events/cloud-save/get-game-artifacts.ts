@@ -1,6 +1,11 @@
 import { UploadcareSync } from "@main/services/uploadcare-sync";
 import { registerEvent } from "../register-event";
-import { db, levelKeys } from "@main/level";
+import {
+  db,
+  gamesShopAssetsSublevel,
+  gamesSublevel,
+  levelKeys,
+} from "@main/level";
 import type { GameShop, UserPreferences } from "@types";
 
 const getGameArtifacts = async (
@@ -18,7 +23,13 @@ const getGameArtifacts = async (
     .catch(() => ({}) as UserPreferences);
 
   const userId = prefs?.cloudSyncUserId ?? "anonymous";
-  return UploadcareSync.listArtifacts(userId, shop, objectId);
+
+  const gameKey = levelKeys.game(shop, objectId);
+  const game = await gamesSublevel.get(gameKey).catch(() => null);
+  const assets = await gamesShopAssetsSublevel.get(gameKey).catch(() => null);
+  const gameTitle = game?.title ?? assets?.title ?? null;
+
+  return UploadcareSync.listArtifacts(userId, shop, objectId, gameTitle);
 };
 
 registerEvent("getGameArtifacts", getGameArtifacts);

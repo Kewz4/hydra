@@ -40,13 +40,18 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
 
     const existing = await gamesSublevel.get(gameKey).catch(() => null);
     if (existing && !existing.isDeleted) {
+      const updates: Partial<typeof existing> = {};
       // Update playtime if Epic reports more than we currently have
       if (epicPlaytimeMs > (existing.playTimeInMilliseconds ?? 0)) {
-        await gamesSublevel.put(gameKey, {
-          ...existing,
-          playTimeInMilliseconds: epicPlaytimeMs,
-          lastTimePlayed: existing.lastTimePlayed ?? new Date(),
-        });
+        updates.playTimeInMilliseconds = epicPlaytimeMs;
+        updates.lastTimePlayed = existing.lastTimePlayed ?? new Date();
+      }
+      // Owned on Epic — make sure it's classified as synced
+      if (existing.libraryOrigin !== "sync") {
+        updates.libraryOrigin = "sync";
+      }
+      if (Object.keys(updates).length > 0) {
+        await gamesSublevel.put(gameKey, { ...existing, ...updates });
       }
       continue;
     }
@@ -100,6 +105,7 @@ const syncEpicLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
       lastTimePlayed: epicPlaytimeMs > 0 ? new Date() : null,
       addedToLibraryAt: new Date(),
       automaticCloudSync: true,
+      libraryOrigin: "sync" as const,
       executablePath,
     };
 

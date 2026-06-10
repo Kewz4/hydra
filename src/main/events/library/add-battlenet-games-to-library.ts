@@ -32,6 +32,7 @@ const addBattleNetGamesToLibrary = async (
       playTimeInMilliseconds: 0,
       lastTimePlayed: null,
       addedToLibraryAt: new Date(),
+      libraryOrigin: "sync" as const,
       executablePath: def.launchUri,
     };
 

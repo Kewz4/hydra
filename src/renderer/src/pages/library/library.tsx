@@ -36,6 +36,7 @@ import { LibraryGameCard } from "./library-game-card";
 import { LibraryGameCardLarge } from "./library-game-card-large";
 import { ViewOptions, ViewMode } from "./view-options";
 import { FilterOptions, SortOption } from "./filter-options";
+import { getGameOrigin } from "@renderer/helpers/game-origin";
 import "./library.scss";
 
 const FAVORITES_COLLECTION_ID = "__favorites__";
@@ -472,30 +473,24 @@ export default function Library() {
   const storeFilteredLibrary = useMemo(() => {
     if (storeFilter === "all") return filteredLibrary;
 
-    // Platform filters — match by shop regardless of exe state
-    if (storeFilter === "steam")
-      return filteredLibrary.filter((g) => g.shop === "steam");
-    if (storeFilter === "epic")
-      return filteredLibrary.filter((g) => g.shop === "epic");
-    if (storeFilter === "gog")
-      return filteredLibrary.filter((g) => g.shop === "gog");
-    if (storeFilter === "xbox")
-      return filteredLibrary.filter((g) => g.shop === "xbox");
+    // Platform filters — games owned on (synced from) that platform
+    if (
+      storeFilter === "steam" ||
+      storeFilter === "epic" ||
+      storeFilter === "gog" ||
+      storeFilter === "xbox"
+    )
+      return filteredLibrary.filter(
+        (g) => g.shop === storeFilter && getGameOrigin(g) === "sync"
+      );
 
-    // Retigga = custom games OR games with a file-path exe (installed repacks)
-    //           OR games currently being downloaded as repacks
-    // Excludes games whose exe is an official protocol (those belong to platform filters)
+    // Retigga = games added from the Hydra API catalog (not owned anywhere)
     if (storeFilter === "retigga")
-      return filteredLibrary.filter((g) => {
-        if (g.shop === "custom") return true;
-        const exe = g.executablePath;
-        if (exe?.startsWith("steam://")) return false;
-        if (exe?.startsWith("legendary://")) return false;
-        if (exe?.startsWith("goggalaxy://")) return false;
-        if (exe?.startsWith("msxbox://")) return false;
-        // Has an installed file-path exe, or an active download record
-        return (exe != null && !exe.includes("://")) || g.download != null;
-      });
+      return filteredLibrary.filter((g) => getGameOrigin(g) === "catalog");
+
+    // Custom = games added manually via "Add custom game"
+    if (storeFilter === "custom")
+      return filteredLibrary.filter((g) => getGameOrigin(g) === "custom");
 
     return filteredLibrary.filter((g) => g.shop === storeFilter);
   }, [filteredLibrary, storeFilter]);

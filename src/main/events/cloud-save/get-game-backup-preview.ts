@@ -23,6 +23,7 @@ const getGameBackupPreview = async (
   return Ludusavi.getBackupPreview(
     shop,
     gameTitle,
+    objectId,
     Wine.getEffectivePrefixPath(game?.winePrefixPath, objectId)
   );
 };

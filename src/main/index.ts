@@ -85,6 +85,20 @@ i18n.init({
   },
 });
 
+// Must be registered before app ready: lets the renderer fetch() local: URLs
+// (e.g. profile image crop reads files as blobs) without tainting canvases.
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: "local",
+    privileges: {
+      secure: true,
+      supportFetchAPI: true,
+      bypassCSP: true,
+      stream: true,
+    },
+  },
+]);
+
 const PROTOCOL = "hydralauncher";
 
 if (process.defaultApp) {

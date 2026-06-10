@@ -25,6 +25,7 @@ const addGameToLibrary = async (
 
     game.isDeleted = false;
     game.addedToLibraryAt ??= new Date();
+    game.libraryOrigin ??= "catalog";
 
     await gamesSublevel.put(gameKey, game);
   } else {
@@ -41,6 +42,7 @@ const addGameToLibrary = async (
       lastTimePlayed: null,
       addedToLibraryAt: new Date(),
       automaticCloudSync: shop !== "custom",
+      libraryOrigin: "catalog" as const,
     };
 
     await gamesSublevel.put(gameKey, game);

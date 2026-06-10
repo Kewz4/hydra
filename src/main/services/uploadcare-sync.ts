@@ -57,31 +57,70 @@ export class UploadcareSync {
     return uuid;
   }
 
-  /** List save artifacts for a game, newest first. */
+  /** Strip everything except letters and digits, lowercase. The Uploadcare
+   * CDN does the same to filenames, so legacy uploads can only be matched
+   * after normalizing both sides. */
+  private static normalizeName(value: string): string {
+    return value.toLowerCase().replace(/[^a-z0-9]/gi, "");
+  }
+
+  /** Fetch all files for the project, following pagination (up to maxPages).
+   * Uploadcare's list endpoint does not support filtering by metadata, so
+   * all filtering happens client-side. */
+  private static async fetchAllFiles(maxPages = 5): Promise<any[]> {
+    const files: any[] = [];
+    let url: string | null =
+      `${API_BASE}/files/?ordering=-datetime_uploaded&limit=100`;
+
+    for (let page = 0; page < maxPages && url; page++) {
+      const res = await axios.get(url, {
+        headers: {
+          Authorization: AUTH_HEADER,
+          Accept: "application/vnd.uploadcare-v0.7+json",
+        },
+        timeout: 20_000,
+      });
+      files.push(...(res.data.results ?? []));
+      url = res.data.next ?? null;
+    }
+
+    return files;
+  }
+
+  /** List save artifacts for a game, newest first. `gameTitle` enables
+   * matching legacy uploads whose filename encodes the title. */
   static async listArtifacts(
     userId: string,
     shop: GameShop,
-    objectId: string
+    objectId: string,
+    gameTitle?: string | null
   ): Promise<GameArtifact[]> {
-    const qs = `metadata[userId]=${encodeURIComponent(userId)}&metadata[shop]=${encodeURIComponent(shop)}&metadata[objectId]=${encodeURIComponent(objectId)}&ordering=-datetime_uploaded&limit=20`;
-    const res = await axios.get(`${API_BASE}/files/?${qs}`, {
-      headers: {
-        Authorization: AUTH_HEADER,
-        Accept: "application/vnd.uploadcare-v0.7+json",
-      },
-      timeout: 15_000,
-    });
+    const results = await this.fetchAllFiles();
 
-    const results: any[] = res.data.results ?? [];
+    const idPrefix = this.normalizeName(`${shop}-${objectId}-`);
+    const titlePrefix = gameTitle
+      ? this.normalizeName(`${shop}-${gameTitle}-`)
+      : null;
+
     return results
       .filter((f) => {
         const meta = f.metadata ?? {};
+        // Note: deliberately NOT filtering by userId here — a reinstall
+        // generates a fresh cloudSyncUserId and would orphan every existing
+        // backup. The shop+objectId match is the real identity.
+        void userId;
         if (meta.shop && meta.objectId) {
           return meta.shop === shop && meta.objectId === objectId;
         }
-        // Fallback: parse filename — format is `{shop}-{objectId}-{timestamp}.tar`
-        const filename: string = (f.original_filename as string) ?? "";
-        return filename.startsWith(`${shop}-${objectId}-`);
+        // Legacy uploads (no metadata): match by filename.
+        // Format is `{shop}-{objectId}-{timestamp}.tar`; older builds used
+        // the game title instead of the objectId.
+        const filename = this.normalizeName(
+          (f.original_filename as string) ?? ""
+        );
+        if (filename.startsWith(idPrefix)) return true;
+        if (titlePrefix && filename.startsWith(titlePrefix)) return true;
+        return false;
       })
       .map((f) => ({
         id: f.uuid as string,
@@ -101,16 +140,11 @@ export class UploadcareSync {
   static async listAllArtifacts(
     userId: string
   ): Promise<GameArtifactWithGame[]> {
-    const qs = `metadata[userId]=${encodeURIComponent(userId)}&ordering=-datetime_uploaded&limit=100`;
-    const res = await axios.get(`${API_BASE}/files/?${qs}`, {
-      headers: {
-        Authorization: AUTH_HEADER,
-        Accept: "application/vnd.uploadcare-v0.7+json",
-      },
-      timeout: 20_000,
-    });
+    const results = await this.fetchAllFiles();
 
-    const results: any[] = res.data.results ?? [];
+    // Note: not filtering by userId — a reinstall generates a fresh
+    // cloudSyncUserId and would orphan every existing backup.
+    void userId;
     return results
       .filter((f) => f.metadata?.shop && f.metadata?.objectId)
       .map((f) => ({

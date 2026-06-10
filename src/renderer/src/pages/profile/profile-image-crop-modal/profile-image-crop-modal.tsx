@@ -459,9 +459,28 @@ export function ProfileImageCropModal({
         outputSize.height
       );
 
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, "image/webp", 0.92)
-      );
+      let blob: Blob | null = null;
+      try {
+        blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, "image/webp", 0.92)
+        );
+      } catch {
+        // Tainted canvas (source loaded without CORS) — fall back to
+        // cropping in the main process via sharp, which reads the file
+        // directly from disk.
+        const { imagePath: croppedImagePath } =
+          await window.electron.cropProfileImage(imagePath, {
+            left: sourceX,
+            top: sourceY,
+            width: sourceWidth,
+            height: sourceHeight,
+            outputWidth: outputSize.width,
+            outputHeight: outputSize.height,
+            rotation,
+          });
+        onApply(croppedImagePath);
+        return;
+      }
 
       if (!blob) throw new Error("Could not export cropped image");
 

@@ -30,7 +30,16 @@ const syncGamePassLibrary = async () => {
   for (const xboxGame of games) {
     const gameKey = levelKeys.game("xbox", xboxGame.productId);
     const existing = await gamesSublevel.get(gameKey).catch(() => null);
-    if (existing && !existing.isDeleted) continue;
+    if (existing && !existing.isDeleted) {
+      // Owned on Xbox — make sure it's classified as synced
+      if (existing.libraryOrigin !== "sync") {
+        await gamesSublevel.put(gameKey, {
+          ...existing,
+          libraryOrigin: "sync",
+        });
+      }
+      continue;
+    }
 
     // Check for same game from another shop — attach as alternativeShop instead of duplicating
     const titleMatch = await findGameByTitle(xboxGame.title);
@@ -79,6 +88,7 @@ const syncGamePassLibrary = async () => {
       lastTimePlayed: null,
       addedToLibraryAt: new Date(),
       automaticCloudSync: true,
+      libraryOrigin: "sync" as const,
       executablePath: `msxbox://game/?productId=${xboxGame.productId}`,
       xboxTitleId: xboxGame.titleId ?? null,
     } as any;

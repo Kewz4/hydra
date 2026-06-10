@@ -16,21 +16,7 @@ import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import BattleNetLogo from "@renderer/assets/battlenet-logo.svg?react";
 import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
 import GameHubLogo from "@renderer/assets/gamehub-logo.svg?react";
-
-const PLATFORM_SCHEMES = [
-  "steam://",
-  "legendary://",
-  "goggalaxy://",
-  "msxbox://",
-  "battlenet://",
-];
-
-function isPlatformSynced(game: LibraryGame): boolean {
-  if (!game.executablePath) return false;
-  return PLATFORM_SCHEMES.some((scheme) =>
-    game.executablePath!.startsWith(scheme)
-  );
-}
+import { getGameOrigin } from "@renderer/helpers/game-origin";
 
 const shopIcon: Record<string, JSX.Element> = {
   steam: <SteamLogo className="library-game-card__shop-icon" />,
@@ -152,7 +138,7 @@ export const LibraryGameCard = memo(function LibraryGameCard({
         <div className="library-game-card__top-section">
           <div className="library-game-card__shop-badge">
             <GameHubLogo className="library-game-card__shop-icon library-game-card__shop-icon--gamehub" />
-            {isPlatformSynced(game) && shopIcon[game.shop]}
+            {getGameOrigin(game) === "sync" && shopIcon[game.shop]}
           </div>
           <div className="library-game-card__playtime">
             {game.hasManuallyUpdatedPlaytime ? (

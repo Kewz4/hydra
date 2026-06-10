@@ -102,7 +102,12 @@ export class CloudSync {
       );
     }
 
-    await Ludusavi.backupGame(shop, gameTitle, backupPath, winePrefix);
+    // Resolve the canonical manifest name (exact-title matching is fragile)
+    const canonicalName =
+      (await Ludusavi.findCanonicalName(shop, gameTitle, objectId)) ??
+      gameTitle;
+
+    await Ludusavi.backupGame(shop, canonicalName, backupPath, winePrefix);
 
     const tarLocation = path.join(backupsPath, `${crypto.randomUUID()}.tar`);
 

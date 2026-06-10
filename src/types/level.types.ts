@@ -67,6 +67,9 @@ export interface Game {
   unlockedAchievementCount?: number;
   pinnedDate?: Date | null;
   automaticCloudSync?: boolean;
+  /** How the game entered the library: synced from a platform account,
+   * added from the Hydra API catalog, or added manually as a custom game. */
+  libraryOrigin?: "sync" | "catalog" | "custom";
   lastCloudSaveAt?: Date | null;
   hasManuallyUpdatedPlaytime?: boolean;
   newDownloadOptionsCount?: number;

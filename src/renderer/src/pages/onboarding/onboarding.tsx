@@ -145,7 +145,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const webviewOpen = epicWindowOpen || gogWindowOpen;
   useEffect(() => {
     if (webviewOpen) {
-      window.electron.setWindowSize(960, 820, 960, 820).catch(() => {});
+      window.electron.setWindowSize(960, 900, 960, 900).catch(() => {});
     } else {
       window.electron.setWindowSize(960, 680, 960, 680).catch(() => {});
     }
@@ -957,7 +957,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <div
                     ref={epicWebviewContainerRef}
                     style={{
-                      height: "560px",
+                      height: "calc(100vh - 290px)",
+                      minHeight: "480px",
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}
@@ -1035,7 +1036,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <div
                     ref={gogWebviewContainerRef}
                     style={{
-                      height: "560px",
+                      height: "calc(100vh - 290px)",
+                      minHeight: "480px",
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}

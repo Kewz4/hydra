@@ -41,6 +41,7 @@ import {
 import { clearNewDownloadOptions } from "@renderer/features";
 import { levelDBService } from "@renderer/services/leveldb.service";
 import { getGameKey } from "@renderer/helpers";
+import { getGameOrigin } from "@renderer/helpers/game-origin";
 import "./repacks-modal.scss";
 
 export interface RepacksModalProps {
@@ -491,19 +492,14 @@ export function RepacksModal({
               game.shop === "gog" || altShops.some((s) => s.shop === "gog");
             const isEpicGame =
               game.shop === "epic" || altShops.some((s) => s.shop === "epic");
-            // Show Steam download button when the game was synced from the Steam
-            // library (executablePath starts with steam://) OR was installed and
-            // the path changed to a real exe but user still has Steam connected.
-            const hasSteamExe =
-              typeof game.executablePath === "string" &&
-              (game.executablePath.startsWith("steam://") ||
-                (!game.executablePath.startsWith("legendary://") &&
-                  !game.executablePath.startsWith("goggalaxy://")));
+            // Show Steam download button only when the game is actually owned
+            // on Steam (synced from the Steam library) — not for catalog-added
+            // entries that merely use the steam shop for assets.
             const isOwnedOnSteam =
               game.shop === "steam" &&
               hasSteamConnected &&
               !(game as any)._synthesized &&
-              hasSteamExe;
+              getGameOrigin(game) === "sync";
             const hasPlatformOptions =
               isOwnedOnSteam || isGogGame || isEpicGame;
 

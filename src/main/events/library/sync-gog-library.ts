@@ -62,6 +62,11 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
 
           // Always refresh playtime from GOG API for existing games too
           if (existing && !existing.isDeleted && userInfo) {
+            // Owned on GOG — make sure it's classified as synced
+            if (existing.libraryOrigin !== "sync") {
+              existing.libraryOrigin = "sync";
+              await gamesSublevel.put(gameKey, existing);
+            }
             const clientId = await getGogGameClientId(objectId).catch(
               () => null
             );
@@ -152,6 +157,7 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
             lastTimePlayed: gogPlaytimeMs > 0 ? new Date() : null,
             addedToLibraryAt: new Date(),
             automaticCloudSync: true,
+            libraryOrigin: "sync" as const,
             executablePath: null,
           };
 
