@@ -135,7 +135,7 @@ export class UpdateCheckerManager {
     const chunks: Buffer[] = [];
     let downloaded = 0;
 
-    while (true) {
+    for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
       chunks.push(Buffer.from(value));
