@@ -102,11 +102,6 @@ export default function UpdateChecker() {
   const showProgress =
     (phase === "downloading" || phase === "available") && stats;
   const showInstallBtn = phase === "downloaded";
-  const showSkip =
-    phase === "error" ||
-    phase === "checking" ||
-    phase === "available" ||
-    phase === "downloading";
   const isError = phase === "error";
 
   return (
@@ -173,13 +168,13 @@ export default function UpdateChecker() {
           </button>
 
           <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            {showSkip && (
+            {isError && (
               <button
                 type="button"
                 className="update-checker__btn update-checker__btn--ghost"
                 onClick={proceed}
               >
-                {isError ? "Continue anyway" : "Skip"}
+                Continue anyway
               </button>
             )}
             {showInstallBtn && (

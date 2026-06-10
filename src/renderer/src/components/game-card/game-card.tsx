@@ -6,6 +6,7 @@ import EpicLogo from "@renderer/assets/epic-logo.svg?react";
 import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import BattleNetLogo from "@renderer/assets/battlenet-logo.svg?react";
 import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
+import GameHubLogo from "@renderer/assets/gamehub-logo.svg?react";
 
 import "./game-card.scss";
 
@@ -13,7 +14,7 @@ import { useTranslation } from "react-i18next";
 import { Badge } from "../badge/badge";
 import { StarRating } from "../star-rating/star-rating";
 import { useCallback, useState } from "react";
-import { useFormat } from "@renderer/hooks";
+import { useFormat, useAppSelector } from "@renderer/hooks";
 
 export interface GameCardProps
   extends React.DetailedHTMLProps<
@@ -46,6 +47,11 @@ export function GameCard({ game, ...props }: GameCardProps) {
 
   const { numberFormatter } = useFormat();
 
+  const library = useAppSelector((state) => state.library.value);
+  const ownedShops = library
+    .filter((g) => g.objectId === game.objectId)
+    .map((g) => g.shop);
+
   return (
     <button
       {...props}
@@ -63,7 +69,17 @@ export function GameCard({ game, ...props }: GameCardProps) {
 
         <div className="game-card__content">
           <div className="game-card__title-container">
-            {shopIcon[game.shop]}
+            <div className="game-card__shop-icons">
+              <GameHubLogo className="game-card__shop-icon game-card__shop-icon--gamehub" />
+              {ownedShops.map(
+                (s) =>
+                  shopIcon[s] && (
+                    <span key={s} className="game-card__shop-icon-wrap">
+                      {shopIcon[s]}
+                    </span>
+                  )
+              )}
+            </div>
             <p className="game-card__title">{game.title}</p>
           </div>
 

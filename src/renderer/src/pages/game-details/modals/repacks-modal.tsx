@@ -491,17 +491,13 @@ export function RepacksModal({
               game.shop === "gog" || altShops.some((s) => s.shop === "gog");
             const isEpicGame =
               game.shop === "epic" || altShops.some((s) => s.shop === "epic");
-            // Only show the Steam download button when the game was actually
-            // synced from the user's Steam library — Steam-synced games have
-            // executablePath set to "steam://run/<id>" by sync-steam-library.
-            // Games manually added from catalogue (or downloaded as repacks)
-            // do NOT have a steam:// executablePath, so we skip the badge.
+            // Show the Steam download button if the game is in the Steam shop
+            // and the user has Steam connected. The executablePath check was
+            // removed because it breaks after installation (path changes to real exe).
             const isOwnedOnSteam =
               game.shop === "steam" &&
               hasSteamConnected &&
-              !(game as any)._synthesized &&
-              typeof game.executablePath === "string" &&
-              game.executablePath.startsWith("steam://");
+              !(game as any)._synthesized;
             const hasPlatformOptions =
               isOwnedOnSteam || isGogGame || isEpicGame;
 

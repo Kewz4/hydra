@@ -25,7 +25,7 @@
   &__logo-icon {
     width: 28px;
     height: 28px;
-    color: #16b195;
+    color: #ffffff;
   }
 
   &__logo-text {
@@ -102,11 +102,11 @@
     }
 
     &--active {
-      border-color: #16b195;
-      background: rgba(22, 177, 149, 0.08);
+      border-color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
 
       .installer__card-icon {
-        color: #16b195;
+        color: #ffffff;
       }
     }
   }
@@ -159,7 +159,7 @@
     font-family: inherit;
 
     &:focus {
-      border-color: rgba(22, 177, 149, 0.5);
+      border-color: rgba(255, 255, 255, 0.3);
     }
   }
 
@@ -192,11 +192,12 @@
     }
 
     &--primary {
-      background: #16b195;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       color: #fff;
 
       &:not(:disabled):hover {
-        background: #13a085;
+        background: rgba(255, 255, 255, 0.22);
       }
     }
 
@@ -215,8 +216,8 @@
   &__spinner {
     width: 36px;
     height: 36px;
-    border: 3px solid rgba(22, 177, 149, 0.2);
-    border-top-color: #16b195;
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top-color: #ffffff;
     border-radius: 50%;
     animation: installer-spin 0.8s linear infinite;
   }
@@ -232,7 +233,7 @@
 
   &__progress-fill {
     height: 100%;
-    background: #16b195;
+    background: rgba(255, 255, 255, 0.8);
     border-radius: 2px;
     transition: width 0.2s ease;
   }
@@ -251,13 +252,13 @@
   &__checkmark {
     width: 48px;
     height: 48px;
-    background: rgba(22, 177, 149, 0.15);
-    border: 2px solid rgba(22, 177, 149, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.25);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #16b195;
+    color: #ffffff;
 
     svg {
       width: 24px;

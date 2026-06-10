@@ -18,6 +18,11 @@ function sendLog(objectId: string, line: string, isError = false) {
     line,
     isError,
   });
+  if (isError) {
+    logger.error(`[gogdl:${objectId}] ${line}`);
+  } else {
+    logger.verbose(`[gogdl:${objectId}] ${line}`);
+  }
 }
 
 const activeGogdlDownloads = new Map<string, () => void>();

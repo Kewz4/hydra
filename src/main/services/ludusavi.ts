@@ -6,6 +6,7 @@ import path from "node:path";
 import YAML from "yaml";
 import cp from "node:child_process";
 import { SystemPath } from "./system-path";
+import { logger } from "./logger";
 
 export class Ludusavi {
   private static ludusaviResourcesPath = app.isPackaged
@@ -73,14 +74,22 @@ export class Ludusavi {
       if (backupPath) args.push("--path", backupPath);
       if (winePrefix) args.push("--wine-prefix", winePrefix);
 
+      logger.verbose(
+        `[ludusavi] ${this.binaryPath} ${args.join(" ")}`
+      );
       cp.execFile(
         this.binaryPath,
         args,
-        (err: cp.ExecFileException | null, stdout: string) => {
+        (err: cp.ExecFileException | null, stdout: string, stderr: string) => {
+          if (stderr?.trim()) {
+            logger.verbose(`[ludusavi:stderr] ${stderr.trim()}`);
+          }
           if (err) {
+            logger.error(`[ludusavi] error for ${objectId}: ${err.message}`);
             return reject(err);
           }
 
+          logger.verbose(`[ludusavi] completed for ${objectId}`);
           return resolve(JSON.parse(stdout) as LudusaviBackup);
         }
       );

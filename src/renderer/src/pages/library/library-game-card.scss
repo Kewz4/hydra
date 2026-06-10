@@ -279,14 +279,14 @@
   &__shop-badge {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
+    gap: 3px;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
     border-radius: 4px;
-    padding: 3px;
+    padding: 3px 4px;
     flex-shrink: 0;
+    min-width: 22px;
+    height: 22px;
   }
 
   &__shop-icon {
@@ -294,5 +294,10 @@
     height: 16px;
     opacity: 0.9;
     color: #ffffff;
+    flex-shrink: 0;
+
+    &--gamehub {
+      opacity: 0.55;
+    }
   }
 }

@@ -17,6 +17,11 @@ function sendLog(objectId: string, line: string, isError = false) {
     line,
     isError,
   });
+  if (isError) {
+    logger.error(`[legendary:${objectId}] ${line}`);
+  } else {
+    logger.verbose(`[legendary:${objectId}] ${line}`);
+  }
 }
 
 // Map from gameKey to the kill function for the active process

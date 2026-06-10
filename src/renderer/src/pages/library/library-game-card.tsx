@@ -15,6 +15,7 @@ import EpicLogo from "@renderer/assets/epic-logo.svg?react";
 import GogLogo from "@renderer/assets/gog-logo.svg?react";
 import BattleNetLogo from "@renderer/assets/battlenet-logo.svg?react";
 import XboxLogo from "@renderer/assets/xbox-logo.svg?react";
+import GameHubLogo from "@renderer/assets/gamehub-logo.svg?react";
 
 const shopIcon: Record<string, JSX.Element> = {
   steam: <SteamLogo className="library-game-card__shop-icon" />,
@@ -134,11 +135,10 @@ export const LibraryGameCard = memo(function LibraryGameCard({
     >
       <div className="library-game-card__overlay">
         <div className="library-game-card__top-section">
-          {shopIcon[game.shop] && (
-            <div className="library-game-card__shop-badge">
-              {shopIcon[game.shop]}
-            </div>
-          )}
+          <div className="library-game-card__shop-badge">
+            <GameHubLogo className="library-game-card__shop-icon library-game-card__shop-icon--gamehub" />
+            {shopIcon[game.shop]}
+          </div>
           <div className="library-game-card__playtime">
             {game.hasManuallyUpdatedPlaytime ? (
               <AlertFillIcon
