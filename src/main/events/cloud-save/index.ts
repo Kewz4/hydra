@@ -5,3 +5,5 @@ import "./upload-save-game";
 import "./get-game-artifacts";
 import "./get-all-artifacts";
 import "./delete-game-artifact";
+import "./scan-ludusavi-backup-folder";
+import "./import-ludusavi-backup";

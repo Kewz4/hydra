@@ -204,7 +204,10 @@ export function ProfileImageCropModal({
     let objectUrl: string | null = null;
     let isMounted = true;
 
-    fetch(`local:${imagePath}`)
+    const isRemote =
+      imagePath.startsWith("http://") || imagePath.startsWith("https://");
+
+    fetch(isRemote ? imagePath : `local:${imagePath}`)
       .then((response) => response.blob())
       .then((blob) => {
         if (!isMounted) return;
@@ -213,7 +216,7 @@ export function ProfileImageCropModal({
         setPreviewUrl(objectUrl);
       })
       .catch(() => {
-        if (isMounted) setPreviewUrl(`local:${imagePath}`);
+        if (isMounted) setPreviewUrl(isRemote ? null : `local:${imagePath}`);
       });
 
     return () => {
@@ -526,6 +529,7 @@ export function ProfileImageCropModal({
                 ref={imageRef}
                 src={previewUrl}
                 alt=""
+                crossOrigin="anonymous"
                 className="profile-image-crop-modal__image"
                 style={{
                   width: renderedWidth,

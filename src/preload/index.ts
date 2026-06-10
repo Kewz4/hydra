@@ -477,6 +477,21 @@ contextBridge.exposeInMainWorld("electron", {
   getAllArtifacts: () => ipcRenderer.invoke("getAllArtifacts"),
   deleteGameArtifact: (artifactId: string) =>
     ipcRenderer.invoke("deleteGameArtifact", artifactId),
+  scanLudusaviBackupFolder: (folderPath: string) =>
+    ipcRenderer.invoke("scanLudusaviBackupFolder", folderPath),
+  importLudusaviBackup: (
+    backupFolderPath: string,
+    gameName: string,
+    objectId: string,
+    shop: GameShop
+  ) =>
+    ipcRenderer.invoke(
+      "importLudusaviBackup",
+      backupFolderPath,
+      gameName,
+      objectId,
+      shop
+    ),
   getGameBackupPreview: (objectId: string, shop: GameShop) =>
     ipcRenderer.invoke("getGameBackupPreview", objectId, shop),
   selectGameBackupPath: (

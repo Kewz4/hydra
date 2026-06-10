@@ -948,7 +948,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <div
                     ref={epicWebviewContainerRef}
                     style={{
-                      height: "360px",
+                      height: "460px",
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}
@@ -1026,7 +1026,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <div
                     ref={gogWebviewContainerRef}
                     style={{
-                      height: "360px",
+                      height: "460px",
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}

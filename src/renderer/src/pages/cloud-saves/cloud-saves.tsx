@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { GameArtifactWithGame, GameShop } from "@types";
 import { Button } from "@renderer/components";
 import { useToast } from "@renderer/hooks";
@@ -31,6 +31,9 @@ function formatDate(iso: string): string {
 export default function CloudSaves() {
   const { t: _t } = useTranslation("game_details");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const filterShop = searchParams.get("shop") ?? null;
+  const filterObjectId = searchParams.get("objectId") ?? null;
   const { showSuccessToast, showErrorToast } = useToast();
 
   const [artifacts, setArtifacts] = useState<GameArtifactWithGame[]>([]);
@@ -58,12 +61,14 @@ export default function CloudSaves() {
   const grouped = useMemo<GroupedSaves>(() => {
     const map: GroupedSaves = {};
     for (const a of artifacts) {
+      if (filterShop && a.shop !== filterShop) continue;
+      if (filterObjectId && a.objectId !== filterObjectId) continue;
       const key = `${a.shop}:${a.objectId}`;
       if (!map[key]) map[key] = [];
       map[key].push(a);
     }
     return map;
-  }, [artifacts]);
+  }, [artifacts, filterShop, filterObjectId]);
 
   const handleRestore = useCallback(
     async (artifact: GameArtifactWithGame) => {
@@ -129,9 +134,20 @@ export default function CloudSaves() {
         <CloudIcon size={20} />
         <h2>Cloud Saves</h2>
         <span className="cloud-saves__count">
-          {artifacts.length} backup{artifacts.length !== 1 ? "s" : ""} across{" "}
           {keys.length} game{keys.length !== 1 ? "s" : ""}
+          {filterObjectId
+            ? null
+            : ` · ${artifacts.length} backup${artifacts.length !== 1 ? "s" : ""}`}
         </span>
+        {filterObjectId && (
+          <button
+            type="button"
+            className="cloud-saves__filter-clear"
+            onClick={() => navigate("/cloud-saves")}
+          >
+            View all saves
+          </button>
+        )}
       </div>
 
       <div className="cloud-saves__explainer">

@@ -476,6 +476,17 @@ declare global {
     ) => Promise<GameArtifact[]>;
     getAllArtifacts: () => Promise<GameArtifactWithGame[]>;
     deleteGameArtifact: (artifactId: string) => Promise<{ ok: boolean }>;
+    scanLudusaviBackupFolder: (
+      folderPath: string
+    ) => Promise<
+      { gameName: string; folderPath: string; hasMappingYaml: boolean }[]
+    >;
+    importLudusaviBackup: (
+      backupFolderPath: string,
+      gameName: string,
+      objectId: string,
+      shop: GameShop
+    ) => Promise<{ ok: boolean; artifactId?: string }>;
     getGameBackupPreview: (
       objectId: string,
       shop: GameShop
