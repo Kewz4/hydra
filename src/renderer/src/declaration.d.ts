@@ -60,7 +60,13 @@ declare global {
     | { type: "checking" }
     | { type: "not-available"; currentVersion: string }
     | { type: "available"; version: string }
-    | { type: "downloading"; percent: number; bytesPerSecond: number; transferred: number; total: number }
+    | {
+        type: "downloading";
+        percent: number;
+        bytesPerSecond: number;
+        transferred: number;
+        total: number;
+      }
     | { type: "downloaded"; version: string }
     | { type: "applying" }
     | { type: "error"; message: string };
@@ -614,7 +620,9 @@ declare global {
     updateCheckerProceed: () => Promise<void>;
     updateCheckerApply: () => Promise<void>;
     toggleConsoleWindow: () => Promise<void>;
-    onUpdateCheckerEvent: (cb: (event: UpdateCheckerEvent) => void) => () => void;
+    onUpdateCheckerEvent: (
+      cb: (event: UpdateCheckerEvent) => void
+    ) => () => void;
 
     /* Auth */
     getAuth: () => Promise<Auth | null>;

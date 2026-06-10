@@ -100,7 +100,10 @@ export default function UpdateChecker() {
     (phase === "downloading" || phase === "available") && stats;
   const showInstallBtn = phase === "downloaded";
   const showSkip =
-    phase === "error" || phase === "checking" || phase === "available" || phase === "downloading";
+    phase === "error" ||
+    phase === "checking" ||
+    phase === "available" ||
+    phase === "downloading";
   const isError = phase === "error";
 
   return (
@@ -130,7 +133,8 @@ export default function UpdateChecker() {
           )}
           <div
             className={
-              "update-checker__status" + (isError ? " update-checker__status--error" : "")
+              "update-checker__status" +
+              (isError ? " update-checker__status--error" : "")
             }
           >
             {statusLine()}

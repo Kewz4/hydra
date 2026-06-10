@@ -720,7 +720,8 @@ contextBridge.exposeInMainWorld("electron", {
   updateCheckerApply: () => ipcRenderer.invoke("updateCheckerApply"),
   toggleConsoleWindow: () => ipcRenderer.invoke("toggleConsoleWindow"),
   onUpdateCheckerEvent: (cb: (event: unknown) => void) => {
-    const listener = (_e: Electron.IpcRendererEvent, event: unknown) => cb(event);
+    const listener = (_e: Electron.IpcRendererEvent, event: unknown) =>
+      cb(event);
     ipcRenderer.on("updateCheckerEvent", listener);
     return () => ipcRenderer.removeListener("updateCheckerEvent", listener);
   },

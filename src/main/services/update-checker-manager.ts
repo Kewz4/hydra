@@ -12,13 +12,20 @@ export type UpdateCheckerEvent =
   | { type: "checking" }
   | { type: "not-available"; currentVersion: string }
   | { type: "available"; version: string }
-  | { type: "downloading"; percent: number; bytesPerSecond: number; transferred: number; total: number }
+  | {
+      type: "downloading";
+      percent: number;
+      bytesPerSecond: number;
+      transferred: number;
+      total: number;
+    }
   | { type: "downloaded"; version: string }
   | { type: "applying" }
   | { type: "error"; message: string };
 
 export class UpdateCheckerManager {
-  private static sendEventFn: ((event: UpdateCheckerEvent) => void) | null = null;
+  private static sendEventFn: ((event: UpdateCheckerEvent) => void) | null =
+    null;
   private static portableExtractDir = "";
 
   static readonly isPortable =
@@ -38,7 +45,10 @@ export class UpdateCheckerManager {
 
     if (!app.isPackaged) {
       await new Promise((r) => setTimeout(r, 800));
-      this.sendEvent({ type: "not-available", currentVersion: app.getVersion() });
+      this.sendEvent({
+        type: "not-available",
+        currentVersion: app.getVersion(),
+      });
       return;
     }
 
@@ -47,7 +57,10 @@ export class UpdateCheckerManager {
 
     autoUpdater
       .on("update-not-available", () => {
-        this.sendEvent({ type: "not-available", currentVersion: app.getVersion() });
+        this.sendEvent({
+          type: "not-available",
+          currentVersion: app.getVersion(),
+        });
       })
       .on("update-available", (info: UpdateInfo) => {
         this.sendEvent({ type: "available", version: info.version });
@@ -106,7 +119,8 @@ export class UpdateCheckerManager {
     const zipAsset = release.assets.find(
       (a) =>
         a.name.toLowerCase().endsWith(".zip") &&
-        (a.name.toLowerCase().includes("win") || a.name.toLowerCase().includes("x64"))
+        (a.name.toLowerCase().includes("win") ||
+          a.name.toLowerCase().includes("x64"))
     );
 
     if (!zipAsset) throw new Error("No Windows ZIP asset found in release");
@@ -143,15 +157,18 @@ export class UpdateCheckerManager {
 
     // Use 7z to extract
     const { SevenZip } = await import("./7zip");
-    await SevenZip.extractFile({ filePath: zipPath, outputPath: extractDir }, (p) => {
-      this.sendEvent({
-        type: "downloading",
-        percent: 80 + p.percent * 0.2,
-        bytesPerSecond: 0,
-        transferred: 0,
-        total: 0,
-      });
-    });
+    await SevenZip.extractFile(
+      { filePath: zipPath, outputPath: extractDir },
+      (p) => {
+        this.sendEvent({
+          type: "downloading",
+          percent: 80 + p.percent * 0.2,
+          bytesPerSecond: 0,
+          transferred: 0,
+          total: 0,
+        });
+      }
+    );
 
     try {
       fs.unlinkSync(zipPath);
@@ -168,8 +185,7 @@ export class UpdateCheckerManager {
 
     const exeDir =
       process.env.PORTABLE_EXECUTABLE_DIR ?? path.dirname(process.execPath);
-    const exePath =
-      process.env.PORTABLE_EXECUTABLE_FILE ?? process.execPath;
+    const exePath = process.env.PORTABLE_EXECUTABLE_FILE ?? process.execPath;
     const exeName = path.basename(exePath);
     const srcDir = this.portableExtractDir;
     const batPath = path.join(os.tmpdir(), "gamehub-apply-update.bat");
