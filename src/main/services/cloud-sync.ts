@@ -1,4 +1,4 @@
-import { levelKeys, gamesSublevel } from "@main/level";
+import { levelKeys, gamesSublevel, gamesShopAssetsSublevel } from "@main/level";
 import path from "node:path";
 import * as tar from "tar";
 import crypto from "node:crypto";
@@ -68,6 +68,16 @@ export class CloudSync {
     });
   }
 
+  private static async resolveGameTitle(
+    shop: GameShop,
+    objectId: string
+  ): Promise<string | null> {
+    const gameKey = levelKeys.game(shop, objectId);
+    const game = await gamesSublevel.get(gameKey).catch(() => null);
+    const assets = await gamesShopAssetsSublevel.get(gameKey).catch(() => null);
+    return game?.title ?? assets?.title ?? null;
+  }
+
   private static async bundleBackup(
     shop: GameShop,
     objectId: string,
@@ -84,7 +94,15 @@ export class CloudSync {
       }
     }
 
-    await Ludusavi.backupGame(shop, objectId, backupPath, winePrefix);
+    // Ludusavi's manifest is indexed by game title, not objectId
+    const gameTitle = await this.resolveGameTitle(shop, objectId);
+    if (!gameTitle) {
+      throw new Error(
+        `Cannot backup ${shop}:${objectId} — game title not found`
+      );
+    }
+
+    await Ludusavi.backupGame(shop, gameTitle, backupPath, winePrefix);
 
     const tarLocation = path.join(backupsPath, `${crypto.randomUUID()}.tar`);
 

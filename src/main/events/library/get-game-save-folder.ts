@@ -1,6 +1,7 @@
 import { registerEvent } from "../register-event";
 import type { GameShop } from "@types";
 import { Ludusavi, logger } from "@main/services";
+import { gamesSublevel, gamesShopAssetsSublevel, levelKeys } from "@main/level";
 import path from "node:path";
 
 const getGameSaveFolder = async (
@@ -9,13 +10,32 @@ const getGameSaveFolder = async (
   objectId: string
 ): Promise<string | null> => {
   try {
-    const backupPreview = await Ludusavi.getBackupPreview(shop, objectId, null);
+    const gameKey = levelKeys.game(shop, objectId);
+
+    // Resolve the game title — ludusavi's manifest is keyed by title, not objectId
+    const game = await gamesSublevel.get(gameKey).catch(() => null);
+    const assets = await gamesShopAssetsSublevel.get(gameKey).catch(() => null);
+    const gameTitle = game?.title ?? assets?.title ?? null;
+
+    if (!gameTitle) {
+      logger.warn(
+        `[getGameSaveFolder] No title found for ${shop}:${objectId}, cannot query ludusavi`
+      );
+      return null;
+    }
+
+    const backupPreview = await Ludusavi.getBackupPreview(
+      shop,
+      gameTitle,
+      null
+    );
 
     if (!backupPreview) {
       return null;
     }
 
-    const gameData = backupPreview.games[objectId];
+    // ludusavi keys results by the title we passed in
+    const gameData = backupPreview.games[gameTitle];
     if (!gameData?.files) {
       return null;
     }
@@ -25,7 +45,6 @@ const getGameSaveFolder = async (
       return null;
     }
 
-    // Return the directory of the first save file found
     return path.dirname(filePaths[0]);
   } catch (error) {
     logger.error("[getGameSaveFolder] Error getting save folder:", error);
