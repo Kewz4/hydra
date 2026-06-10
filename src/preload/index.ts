@@ -716,6 +716,14 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("resetCommonRedistPreflight"),
   checkForUpdates: () => ipcRenderer.invoke("checkForUpdates"),
   restartAndInstallUpdate: () => ipcRenderer.invoke("restartAndInstallUpdate"),
+  updateCheckerProceed: () => ipcRenderer.invoke("updateCheckerProceed"),
+  updateCheckerApply: () => ipcRenderer.invoke("updateCheckerApply"),
+  toggleConsoleWindow: () => ipcRenderer.invoke("toggleConsoleWindow"),
+  onUpdateCheckerEvent: (cb: (event: unknown) => void) => {
+    const listener = (_e: Electron.IpcRendererEvent, event: unknown) => cb(event);
+    ipcRenderer.on("updateCheckerEvent", listener);
+    return () => ipcRenderer.removeListener("updateCheckerEvent", listener);
+  },
 
   /* Profile */
   getMe: () => ipcRenderer.invoke("getMe"),

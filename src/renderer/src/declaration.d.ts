@@ -56,6 +56,15 @@ declare global {
     export default content;
   }
 
+  type UpdateCheckerEvent =
+    | { type: "checking" }
+    | { type: "not-available"; currentVersion: string }
+    | { type: "available"; version: string }
+    | { type: "downloading"; percent: number; bytesPerSecond: number; transferred: number; total: number }
+    | { type: "downloaded"; version: string }
+    | { type: "applying" }
+    | { type: "error"; message: string };
+
   interface Electron {
     /* Torrenting */
     startGameDownload: (
@@ -602,6 +611,10 @@ declare global {
     ) => () => Electron.IpcRenderer;
     checkForUpdates: () => Promise<boolean>;
     restartAndInstallUpdate: () => Promise<void>;
+    updateCheckerProceed: () => Promise<void>;
+    updateCheckerApply: () => Promise<void>;
+    toggleConsoleWindow: () => Promise<void>;
+    onUpdateCheckerEvent: (cb: (event: UpdateCheckerEvent) => void) => () => void;
 
     /* Auth */
     getAuth: () => Promise<Auth | null>;

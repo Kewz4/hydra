@@ -1,0 +1,152 @@
+.update-checker {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #0f0f14;
+  color: #e2e2ea;
+  font-family: "Noto Sans", system-ui, sans-serif;
+  user-select: none;
+  overflow: hidden;
+
+  &__titlebar {
+    height: 32px;
+    -webkit-app-region: drag;
+    flex-shrink: 0;
+  }
+
+  &__body {
+    flex: 1;
+    padding: 0 28px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  &__logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+  }
+
+  &__title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #f0f1f7;
+  }
+
+  &__subtitle {
+    font-size: 11px;
+    color: #6b6d7c;
+    margin-top: 1px;
+  }
+
+  &__status {
+    font-size: 13px;
+    color: #a8aab8;
+    min-height: 18px;
+  }
+
+  &__status--error {
+    color: #e05c6a;
+  }
+
+  &__progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  &__progress-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  &__progress-fill {
+    height: 100%;
+    background: #16b195;
+    border-radius: 2px;
+    transition: width 0.15s ease;
+  }
+
+  &__progress-label {
+    font-size: 11px;
+    color: #6b6d7c;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+  }
+
+  &__btn {
+    padding: 7px 18px;
+    border-radius: 6px;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+
+    &:hover {
+      opacity: 0.85;
+    }
+
+    &--primary {
+      background: #16b195;
+      color: #fff;
+    }
+
+    &--ghost {
+      background: transparent;
+      color: #6b6d7c;
+      padding: 7px 0;
+
+      &:hover {
+        color: #a8aab8;
+      }
+    }
+
+    &--console {
+      background: rgba(255, 255, 255, 0.06);
+      color: #a8aab8;
+      font-size: 11px;
+      padding: 5px 12px;
+    }
+  }
+
+  &__spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    border-top-color: #16b195;
+    border-radius: 50%;
+    animation: uc-spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+@keyframes uc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

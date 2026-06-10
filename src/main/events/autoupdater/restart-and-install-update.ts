@@ -7,7 +7,7 @@ const { autoUpdater } = updater;
 export const restartAndInstallUpdate = () => {
   autoUpdater.removeAllListeners();
   if (app.isPackaged) {
-    autoUpdater.quitAndInstall(false);
+    autoUpdater.quitAndInstall(true, true);
   }
 };
 

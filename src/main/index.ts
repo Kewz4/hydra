@@ -57,6 +57,7 @@ import { db, gamesSublevel, levelKeys } from "./level";
 import { GameShop, UserPreferences } from "@types";
 import { launchGame } from "./helpers";
 import { loadState } from "./main";
+import { UpdateCheckerManager } from "./services/update-checker-manager";
 
 const { autoUpdater } = updater;
 
@@ -182,7 +183,6 @@ app.whenReady().then(async () => {
 
   if (language) i18n.changeLanguage(language);
 
-  // Check if starting from a "run" deep link - don't show main window in that case
   const deepLinkArg = process.argv.find((arg) =>
     arg.startsWith("hydralauncher://")
   );
@@ -190,23 +190,41 @@ app.whenReady().then(async () => {
 
   const { needsSetup } = await import("./services/installer");
 
-  if (needsSetup()) {
-    WindowManager.createInstallerWindow();
-  } else if (!process.argv.includes("--hidden") && !isRunDeepLink) {
-    WindowManager.createMainWindow();
-  }
-
-  WindowManager.createNotificationWindow();
-  WindowManager.createSystemTray(language || "en");
-
   // Ctrl+Shift+L / Cmd+Shift+L toggles the debug console window
   globalShortcut.register("CommandOrControl+Shift+L", () => {
     WindowManager.toggleConsoleWindow();
   });
 
-  if (deepLinkArg) {
-    handleDeepLinkPath(deepLinkArg);
-  }
+  // Wire update checker events to the update checker window
+  UpdateCheckerManager.setSendEvent((event) => {
+    WindowManager.updateCheckerWindow?.webContents.send(
+      "updateCheckerEvent",
+      event
+    );
+  });
+
+  // Show the update checker on every launch; it signals "proceed" when done
+  WindowManager.createUpdateCheckerWindow();
+  UpdateCheckerManager.checkAndUpdate().catch(() => {});
+
+  // When the update checker window closes (no update / error / user skipped),
+  // open the normal app flow
+  const proceedToApp = () => {
+    if (needsSetup()) {
+      WindowManager.createInstallerWindow();
+    } else if (!process.argv.includes("--hidden") && !isRunDeepLink) {
+      WindowManager.createMainWindow();
+    }
+    WindowManager.createNotificationWindow();
+    WindowManager.createSystemTray(language || "en");
+    if (deepLinkArg) handleDeepLinkPath(deepLinkArg);
+  };
+
+  // The update checker window closing is the signal to proceed.
+  // The renderer calls updateCheckerProceed() IPC which closes it.
+  WindowManager.updateCheckerWindow?.once("closed", () => {
+    proceedToApp();
+  });
 });
 
 app.on("browser-window-created", (_, window) => {

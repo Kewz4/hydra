@@ -34,6 +34,7 @@ export class WindowManager {
   public static gameLauncherWindow: Electron.BrowserWindow | null = null;
   public static installerWindow: Electron.BrowserWindow | null = null;
   public static consoleWindow: Electron.BrowserWindow | null = null;
+  public static updateCheckerWindow: Electron.BrowserWindow | null = null;
   private static bigPicture: Electron.BrowserWindow | null = null;
   private static deferredMainMaximize = false;
 
@@ -375,6 +376,37 @@ export class WindowManager {
         main.focus();
       }
     });
+  }
+
+  public static createUpdateCheckerWindow() {
+    if (this.updateCheckerWindow && !this.updateCheckerWindow.isDestroyed()) {
+      this.updateCheckerWindow.focus();
+      return;
+    }
+
+    const win = new BrowserWindow({
+      width: 480,
+      height: 300,
+      resizable: false,
+      frame: false,
+      backgroundColor: "#0f0f14",
+      icon,
+      center: true,
+      webPreferences: {
+        preload: path.join(__dirname, "../preload/index.mjs"),
+        sandbox: false,
+      },
+      show: false,
+    });
+
+    this.updateCheckerWindow = win;
+
+    win.once("ready-to-show", () => win.show());
+    win.on("closed", () => {
+      this.updateCheckerWindow = null;
+    });
+
+    this.loadWindowURL(win, "update-checker");
   }
 
   public static createInstallerWindow() {
