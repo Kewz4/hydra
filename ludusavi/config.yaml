@@ -1,5 +1,5 @@
 manifest:
-  enable: false
+  enable: true
   secondary:
     - url: https://cdn.losbroxas.org/manifest.yaml
       enable: true

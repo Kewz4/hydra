@@ -53,6 +53,28 @@ export class Ludusavi {
     }
   }
 
+  /** Update the ludusavi manifest (downloads game database from CDN). */
+  public static async updateManifest(): Promise<void> {
+    return new Promise((resolve) => {
+      logger.info("[ludusavi] updating manifest…");
+      cp.execFile(
+        this.binaryPath,
+        ["--config", this.configPath, "manifest", "update"],
+        { timeout: 60_000 },
+        (err, stdout, stderr) => {
+          if (err) {
+            logger.warn(`[ludusavi] manifest update failed: ${err.message}`);
+          } else {
+            logger.info("[ludusavi] manifest updated successfully");
+          }
+          if (stderr?.trim()) logger.verbose(`[ludusavi:manifest] ${stderr.trim()}`);
+          if (stdout?.trim()) logger.verbose(`[ludusavi:manifest] ${stdout.trim()}`);
+          resolve();
+        }
+      );
+    });
+  }
+
   public static async backupGame(
     _shop: GameShop,
     objectId: string,

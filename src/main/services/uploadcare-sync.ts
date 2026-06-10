@@ -63,14 +63,8 @@ export class UploadcareSync {
     shop: GameShop,
     objectId: string
   ): Promise<GameArtifact[]> {
-    const res = await axios.get(`${API_BASE}/files/`, {
-      params: {
-        "metadata[userId]": userId,
-        "metadata[shop]": shop,
-        "metadata[objectId]": objectId,
-        ordering: "-datetime_uploaded",
-        limit: 20,
-      },
+    const qs = `metadata[userId]=${encodeURIComponent(userId)}&metadata[shop]=${encodeURIComponent(shop)}&metadata[objectId]=${encodeURIComponent(objectId)}&ordering=-datetime_uploaded&limit=20`;
+    const res = await axios.get(`${API_BASE}/files/?${qs}`, {
       headers: {
         Authorization: AUTH_HEADER,
         Accept: "application/vnd.uploadcare-v0.7+json",
@@ -107,12 +101,8 @@ export class UploadcareSync {
   static async listAllArtifacts(
     userId: string
   ): Promise<GameArtifactWithGame[]> {
-    const res = await axios.get(`${API_BASE}/files/`, {
-      params: {
-        "metadata[userId]": userId,
-        ordering: "-datetime_uploaded",
-        limit: 100,
-      },
+    const qs = `metadata[userId]=${encodeURIComponent(userId)}&ordering=-datetime_uploaded&limit=100`;
+    const res = await axios.get(`${API_BASE}/files/?${qs}`, {
       headers: {
         Authorization: AUTH_HEADER,
         Accept: "application/vnd.uploadcare-v0.7+json",

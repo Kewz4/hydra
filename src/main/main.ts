@@ -110,6 +110,8 @@ export const loadState = async () => {
 
   Ludusavi.copyConfigFileToUserData();
   Ludusavi.copyBinaryToUserData();
+  // Download/refresh ludusavi game database in background (non-blocking)
+  Ludusavi.updateManifest().catch(() => {});
 
   if (process.platform === "linux") {
     DeckyPlugin.checkAndUpdateIfOutdated();

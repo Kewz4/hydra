@@ -9,8 +9,27 @@ export function needsSetup(): boolean {
   if (process.platform !== "win32") return false;
   if (!app.isPackaged) return false;
 
-  const marker = path.join(path.dirname(process.execPath), SETUP_MARKER);
-  return !fs.existsSync(marker);
+  const exeDir = path.dirname(process.execPath);
+  const marker = path.join(exeDir, SETUP_MARKER);
+  if (fs.existsSync(marker)) return false;
+
+  // After an NSIS auto-update, the marker gets wiped but the userData (LevelDB)
+  // already exists at the default Electron path. Re-create the marker so the
+  // user doesn't see the installer window again after every update.
+  const defaultUserData = path.join(
+    process.env.APPDATA ?? "",
+    "GameHub"
+  );
+  if (fs.existsSync(path.join(defaultUserData, "LOCK")) || fs.existsSync(path.join(defaultUserData, "level-db"))) {
+    try {
+      fs.writeFileSync(marker, "", "utf8");
+    } catch {
+      // ignore
+    }
+    return false;
+  }
+
+  return true;
 }
 
 export function getInstallerDefaults() {

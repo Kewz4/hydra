@@ -491,13 +491,19 @@ export function RepacksModal({
               game.shop === "gog" || altShops.some((s) => s.shop === "gog");
             const isEpicGame =
               game.shop === "epic" || altShops.some((s) => s.shop === "epic");
-            // Show the Steam download button if the game is in the Steam shop
-            // and the user has Steam connected. The executablePath check was
-            // removed because it breaks after installation (path changes to real exe).
+            // Show Steam download button when the game was synced from the Steam
+            // library (executablePath starts with steam://) OR was installed and
+            // the path changed to a real exe but user still has Steam connected.
+            const hasSteamExe =
+              typeof game.executablePath === "string" &&
+              (game.executablePath.startsWith("steam://") ||
+                (!game.executablePath.startsWith("legendary://") &&
+                  !game.executablePath.startsWith("goggalaxy://")));
             const isOwnedOnSteam =
               game.shop === "steam" &&
               hasSteamConnected &&
-              !(game as any)._synthesized;
+              !(game as any)._synthesized &&
+              hasSteamExe;
             const hasPlatformOptions =
               isOwnedOnSteam || isGogGame || isEpicGame;
 
