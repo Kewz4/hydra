@@ -199,6 +199,10 @@ declare global {
       refresh_token: string;
       username: string;
     } | null>;
+    completeGogAuth: (code: string) => Promise<{
+      refresh_token: string;
+      username: string;
+    } | null>;
     syncGogLibrary: () => Promise<{
       total: number;
       added: number;

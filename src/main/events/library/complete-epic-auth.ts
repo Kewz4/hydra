@@ -13,13 +13,13 @@ const completeEpicAuth = async (
   _event: Electron.IpcMainInvokeEvent,
   code: string
 ): Promise<{ success: boolean; account?: string }> => {
-  try {
-    const prefs = await db
-      .get<string, UserPreferences | null>(levelKeys.userPreferences, {
-        valueEncoding: "json",
-      })
-      .catch(() => null);
+  const prefs = await db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
 
+  try {
     let binary = findLegendaryBinary(prefs?.legendaryBinaryPath);
     if (!binary) {
       logger.log("legendary not found — downloading before auth...");
