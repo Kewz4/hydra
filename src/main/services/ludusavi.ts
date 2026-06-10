@@ -41,7 +41,10 @@ export class Ludusavi {
     }
 
     if (!fs.existsSync(configFile)) {
-      fs.cpSync(path.join(this.ludusaviResourcesPath, "config.yaml"), configFile);
+      fs.cpSync(
+        path.join(this.ludusaviResourcesPath, "config.yaml"),
+        configFile
+      );
       return;
     }
 
@@ -126,16 +129,23 @@ export class Ludusavi {
     for (const findArgs of attempts) {
       const args = ["--config", this.configPath, ...findArgs];
       const result = await new Promise<string | null>((resolve) => {
-        cp.execFile(this.binaryPath, args, { timeout: 30_000 }, (err, stdout) => {
-          if (err) return resolve(null);
-          try {
-            const parsed = JSON.parse(stdout) as { games?: Record<string, unknown> };
-            const names = Object.keys(parsed.games ?? {});
-            resolve(names[0] ?? null);
-          } catch {
-            resolve(null);
+        cp.execFile(
+          this.binaryPath,
+          args,
+          { timeout: 30_000 },
+          (err, stdout) => {
+            if (err) return resolve(null);
+            try {
+              const parsed = JSON.parse(stdout) as {
+                games?: Record<string, unknown>;
+              };
+              const names = Object.keys(parsed.games ?? {});
+              resolve(names[0] ?? null);
+            } catch {
+              resolve(null);
+            }
           }
-        });
+        );
       });
 
       if (result) {
