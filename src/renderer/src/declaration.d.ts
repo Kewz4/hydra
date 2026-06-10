@@ -177,6 +177,10 @@ declare global {
       success: boolean;
       account?: string;
     }>;
+    completeEpicAuth: (code: string) => Promise<{
+      success: boolean;
+      account?: string;
+    }>;
     syncEpicLibrary: () => Promise<{
       total: number;
       added: number;
@@ -190,6 +194,10 @@ declare global {
     onLegendaryInstallProgress: (cb: (pct: number) => void) => () => void;
     onBattleNetInstallProgress: (cb: (pct: number) => void) => () => void;
     openGogAuthWindow: () => Promise<{
+      refresh_token: string;
+      username: string;
+    } | null>;
+    completeGogAuth: (code: string) => Promise<{
       refresh_token: string;
       username: string;
     } | null>;
