@@ -74,9 +74,7 @@ export class Ludusavi {
       if (backupPath) args.push("--path", backupPath);
       if (winePrefix) args.push("--wine-prefix", winePrefix);
 
-      logger.verbose(
-        `[ludusavi] ${this.binaryPath} ${args.join(" ")}`
-      );
+      logger.verbose(`[ludusavi] ${this.binaryPath} ${args.join(" ")}`);
       cp.execFile(
         this.binaryPath,
         args,
