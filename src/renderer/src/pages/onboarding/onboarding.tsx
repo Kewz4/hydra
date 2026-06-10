@@ -320,23 +320,34 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       let code: string | null = null;
       try {
         const json = JSON.parse(bodyText.trim());
-        code = json?.authorizationCode || json?.exchangeCode || json?.code || null;
+        code =
+          json?.authorizationCode || json?.exchangeCode || json?.code || null;
       } catch {
-        try { code = new URL(url).searchParams.get("code"); } catch { /* ignore */ }
+        try {
+          code = new URL(url).searchParams.get("code");
+        } catch {
+          /* ignore */
+        }
       }
       if (!code || typeof code !== "string" || code.length < 8) return;
       epicWebviewHandledRef.current = true;
-      const result = await window.electron.completeEpicAuth(code).catch(() => ({ success: false as const }));
+      const result = await window.electron
+        .completeEpicAuth(code)
+        .catch(() => ({ success: false as const }));
       setEpicWindowOpen(false);
       if (result?.success) {
         setEpicLinked(true);
-        setEpicAccount((result as { success: true; account?: string }).account ?? "Epic");
+        setEpicAccount(
+          (result as { success: true; account?: string }).account ?? "Epic"
+        );
         window.electron.syncEpicLibrary().catch(() => {});
       }
     };
 
-    const onWillNavigate = (e: Event) => void tryExtract((e as Event & { url: string }).url);
-    const onDidNavigate = (e: Event) => void tryExtract((e as Event & { url: string }).url);
+    const onWillNavigate = (e: Event) =>
+      void tryExtract((e as Event & { url: string }).url);
+    const onDidNavigate = (e: Event) =>
+      void tryExtract((e as Event & { url: string }).url);
     const onDidFinishLoad = () => void tryExtract(wv.getURL());
 
     wv.addEventListener("will-navigate", onWillNavigate);
@@ -368,7 +379,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
     }
 
     const GOG_CLIENT_ID = "46899977096215655";
-    const GOG_REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
+    const GOG_REDIRECT_URI =
+      "https://embed.gog.com/on_login_success?origin=client";
     const GOG_AUTH_URL =
       `https://auth.gog.com/auth?client_id=${GOG_CLIENT_ID}` +
       `&redirect_uri=${encodeURIComponent(GOG_REDIRECT_URI)}` +
@@ -385,23 +397,36 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (gogWebviewHandledRef.current) return;
       if (!url.includes("on_login_success")) return;
       let code: string | null = null;
-      try { code = new URL(url).searchParams.get("code"); } catch { return; }
+      try {
+        code = new URL(url).searchParams.get("code");
+      } catch {
+        return;
+      }
       if (!code) return;
       gogWebviewHandledRef.current = true;
-      const result = await window.electron.completeGogAuth(code).catch(() => null);
+      const result = await window.electron
+        .completeGogAuth(code)
+        .catch(() => null);
       setGogWindowOpen(false);
       if (result) {
-        await window.electron.updateUserPreferences({ gogRefreshToken: result.refresh_token });
+        await window.electron.updateUserPreferences({
+          gogRefreshToken: result.refresh_token,
+        });
         setGogLinked(true);
         setGogUsername(result.username ?? "GOG User");
-        const gogdlStatus = await window.electron.getGogdlStatus().catch(() => ({ binaryFound: false }));
-        if (!gogdlStatus.binaryFound) window.electron.installGogdl().catch(() => {});
+        const gogdlStatus = await window.electron
+          .getGogdlStatus()
+          .catch(() => ({ binaryFound: false }));
+        if (!gogdlStatus.binaryFound)
+          window.electron.installGogdl().catch(() => {});
         window.electron.syncGogLibrary().catch(() => {});
       }
     };
 
-    const onWillNavigate = (e: Event) => void tryExtract((e as Event & { url: string }).url);
-    const onDidNavigate = (e: Event) => void tryExtract((e as Event & { url: string }).url);
+    const onWillNavigate = (e: Event) =>
+      void tryExtract((e as Event & { url: string }).url);
+    const onDidNavigate = (e: Event) =>
+      void tryExtract((e as Event & { url: string }).url);
 
     wv.addEventListener("will-navigate", onWillNavigate);
     wv.addEventListener("did-navigate", onDidNavigate);
@@ -913,10 +938,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </div>
                 </>
               ) : epicWindowOpen ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
                   <div
                     ref={epicWebviewContainerRef}
-                    style={{ height: "360px", borderRadius: "8px", overflow: "hidden" }}
+                    style={{
+                      height: "360px",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                    }}
                   />
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <button
@@ -981,10 +1016,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   </div>
                 </>
               ) : gogWindowOpen ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
                   <div
                     ref={gogWebviewContainerRef}
-                    style={{ height: "360px", borderRadius: "8px", overflow: "hidden" }}
+                    style={{
+                      height: "360px",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                    }}
                   />
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <button
