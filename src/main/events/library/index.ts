@@ -54,6 +54,7 @@ import "./get-legendary-status";
 import "./install-legendary";
 import "./open-legendary-auth-window";
 import "./complete-epic-auth";
+import "./epic-sign-out";
 import "./sync-epic-library";
 import "./open-gog-auth-window";
 import "./complete-gog-auth";

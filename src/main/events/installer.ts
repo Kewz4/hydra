@@ -66,3 +66,10 @@ ipcMain.handle("installer:closeAndLaunch", () => {
   WindowManager.installerWindow = null;
   WindowManager.createMainWindow();
 });
+
+ipcMain.handle(
+  "installer:resizeWindow",
+  (_e, width: number, height: number) => {
+    WindowManager.installerWindow?.setSize(width, height, true);
+  }
+);

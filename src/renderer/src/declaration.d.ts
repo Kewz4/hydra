@@ -57,7 +57,7 @@ declare global {
   }
 
   type UpdateCheckerEvent =
-    | { type: "checking" }
+    | { type: "checking"; currentVersion: string }
     | { type: "not-available"; currentVersion: string }
     | { type: "available"; version: string }
     | {
@@ -195,6 +195,12 @@ declare global {
     completeEpicAuth: (
       code: string
     ) => Promise<{ success: boolean; account?: string }>;
+    epicSignOut: () => Promise<{
+      binaryFound: boolean;
+      binaryPath: string | null;
+      account: string | null;
+      authenticated: boolean;
+    }>;
     completeGogAuth: (
       code: string
     ) => Promise<{ refresh_token: string; username: string } | null>;

@@ -529,7 +529,9 @@ export function ProfileImageCropModal({
                 ref={imageRef}
                 src={previewUrl}
                 alt=""
-                crossOrigin="anonymous"
+                {...(previewUrl.startsWith("http")
+                  ? { crossOrigin: "anonymous" as const }
+                  : {})}
                 className="profile-image-crop-modal__image"
                 style={{
                   width: renderedWidth,

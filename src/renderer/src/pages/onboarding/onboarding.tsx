@@ -92,7 +92,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   );
 
   useEffect(() => {
-    window.electron.setWindowSize(960, 620, 960, 620).catch(() => {});
+    window.electron.setWindowSize(960, 680, 960, 680).catch(() => {});
     return () => {
       window.electron.setWindowSize(1200, 860, 1024, 860).catch(() => {});
     };
@@ -141,6 +141,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [gogUsername, setGogUsername] = useState<string | null>(null);
   const gogWebviewContainerRef = useRef<HTMLDivElement>(null);
   const gogWebviewHandledRef = useRef(false);
+
+  const webviewOpen = epicWindowOpen || gogWindowOpen;
+  useEffect(() => {
+    if (webviewOpen) {
+      window.electron.setWindowSize(960, 820, 960, 820).catch(() => {});
+    } else {
+      window.electron.setWindowSize(960, 680, 960, 680).catch(() => {});
+    }
+  }, [webviewOpen]);
 
   const [xboxBusy, setXboxBusy] = useState(false);
   const [xboxWindowOpen, setXboxWindowOpen] = useState(false);
@@ -948,7 +957,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <div
                     ref={epicWebviewContainerRef}
                     style={{
-                      height: "460px",
+                      height: "560px",
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}
@@ -1026,7 +1035,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   <div
                     ref={gogWebviewContainerRef}
                     style={{
-                      height: "460px",
+                      height: "560px",
                       borderRadius: "8px",
                       overflow: "hidden",
                     }}

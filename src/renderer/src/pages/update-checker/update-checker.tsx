@@ -46,6 +46,7 @@ export default function UpdateChecker() {
   useEffect(() => {
     const unsub = window.electron.onUpdateCheckerEvent((event) => {
       if (event.type === "checking") {
+        setCurrentVersion(event.currentVersion);
         setPhase("checking");
       } else if (event.type === "not-available") {
         setCurrentVersion(event.currentVersion);
@@ -78,7 +79,9 @@ export default function UpdateChecker() {
   const statusLine = () => {
     switch (phase) {
       case "checking":
-        return "Checking for updates…";
+        return currentVersion
+          ? `Checking for updates… (current: v${currentVersion})`
+          : "Checking for updates…";
       case "not-available":
         return `GameHub v${currentVersion} is up to date.`;
       case "available":

@@ -113,9 +113,9 @@ export function SettingsEpicAccount() {
   );
 
   const handleSignOut = async () => {
-    // legendary doesn't have a sign-out command; we just clear the preference
-    await updateUserPreferences({ legendaryBinaryPath: null });
-    setStatus(null);
+    const newStatus = await window.electron.epicSignOut().catch(() => null);
+    if (newStatus) setStatus(newStatus);
+    else setStatus((prev) => (prev ? { ...prev, authenticated: false, account: null } : null));
     showSuccessToast(t("epic_signed_out"));
   };
 

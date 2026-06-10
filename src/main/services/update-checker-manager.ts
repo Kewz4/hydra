@@ -9,7 +9,7 @@ import { logger } from "./logger";
 const { autoUpdater } = updater;
 
 export type UpdateCheckerEvent =
-  | { type: "checking" }
+  | { type: "checking"; currentVersion: string }
   | { type: "not-available"; currentVersion: string }
   | { type: "available"; version: string }
   | {
@@ -41,7 +41,7 @@ export class UpdateCheckerManager {
   }
 
   static async checkAndUpdate(): Promise<void> {
-    this.sendEvent({ type: "checking" });
+    this.sendEvent({ type: "checking", currentVersion: app.getVersion() });
 
     if (!app.isPackaged) {
       await new Promise((r) => setTimeout(r, 800));

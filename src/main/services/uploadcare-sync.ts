@@ -28,6 +28,11 @@ export class UploadcareSync {
       contentType: "application/tar",
     });
 
+    // Embed metadata directly in the upload form so it's always stored
+    for (const [key, value] of Object.entries(metadata)) {
+      form.append(`metadata[${key}]`, value);
+    }
+
     const uploadRes = await axios.post<{ file: string }>(UPLOAD_BASE, form, {
       headers: form.getHeaders(),
       timeout: 120_000,
@@ -35,7 +40,7 @@ export class UploadcareSync {
 
     const uuid = uploadRes.data.file;
 
-    // Attach metadata — non-fatal if it fails (file is already backed up)
+    // Also PATCH metadata for APIs that need it via the REST endpoint
     try {
       await axios.patch(`${API_BASE}/files/${uuid}/metadata/`, metadata, {
         headers: {
@@ -74,17 +79,28 @@ export class UploadcareSync {
     });
 
     const results: any[] = res.data.results ?? [];
-    return results.map((f) => ({
-      id: f.uuid as string,
-      artifactLengthInBytes: f.size as number,
-      downloadOptionTitle: (f.metadata?.downloadOptionTitle as string) ?? null,
-      createdAt: f.datetime_uploaded as string,
-      updatedAt: f.datetime_uploaded as string,
-      hostname: (f.metadata?.hostname as string) ?? "",
-      downloadCount: 0,
-      label: (f.metadata?.label as string) ?? undefined,
-      isFrozen: false,
-    }));
+    return results
+      .filter((f) => {
+        const meta = f.metadata ?? {};
+        if (meta.shop && meta.objectId) {
+          return meta.shop === shop && meta.objectId === objectId;
+        }
+        // Fallback: parse filename — format is `{shop}-{objectId}-{timestamp}.tar`
+        const filename: string = (f.original_filename as string) ?? "";
+        return filename.startsWith(`${shop}-${objectId}-`);
+      })
+      .map((f) => ({
+        id: f.uuid as string,
+        artifactLengthInBytes: f.size as number,
+        downloadOptionTitle:
+          (f.metadata?.downloadOptionTitle as string) ?? null,
+        createdAt: f.datetime_uploaded as string,
+        updatedAt: f.datetime_uploaded as string,
+        hostname: (f.metadata?.hostname as string) ?? "",
+        downloadCount: 0,
+        label: (f.metadata?.label as string) ?? undefined,
+        isFrozen: false,
+      }));
   }
 
   /** List all save artifacts across all games for a user, newest first. */

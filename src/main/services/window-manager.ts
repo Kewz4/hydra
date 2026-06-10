@@ -417,7 +417,7 @@ export class WindowManager {
 
     const win = new BrowserWindow({
       width: 560,
-      height: 480,
+      height: 620,
       resizable: false,
       frame: false,
       backgroundColor: "#0f0f14",

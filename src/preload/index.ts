@@ -220,6 +220,7 @@ contextBridge.exposeInMainWorld("electron", {
   openLegendaryAuthWindow: () => ipcRenderer.invoke("openLegendaryAuthWindow"),
   completeEpicAuth: (code: string) =>
     ipcRenderer.invoke("completeEpicAuth", code),
+  epicSignOut: () => ipcRenderer.invoke("epicSignOut"),
   completeGogAuth: (code: string) =>
     ipcRenderer.invoke("completeGogAuth", code),
   syncEpicLibrary: () => ipcRenderer.invoke("syncEpicLibrary"),
