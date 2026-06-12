@@ -526,3 +526,11 @@
     flex-shrink: 0;
   }
 }
+
+.onboarding-done-summary {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px 0 8px;
+}

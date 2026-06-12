@@ -770,6 +770,36 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           ) : (
             <>
               <h1>You&apos;re all set!</h1>
+              {(() => {
+                const connected = [
+                  { name: "Steam", linked: steamLinked, Icon: SteamLogo },
+                  { name: "Epic Games", linked: epicLinked, Icon: EpicLogo },
+                  { name: "GOG", linked: gogLinked, Icon: GogLogo },
+                  { name: "Xbox", linked: xboxLinked, Icon: XboxLogo },
+                  {
+                    name: "Ubisoft Connect",
+                    linked: ubisoftLinked,
+                    Icon: UbisoftLogo,
+                  },
+                  { name: "EA app", linked: eaLinked, Icon: EaLogo },
+                ].filter((p) => p.linked);
+                if (connected.length === 0) return null;
+                return (
+                  <div className="onboarding-done-summary">
+                    {connected.map(({ name, Icon }) => (
+                      <div
+                        key={name}
+                        className="onboarding-connected-badge"
+                        style={{ margin: 0 }}
+                      >
+                        <Icon style={{ width: 16, height: 16 }} />
+                        {name}
+                        <CheckCircleFillIcon size={14} />
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
               <p>
                 Your libraries will sync in the background. Connect more
                 services anytime from <strong>Settings → Integrations</strong>.
@@ -1652,60 +1682,88 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
                 <div>
                   <h2>EA app</h2>
-                  <p>Import games installed through the EA app or Origin</p>
+                  <p>Import your EA library</p>
                 </div>
               </div>
               <p className="onboarding-step-description">
-                GameHub detects games installed through the EA app (or Origin)
-                and adds them to your library. They launch through the EA app.
+                Connect your EA account to import your owned games — no client
+                required. Games launch through the EA app when it&apos;s
+                installed.
               </p>
 
-              {eaState === null ? (
-                <p style={{ opacity: 0.6 }}>Detecting EA app…</p>
-              ) : !eaState.installed ? (
-                <p style={{ opacity: 0.7 }}>
-                  EA app not detected on this machine. You can add EA games
-                  later from Settings → Integrations.
-                </p>
-              ) : eaState.detected.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>
-                  EA app found, but no installed games were detected.
-                </p>
+              {eaLinked ? (
+                <>
+                  <div className="onboarding-connected-badge">
+                    <CheckCircleFillIcon size={16} />
+                    Connected as {eaAccountName}
+                    {eaSyncResult && (
+                      <span style={{ opacity: 0.7, fontSize: "0.85em" }}>
+                        {" "}
+                        — {eaSyncResult}
+                      </span>
+                    )}
+                  </div>
+                  <div className="onboarding-actions">
+                    <Button type="button" onClick={next}>
+                      Continue
+                    </Button>
+                  </div>
+                </>
               ) : (
-                <p style={{ opacity: 0.8 }}>
-                  Detected: {eaState.detected.map((g) => g.title).join(", ")}
-                </p>
-              )}
-
-              {eaResult && (
-                <div className="onboarding-connected-badge">
-                  <CheckCircleFillIcon size={16} />
-                  {eaResult}
-                </div>
-              )}
-
-              <div className="onboarding-actions">
-                <button
-                  type="button"
-                  className="onboarding-skip"
-                  onClick={next}
-                >
-                  {eaResult ? "Continue" : "Skip for now"}
-                </button>
-                {eaState?.installed &&
-                  eaState.detected.length > 0 &&
-                  !eaResult && (
+                <>
+                  <div
+                    className="onboarding-actions"
+                    style={{ marginBottom: 0 }}
+                  >
+                    <button
+                      type="button"
+                      className="onboarding-skip"
+                      onClick={next}
+                    >
+                      Skip for now
+                    </button>
                     <Button
                       type="button"
-                      onClick={handleAddEaGames}
-                      disabled={eaBusy}
+                      onClick={handleEaConnect}
+                      disabled={eaConnecting}
                     >
-                      {eaBusy
-                        ? "Adding…"
-                        : `Add ${eaState.detected.length} game${eaState.detected.length !== 1 ? "s" : ""}`}
+                      <PersonIcon size={14} />
+                      {eaConnecting ? "Connecting…" : "Connect EA"}
                     </Button>
-                  )}
-              </div>
+                  </div>
+
+                  {eaState !== null &&
+                    eaState.installed &&
+                    eaState.detected.length > 0 && (
+                      <>
+                        <div
+                          className="onboarding-divider"
+                          style={{ marginTop: "16px" }}
+                        >
+                          or add installed games
+                        </div>
+                        {eaResult ? (
+                          <div className="onboarding-connected-badge">
+                            <CheckCircleFillIcon size={16} />
+                            {eaResult}
+                          </div>
+                        ) : (
+                          <div className="onboarding-actions">
+                            <Button
+                              type="button"
+                              onClick={handleAddEaGames}
+                              disabled={eaBusy}
+                            >
+                              {eaBusy
+                                ? "Adding…"
+                                : `Add ${eaState.detected.length} installed game${eaState.detected.length !== 1 ? "s" : ""}`}
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                </>
+              )}
             </>
           )}
 
