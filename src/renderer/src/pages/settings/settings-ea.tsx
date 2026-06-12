@@ -165,7 +165,7 @@ export function SettingsEa() {
         </div>
       )}
 
-      {clientInstalled === false && (
+      {data !== null && clientInstalled === false && (
         <div className="settings-account__warning">
           <AlertIcon size={16} />
           <span>

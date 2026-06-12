@@ -144,26 +144,17 @@ export function SettingsGogAccount() {
   if (connected) {
     return (
       <>
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "12px",
-              borderRadius: "8px",
-              background: "var(--color-background-2, rgba(255,255,255,0.05))",
-            }}
-          >
-            <div style={{ flex: 1 }}>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-              >
+        <div className="settings-account">
+          <div className="settings-account__card">
+            <div className="settings-account__identity">
+              <div className="settings-account__name">
                 <CheckCircleFillIcon size={14} />
                 <strong>{displayName}</strong>
               </div>
               {userInfo?.userId && (
-                <small style={{ opacity: 0.6 }}>{userInfo.userId}</small>
+                <small className="settings-account__sub">
+                  {userInfo.userId}
+                </small>
               )}
             </div>
             <Button type="button" onClick={handleDisconnect} theme="outline">
@@ -171,7 +162,7 @@ export function SettingsGogAccount() {
             </Button>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="settings-account__row">
             <Button
               type="button"
               onClick={handleSync}
@@ -191,7 +182,7 @@ export function SettingsGogAccount() {
             )}
           </div>
 
-          <p style={{ opacity: 0.6, fontSize: "0.85em", margin: 0 }}>
+          <p className="settings-account__hint">
             {t("gog_library_description")}
           </p>
         </div>
@@ -211,8 +202,8 @@ export function SettingsGogAccount() {
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <p style={{ margin: 0, opacity: 0.8 }}>
+      <div className="settings-account">
+        <p className="settings-account__description">
           {t("gog_account_description")}
         </p>
         <div>

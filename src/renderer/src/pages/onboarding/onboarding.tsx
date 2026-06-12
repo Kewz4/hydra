@@ -973,6 +973,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
 
         {/* ── Right content ── */}
         <div className="onboarding-content">
+          {showSidebar && (
+            <div className="onboarding-progress">
+              <div
+                className="onboarding-progress__fill"
+                style={{
+                  width: `${(stepIndex / (ALL_STEPS.length - 1)) * 100}%`,
+                }}
+              />
+            </div>
+          )}
+          <div key={currentStep} className="onboarding-step-body">
           {/* ── Language ── */}
           {currentStep === "language" && (
             <>
@@ -2014,6 +2025,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               </div>
             </>
           )}
+          </div>
         </div>
       </div>
 

@@ -133,7 +133,7 @@ export function SettingsBattleNet() {
 
       {bnetInstalled && (
         <>
-          <p style={{ margin: 0, fontSize: "0.875em", opacity: 0.7 }}>
+          <p className="settings-account__hint">
             {t("battlenet_select_games")}
           </p>
 

@@ -134,24 +134,15 @@ export function SettingsEpicAccount() {
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <p style={{ margin: 0, opacity: 0.8 }}>
+      <div className="settings-account">
+        <p className="settings-account__description">
           {t("epic_account_description")}
         </p>
 
         {isAuthenticated ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 14px",
-              borderRadius: "8px",
-              background: "var(--color-background-2, rgba(255,255,255,0.05))",
-            }}
-          >
+          <div className="settings-account__card">
             <CheckCircleFillIcon size={16} />
-            <span style={{ flex: 1 }}>
+            <span className="settings-account__identity">
               {t("epic_logged_in_as", { username: accountName })}
             </span>
             <Button
@@ -182,7 +173,7 @@ export function SettingsEpicAccount() {
 
         {/* Sync library */}
         {isAuthenticated && (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="settings-account__row">
             <Button
               type="button"
               onClick={handleSync}

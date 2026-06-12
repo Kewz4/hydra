@@ -196,37 +196,28 @@ export function SettingsSteamAccount() {
   if (displayAccount) {
     return (
       <>
-        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              padding: "12px",
-              borderRadius: "8px",
-              background: "var(--color-background-2, rgba(255,255,255,0.05))",
-            }}
-          >
+        <div className="settings-account">
+          <div className="settings-account__card">
             <img
               src={displayAccount.avatarfull}
               alt={displayAccount.personaname}
-              style={{ width: 48, height: 48, borderRadius: "50%" }}
+              className="settings-account__avatar"
             />
-            <div style={{ flex: 1 }}>
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-              >
+            <div className="settings-account__identity">
+              <div className="settings-account__name">
                 <CheckCircleFillIcon size={14} />
                 <strong>{displayAccount.personaname}</strong>
               </div>
-              <small style={{ opacity: 0.6 }}>{displayAccount.steamid}</small>
+              <small className="settings-account__sub">
+                {displayAccount.steamid}
+              </small>
             </div>
             <Button type="button" onClick={handleDisconnect} theme="outline">
               {t("disconnect")}
             </Button>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div className="settings-account__row">
             <Button
               type="button"
               onClick={handleSync}
@@ -247,7 +238,7 @@ export function SettingsSteamAccount() {
             )}
           </div>
 
-          <p style={{ opacity: 0.6, fontSize: "0.85em", margin: 0 }}>
+          <p className="settings-account__hint">
             {t("steam_library_description")}
           </p>
         </div>
@@ -266,11 +257,8 @@ export function SettingsSteamAccount() {
   }
 
   return (
-    <form
-      onSubmit={handleConnect}
-      style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-    >
-      <p style={{ margin: 0, opacity: 0.8 }}>
+    <form onSubmit={handleConnect} className="settings-account">
+      <p className="settings-account__description">
         {t("steam_account_description")}
       </p>
 
