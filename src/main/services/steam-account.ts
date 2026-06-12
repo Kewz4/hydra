@@ -82,7 +82,10 @@ async function getSteamOwnedGamesWithKey(
         key: apiKey,
         steamid: steamId,
         include_appinfo: true,
-        include_played_free_games: false,
+        // Without this, played F2P games (CS2, Warframe, …) are missing from
+        // the response, never get stamped libraryOrigin: "sync", and end up
+        // misclassified as catalogue ("Retigga") games by the migration pass.
+        include_played_free_games: true,
         format: "json",
       },
       timeout: 15_000,

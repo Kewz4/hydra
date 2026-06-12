@@ -354,6 +354,35 @@ const getValidLegendaryAuth = async (): Promise<LegendaryAuth | null> => {
   return auth;
 };
 
+/** Epic doesn't ship playtime in legendary's metadata — it lives in the
+ * library service. Returns a map of app_name (artifactId) → playtime in ms. */
+export const getEpicPlaytimeMap = async (): Promise<Map<string, number>> => {
+  const map = new Map<string, number>();
+  const auth = await getValidLegendaryAuth();
+  if (!auth) return map;
+
+  try {
+    const res = await axios.get(
+      `https://library-service.live.use1a.on.epicgames.com/library/api/public/playtime/account/${auth.accountId}/all`,
+      {
+        headers: { Authorization: `Bearer ${auth.accessToken}` },
+        timeout: 15_000,
+      }
+    );
+    const items: Array<{ artifactId?: string; totalTime?: number }> =
+      Array.isArray(res.data) ? res.data : [];
+    for (const item of items) {
+      if (item.artifactId && typeof item.totalTime === "number") {
+        // totalTime is in seconds
+        map.set(item.artifactId, item.totalTime * 1000);
+      }
+    }
+  } catch (err) {
+    achievementsLogger.warn("getEpicPlaytimeMap failed", err);
+  }
+  return map;
+};
+
 const getEpicSandboxId = (appName: string): string | null => {
   try {
     const metadataPath = path.join(
