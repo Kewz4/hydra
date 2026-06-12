@@ -204,6 +204,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   } | null>(null);
   const [ubisoftBusy, setUbisoftBusy] = useState(false);
   const [ubisoftResult, setUbisoftResult] = useState("");
+  const [ubisoftLinked, setUbisoftLinked] = useState(false);
+  const [ubisoftAccountName, setUbisoftAccountName] = useState<string | null>(null);
+  const [ubisoftConnecting, setUbisoftConnecting] = useState(false);
+  const [ubisoftSyncResult, setUbisoftSyncResult] = useState<string>("");
 
   const [eaState, setEaState] = useState<{
     installed: boolean;
@@ -410,11 +414,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       });
       setGogLinked(true);
       setGogUsername(result.username ?? "GOG User");
-      const gogdlStatus = await window.electron
-        .getGogdlStatus()
-        .catch(() => ({ binaryFound: false }));
-      if (!gogdlStatus.binaryFound)
-        window.electron.installGogdl().catch(() => {});
       window.electron.syncGogLibrary().catch(() => {});
     },
     []
@@ -489,6 +488,27 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       setUbisoftResult("Failed to add Ubisoft games.");
     } finally {
       setUbisoftBusy(false);
+    }
+  };
+
+  const handleUbisoftConnect = async () => {
+    setUbisoftConnecting(true);
+    try {
+      const result = await window.electron.openUbisoftAuthWindow();
+      if (result) {
+        setUbisoftLinked(true);
+        setUbisoftAccountName(result.username);
+        const syncResult = await window.electron.syncUbisoftLibrary().catch(() => null);
+        if (syncResult && !syncResult.error) {
+          setUbisoftSyncResult(
+            `Synced ${syncResult.total} game${syncResult.total !== 1 ? "s" : ""} from your Ubisoft library.`
+          );
+        }
+      }
+    } catch {
+      // ignore
+    } finally {
+      setUbisoftConnecting(false);
     }
   };
 
@@ -1267,9 +1287,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
               </div>
               <p className="onboarding-step-description">
-                GameHub will install Legendary automatically if needed. Your
-                Epic library will sync and you&apos;ll be able to download
-                games.
+                Connect your Epic Games account to import your owned library into GameHub.
               </p>
 
               {epicLinked ? (
@@ -1490,62 +1508,85 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
                 <div>
                   <h2>Ubisoft Connect</h2>
-                  <p>Import games installed through Ubisoft Connect</p>
+                  <p>Import your Ubisoft library</p>
                 </div>
               </div>
               <p className="onboarding-step-description">
-                GameHub detects games installed through Ubisoft Connect and adds
-                them to your library. They launch through the Ubisoft Connect
-                client.
+                Connect your Ubisoft account to import your owned games — no
+                client required. Games launch through Ubisoft Connect when
+                it&apos;s installed.
               </p>
 
-              {ubisoftState === null ? (
-                <p style={{ opacity: 0.6 }}>Detecting Ubisoft Connect…</p>
-              ) : !ubisoftState.installed ? (
-                <p style={{ opacity: 0.7 }}>
-                  Ubisoft Connect not detected on this machine. You can add
-                  Ubisoft games later from Settings → Integrations.
-                </p>
-              ) : ubisoftState.detected.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>
-                  Ubisoft Connect found, but no installed games were detected.
-                </p>
+              {ubisoftLinked ? (
+                <>
+                  <div className="onboarding-connected-badge">
+                    <CheckCircleFillIcon size={16} />
+                    Connected as {ubisoftAccountName}
+                    {ubisoftSyncResult && (
+                      <span style={{ opacity: 0.7, fontSize: "0.85em" }}>
+                        {" "}
+                        — {ubisoftSyncResult}
+                      </span>
+                    )}
+                  </div>
+                  <div className="onboarding-actions">
+                    <Button type="button" onClick={next}>
+                      Continue
+                    </Button>
+                  </div>
+                </>
               ) : (
-                <p style={{ opacity: 0.8 }}>
-                  Detected:{" "}
-                  {ubisoftState.detected.map((g) => g.title).join(", ")}
-                </p>
-              )}
-
-              {ubisoftResult && (
-                <div className="onboarding-connected-badge">
-                  <CheckCircleFillIcon size={16} />
-                  {ubisoftResult}
-                </div>
-              )}
-
-              <div className="onboarding-actions">
-                <button
-                  type="button"
-                  className="onboarding-skip"
-                  onClick={next}
-                >
-                  {ubisoftResult ? "Continue" : "Skip for now"}
-                </button>
-                {ubisoftState?.installed &&
-                  ubisoftState.detected.length > 0 &&
-                  !ubisoftResult && (
+                <>
+                  <div className="onboarding-actions" style={{ marginBottom: 0 }}>
+                    <button
+                      type="button"
+                      className="onboarding-skip"
+                      onClick={next}
+                    >
+                      Skip for now
+                    </button>
                     <Button
                       type="button"
-                      onClick={handleAddUbisoftGames}
-                      disabled={ubisoftBusy}
+                      onClick={handleUbisoftConnect}
+                      disabled={ubisoftConnecting}
                     >
-                      {ubisoftBusy
-                        ? "Adding…"
-                        : `Add ${ubisoftState.detected.length} game${ubisoftState.detected.length !== 1 ? "s" : ""}`}
+                      <PersonIcon size={14} />
+                      {ubisoftConnecting ? "Connecting…" : "Connect Ubisoft"}
                     </Button>
-                  )}
-              </div>
+                  </div>
+
+                  {ubisoftState !== null &&
+                    ubisoftState.installed &&
+                    ubisoftState.detected.length > 0 && (
+                      <>
+                        <div
+                          className="onboarding-divider"
+                          style={{ marginTop: "16px" }}
+                        >
+                          or add installed games
+                        </div>
+                        {ubisoftResult ? (
+                          <div className="onboarding-connected-badge">
+                            <CheckCircleFillIcon size={16} />
+                            {ubisoftResult}
+                          </div>
+                        ) : (
+                          <div className="onboarding-actions">
+                            <Button
+                              type="button"
+                              onClick={handleAddUbisoftGames}
+                              disabled={ubisoftBusy}
+                            >
+                              {ubisoftBusy
+                                ? "Adding…"
+                                : `Add ${ubisoftState.detected.length} installed game${ubisoftState.detected.length !== 1 ? "s" : ""}`}
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                </>
+              )}
             </>
           )}
 
