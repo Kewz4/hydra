@@ -45,9 +45,37 @@ const syncEaLibrary = async (
       throw new Error("EA account not connected");
     }
 
+    let accessToken = prefs.eaAccessToken;
+
+    // Access tokens only live ~1h — silently re-acquire from the persisted
+    // browser session cookies instead of failing the sync.
+    const expired = prefs.eaTokenExpiry
+      ? Date.parse(prefs.eaTokenExpiry) < Date.now()
+      : false;
+    if (expired) {
+      const { refreshEaTokenSilently } = await import(
+        "@main/services/ea-auth"
+      );
+      const refreshed = await refreshEaTokenSilently();
+      if (refreshed) {
+        accessToken = refreshed.accessToken;
+        await db.put<string, UserPreferences>(
+          levelKeys.userPreferences,
+          {
+            ...prefs,
+            eaAccessToken: refreshed.accessToken,
+            eaTokenExpiry: new Date(
+              Date.now() + refreshed.expiresIn * 1000
+            ).toISOString(),
+          },
+          { valueEncoding: "json" }
+        );
+      }
+    }
+
     const headers = {
-      Authorization: `Bearer ${prefs.eaAccessToken}`,
-      "X-AuthToken": prefs.eaAccessToken,
+      Authorization: `Bearer ${accessToken}`,
+      "X-AuthToken": accessToken,
       "Content-Type": "application/json",
     };
 

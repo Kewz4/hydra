@@ -23,4 +23,5 @@ export const levelKeys = {
   downloadSourcesSinceValue: "downloadSourcesSinceValue", // The 'since' value API used (for modal comparison)
   localNotifications: "localNotifications",
   commonRedistPassed: "commonRedistPassed", // Whether common redistributables preflight has passed
+  libraryOriginRepairV2: "libraryOriginRepairV2", // One-time demotion of wrongly "sync"-stamped scan/repack games
 };

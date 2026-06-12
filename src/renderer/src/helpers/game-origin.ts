@@ -2,28 +2,42 @@ import type { GameShop } from "@types";
 
 export type GameOrigin = "sync" | "catalog" | "custom";
 
+const PLATFORM_SCHEMES = [
+  "steam://",
+  "legendary://",
+  "goggalaxy://",
+  "msxbox://",
+  "battlenet://",
+  "origin2://",
+  "uplay://",
+];
+
 interface OriginSource {
   shop: GameShop;
   libraryOrigin?: GameOrigin;
+  executablePath?: string | null;
 }
 
 /**
  * Classify how a game entered the library.
- * - "sync": owned on a connected platform (Steam/Epic/GOG/Xbox/Battle.net etc.)
- * - "custom": added manually via "Add custom game" or deep scan
- * - "catalog": downloaded via repack from inside GameHub (Retigga)
+ * - "sync": owned on a connected platform (Steam/Epic/GOG/Xbox/…)
+ * - "custom": added manually via "Add custom game" or found by a disk scan
+ *   outside official store folders
+ * - "catalog": added from the Hydra repack catalogue (Retigga)
  *
- * Games added from the Hydra repack catalogue always get libraryOrigin: "catalog"
- * stamped at add time. Platform syncs stamp "sync". Custom additions stamp "custom"
- * or use shop: "custom". Legacy records without libraryOrigin but with a known
- * platform shop are treated as "sync" — they predate the stamp and were never
- * catalogue repacks.
+ * The libraryOrigin stamp is the source of truth: platform syncs stamp
+ * "sync" (and repair legacy entries on every sync), catalogue adds stamp
+ * "catalog", custom adds and non-store scans stamp "custom". For legacy
+ * records without a stamp, only a platform URI-scheme exe proves ownership —
+ * a real file path can just as well be a repack install, so everything else
+ * falls back to "catalog" rather than leaking into the platform tabs.
  */
 export function getGameOrigin(game: OriginSource): GameOrigin {
   if (game.libraryOrigin) return game.libraryOrigin;
   if (game.shop === "custom") return "custom";
-  // Non-custom shops (steam, epic, gog, etc.) without an explicit libraryOrigin
-  // are always platform-owned games. Only Hydra catalogue repacks have the
-  // "catalog" libraryOrigin stamp, so anything without it is "sync".
-  return "sync";
+  const exe = game.executablePath;
+  if (exe && PLATFORM_SCHEMES.some((scheme) => exe.startsWith(scheme))) {
+    return "sync";
+  }
+  return "catalog";
 }

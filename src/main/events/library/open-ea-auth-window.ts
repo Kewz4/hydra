@@ -5,20 +5,44 @@ import { db, levelKeys } from "@main/level";
 import type { UserPreferences } from "@types";
 import { logger } from "@main/services";
 import { WindowManager } from "@main/services/window-manager";
-
-const EA_AUTH_URL =
-  "https://accounts.ea.com/connect/auth" +
-  "?client_id=EADOTCOM-002-WEBCLIENT" +
-  "&response_type=token" +
-  "&redirect_uri=nucleus:rest" +
-  "&prompt=login" +
-  "&release_type=prod";
+import {
+  EA_AUTH_PARTITION,
+  EA_TOKEN_URL,
+  parseEaAuthJson,
+} from "@main/services/ea-auth";
 
 export interface EaAuthResult {
   accessToken: string;
   username: string;
   pid: string;
 }
+
+const persistEaAuth = async (
+  accessToken: string,
+  expiresInSeconds: number,
+  username: string,
+  pid: string
+) => {
+  const prefs = await db
+    .get<string, UserPreferences | null>(levelKeys.userPreferences, {
+      valueEncoding: "json",
+    })
+    .catch(() => null);
+  const expiry = new Date(
+    Date.now() + expiresInSeconds * 1000
+  ).toISOString();
+  await db.put<string, UserPreferences>(
+    levelKeys.userPreferences,
+    {
+      ...(prefs ?? {}),
+      eaAccessToken: accessToken,
+      eaTokenExpiry: expiry,
+      eaUsername: username,
+      eaPid: pid,
+    },
+    { valueEncoding: "json" }
+  );
+};
 
 const openEaAuthWindow = async (
   _event: Electron.IpcMainInvokeEvent
@@ -34,36 +58,23 @@ const openEaAuthWindow = async (
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        partition: "persist:ea-auth",
+        partition: EA_AUTH_PARTITION,
       },
     });
 
-    win.loadURL(EA_AUTH_URL);
+    // prompt=login forces the sign-in page; once the user authenticates, EA
+    // redirects back to the auth endpoint which answers with a JSON body
+    // containing the access token (nucleus:rest = "REST mode", no redirect).
+    win.loadURL(`${EA_TOKEN_URL}&prompt=login`);
 
     let handled = false;
 
-    const handleToken = async (url: string) => {
+    const completeWithToken = async (accessToken: string, expiresIn: number) => {
       if (handled) return;
-      // EA redirects to nucleus:rest#access_token=... — only the actual redirect
-      // starts with "nucleus:" (the initial auth URL contains "nucleus" only as
-      // a query param value in redirect_uri, so startsWith is the right check).
-      if (!url.startsWith("nucleus:")) return;
       handled = true;
-      win.close();
+      if (!win.isDestroyed()) win.close();
 
       try {
-        // Parse token from fragment or query string
-        const hashIdx = url.indexOf("#");
-        const queryStr =
-          hashIdx >= 0 ? url.slice(hashIdx + 1) : url.split("?")[1] ?? "";
-        const params = new URLSearchParams(queryStr);
-        const accessToken = params.get("access_token");
-        if (!accessToken) {
-          resolve(null);
-          return;
-        }
-
-        // Fetch user info
         const infoRes = await axios.get(
           "https://gateway.ea.com/proxy/identity/pids/me",
           {
@@ -79,37 +90,66 @@ const openEaAuthWindow = async (
           "EA Account";
         const pid = String(pidData.pidId ?? "");
 
-        const result: EaAuthResult = { accessToken, username, pid };
-
-        // Persist immediately
-        const prefs = await db
-          .get<string, UserPreferences | null>(levelKeys.userPreferences, {
-            valueEncoding: "json",
-          })
-          .catch(() => null);
-        const expiry = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString(); // 3 hours
-        await db.put<string, UserPreferences>(
-          levelKeys.userPreferences,
-          {
-            ...(prefs ?? {}),
-            eaAccessToken: accessToken,
-            eaTokenExpiry: expiry,
-            eaUsername: username,
-            eaPid: pid,
-          },
-          { valueEncoding: "json" }
-        );
-
-        resolve(result);
+        await persistEaAuth(accessToken, expiresIn, username, pid);
+        resolve({ accessToken, username, pid });
       } catch (err) {
-        logger.error("EA auth token exchange failed", err);
-        resolve(null);
+        logger.error("EA auth: identity fetch failed", err);
+        // Token itself is valid — persist it anyway so syncs can run
+        await persistEaAuth(accessToken, expiresIn, "EA Account", "").catch(
+          () => {}
+        );
+        resolve({ accessToken, username: "EA Account", pid: "" });
       }
     };
 
-    win.webContents.on("will-navigate", (_e, url) => handleToken(url));
-    win.webContents.on("will-redirect", (_e, url) => handleToken(url));
-    win.webContents.on("did-navigate", (_e, url) => handleToken(url));
+    const checkPageForToken = async () => {
+      if (handled || win.isDestroyed()) return;
+      const url = win.webContents.getURL();
+      // The token JSON is only ever served from the auth endpoint itself
+      if (!url.startsWith("https://accounts.ea.com/connect/auth")) return;
+
+      try {
+        const bodyText: string = await win.webContents.executeJavaScript(
+          "document.body ? document.body.innerText : ''",
+          true
+        );
+        const data = parseEaAuthJson(bodyText);
+        if (data?.access_token) {
+          await completeWithToken(
+            data.access_token,
+            Number(data.expires_in ?? 3600)
+          );
+        } else if (data?.error) {
+          logger.error(`EA auth endpoint returned error: ${bodyText}`);
+        }
+      } catch {
+        // page not ready / not JSON — keep waiting
+      }
+    };
+
+    // Fallback: some EA stacks do redirect to nucleus:rest#access_token=...
+    const handleNucleusRedirect = (url: string) => {
+      if (handled || !url.startsWith("nucleus:")) return;
+      const hashIdx = url.indexOf("#");
+      const queryStr =
+        hashIdx >= 0 ? url.slice(hashIdx + 1) : (url.split("?")[1] ?? "");
+      const params = new URLSearchParams(queryStr);
+      const accessToken = params.get("access_token");
+      if (accessToken) {
+        void completeWithToken(
+          accessToken,
+          Number(params.get("expires_in") ?? 3600)
+        );
+      }
+    };
+
+    win.webContents.on("did-finish-load", () => void checkPageForToken());
+    win.webContents.on("will-navigate", (_e, url) =>
+      handleNucleusRedirect(url)
+    );
+    win.webContents.on("will-redirect", (_e, url) =>
+      handleNucleusRedirect(url)
+    );
     win.on("closed", () => {
       if (!handled) resolve(null);
     });

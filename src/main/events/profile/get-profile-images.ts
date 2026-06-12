@@ -33,13 +33,15 @@ const getOwnId = async (): Promise<string | null> => {
 
 const toRendererUrl = (value: string | null): string | null => {
   if (!value) return null;
-  const normalized = value.replace(/\\/g, "/");
-  if (normalized.startsWith("http") || normalized.startsWith("file:"))
-    return normalized;
-  // Local filesystem path — only usable if the file still exists; a missing
-  // file here is what used to leave a broken image after relaunch
-  if (!fs.existsSync(value)) return null;
-  return `local:${normalized}`;
+  if (value.startsWith("http") || value.startsWith("file:")) return value;
+  // Local filesystem path (possibly already local:-prefixed by an older
+  // version) — only usable if the file still exists; a missing file here is
+  // what used to leave a broken image after relaunch
+  const rawPath = value.startsWith("local:")
+    ? value.slice("local:".length)
+    : value;
+  if (!fs.existsSync(rawPath)) return null;
+  return `local:${rawPath.replace(/\\/g, "/")}`;
 };
 
 const getProfileImages = async (

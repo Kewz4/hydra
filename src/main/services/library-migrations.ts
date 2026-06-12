@@ -1,4 +1,10 @@
-import { gamesShopAssetsSublevel, gamesSublevel, levelKeys } from "@main/level";
+import {
+  db,
+  downloadsSublevel,
+  gamesShopAssetsSublevel,
+  gamesSublevel,
+  levelKeys,
+} from "@main/level";
 import { HydraApi } from "./hydra-api";
 import { logger } from "./logger";
 import { WindowManager } from "./window-manager";
@@ -6,6 +12,7 @@ import {
   compactGameTitle,
   normalizeGameTitle,
 } from "@main/helpers/normalize-game-title";
+import { classifyScannedOrigin } from "@main/helpers/classify-scanned-origin";
 import type { CatalogueSearchResult, Game } from "@types";
 
 const searchCatalogue = async (
@@ -52,18 +59,31 @@ const searchCatalogue = async (
  *
  * 2. libraryOrigin stamping for legacy records, so the per-platform library
  *    filters stop guessing:
- *      - custom-shop games               → "custom"
- *      - any executable (scheme or file) → "sync"   (installed = owned; this
- *        also re-stamps "catalog" games that a scan later found on disk)
- *      - everything else unstamped       → "catalog"
+ *      - custom-shop games                  → "custom"
+ *      - platform URI exe (steam://run/…)   → "sync" (set by platform syncs)
+ *      - real exe inside a store folder     → "sync"
+ *      - real exe elsewhere (repack, scan)  → "custom" — installed-on-disk is
+ *        NOT proof of store ownership; only platform syncs may claim "sync"
+ *      - everything else unstamped          → "catalog"
  *    Platform sync loops keep re-stamping owned games with "sync" on every
  *    run, so a stamp here is never the final word for genuinely synced games.
+ *
+ * 3. One-time repair (libraryOriginRepairV2): earlier versions stamped "sync"
+ *    on ANY game with ANY executable, which dumped repack installs and scan
+ *    finds into the Steam tab. Demote those wrong stamps once; genuinely
+ *    owned games are re-stamped "sync" by the next platform sync.
  */
 export const runLibraryMigrations = async (): Promise<void> => {
   const entries: Array<[string, Game]> = await gamesSublevel
     .iterator()
     .all()
     .catch(() => []);
+
+  const originRepairDone = await db
+    .get<string, boolean>(levelKeys.libraryOriginRepairV2, {
+      valueEncoding: "json",
+    })
+    .catch(() => false);
 
   for (const [key, game] of entries) {
     if (!game || game.isDeleted) continue;
@@ -109,17 +129,35 @@ export const runLibraryMigrations = async (): Promise<void> => {
 
       // --- Stamp libraryOrigin --------------------------------------------
       const exe = game.executablePath;
+      const isUriExe = Boolean(exe?.includes("://"));
       let desired: "sync" | "catalog" | "custom" | null = null;
 
       if (game.shop === "custom") {
         if (game.libraryOrigin !== "custom") desired = "custom";
-      } else if (exe) {
-        // Any executable — a platform URI (steam://run/…) or a real file
-        // found on disk by a scan — means the game is owned/installed,
-        // not a catalogue-only entry.
-        if (game.libraryOrigin !== "sync") desired = "sync";
       } else if (!game.libraryOrigin) {
-        desired = "catalog";
+        if (isUriExe) {
+          // Platform URI exes are only ever set by platform syncs — owned
+          desired = "sync";
+        } else if (exe) {
+          // Real file on disk: store folder → owned, anywhere else → custom
+          desired = classifyScannedOrigin(exe, game.libraryOrigin);
+        } else {
+          desired = "catalog";
+        }
+      } else if (
+        !originRepairDone &&
+        game.shop === "steam" &&
+        game.libraryOrigin === "sync" &&
+        exe &&
+        !isUriExe &&
+        classifyScannedOrigin(exe) !== "sync"
+      ) {
+        // One-time repair of the old any-exe→"sync" stamp. Scoped to Steam
+        // (the affected platform) — owned games get exe steam://run/… and
+        // re-stamped "sync" by the next Steam library sync. Games with a
+        // GameHub download record are repacks → Retigga; the rest → custom.
+        const download = await downloadsSublevel.get(key).catch(() => null);
+        desired = download ? "catalog" : "custom";
       }
 
       const updates: Partial<typeof game> = {};
@@ -131,6 +169,12 @@ export const runLibraryMigrations = async (): Promise<void> => {
     } catch (err) {
       logger.error(`[LibraryMigrations] Failed migrating ${key}`, err);
     }
+  }
+
+  if (!originRepairDone) {
+    await db
+      .put(levelKeys.libraryOriginRepairV2, true, { valueEncoding: "json" })
+      .catch(() => {});
   }
 
   logger.info("[LibraryMigrations] Library migration pass complete");

@@ -138,9 +138,11 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
             ? `https:${details.images.background}`
             : null;
 
+          // gogIconUrl (logo2x) is a LANDSCAPE logo — never use it as the
+          // portrait cover or the library card stretches it blurry. Leave the
+          // cover to the catalogue/SteamGridDB (600x900 portrait grids).
           const assets = await fetchBestAssets("gog", objectId, details.title, {
             iconUrl: gogIconUrl,
-            coverImageUrl: gogIconUrl,
             libraryHeroImageUrl: gogHeroUrl,
           });
 

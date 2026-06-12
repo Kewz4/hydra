@@ -89,6 +89,23 @@ export class UploadcareSync {
     });
 
     const uuid = res.data.file;
+
+    // Also PATCH metadata via REST — form-embedded metadata is not always
+    // visible to the list endpoint, which breaks findLatestImageByKind
+    if (metadata) {
+      try {
+        await axios.patch(`${API_BASE}/files/${uuid}/metadata/`, metadata, {
+          headers: {
+            Authorization: AUTH_HEADER,
+            "Content-Type": "application/json",
+            Accept: "application/vnd.uploadcare-v0.7+json",
+          },
+        });
+      } catch (metaErr) {
+        logger.error(`Uploadcare: metadata patch failed for ${uuid}`, metaErr);
+      }
+    }
+
     logger.log(`Uploadcare: uploaded image ${uuid}`);
     return `${CDN_BASE}/${uuid}/`;
   }
