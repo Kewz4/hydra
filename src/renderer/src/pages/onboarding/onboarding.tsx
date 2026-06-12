@@ -414,6 +414,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       });
       setGogLinked(true);
       setGogUsername(result.username ?? "GOG User");
+      // gogdl is needed to download GOG games — install it in the background
+      // if it isn't present yet
+      const gogdlStatus = await window.electron
+        .getGogdlStatus()
+        .catch(() => ({ binaryFound: false }));
+      if (!gogdlStatus.binaryFound)
+        window.electron.installGogdl().catch(() => {});
       window.electron.syncGogLibrary().catch(() => {});
     },
     []

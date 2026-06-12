@@ -29,6 +29,7 @@ export function SettingsSteamAccount() {
     avatarfull: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [summaryChecked, setSummaryChecked] = useState(false);
   const [isOpenIdPending, setIsOpenIdPending] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{
@@ -52,6 +53,7 @@ export function SettingsSteamAccount() {
     const savedSteamId = userPreferences?.steamId;
 
     if (savedSteamId) {
+      setSummaryChecked(false);
       window.electron
         .getSteamPlayerSummary(
           savedSteamId,
@@ -60,9 +62,11 @@ export function SettingsSteamAccount() {
         .then((summary) => {
           if (summary) setLinkedAccount(summary);
         })
-        .catch(() => {});
+        .catch(() => {})
+        .finally(() => setSummaryChecked(true));
     } else {
       setLinkedAccount(null);
+      setSummaryChecked(true);
     }
   }, [userPreferences?.steamId, userPreferences?.steamApiKey]);
 
@@ -162,6 +166,12 @@ export function SettingsSteamAccount() {
       setIsSyncing(false);
     }
   };
+
+  // A Steam ID is saved but the profile lookup hasn't resolved yet — don't
+  // flash the "connect" form in the meantime
+  if (userPreferences?.steamId && !linkedAccount && !summaryChecked) {
+    return <p style={{ margin: 0, opacity: 0.5 }}>Loading…</p>;
+  }
 
   if (linkedAccount) {
     return (
