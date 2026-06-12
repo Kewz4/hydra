@@ -192,6 +192,14 @@ export interface UserPreferences {
   localProfileImageUrl?: string | null;
   localBackgroundImageUrl?: string | null;
   excludedGames?: ExcludedGame[];
+  ubisoftTicket?: string | null;
+  ubisoftUserId?: string | null;
+  ubisoftProfileId?: string | null;
+  ubisoftUsername?: string | null;
+  eaAccessToken?: string | null;
+  eaTokenExpiry?: string | null;
+  eaUsername?: string | null;
+  eaPid?: string | null;
 }
 
 export interface ExcludedGame {

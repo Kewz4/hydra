@@ -248,6 +248,10 @@ contextBridge.exposeInMainWorld("electron", {
   getEaGames: () => ipcRenderer.invoke("getEaGames"),
   addEaGamesToLibrary: (titles: string[]) =>
     ipcRenderer.invoke("addEaGamesToLibrary", titles),
+  openUbisoftAuthWindow: () => ipcRenderer.invoke("openUbisoftAuthWindow"),
+  syncUbisoftLibrary: () => ipcRenderer.invoke("syncUbisoftLibrary"),
+  openEaAuthWindow: () => ipcRenderer.invoke("openEaAuthWindow"),
+  syncEaLibrary: () => ipcRenderer.invoke("syncEaLibrary"),
   importPlatformAchievements: (platform: "steam" | "epic" | "gog" | "xbox") =>
     ipcRenderer.invoke("importPlatformAchievements", platform),
   syncGamePassLibrary: () => ipcRenderer.invoke("syncGamePassLibrary"),

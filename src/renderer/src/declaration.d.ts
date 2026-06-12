@@ -319,6 +319,27 @@ declare global {
       }>;
     }>;
     addEaGamesToLibrary: (titles: string[]) => Promise<{ added: number }>;
+    openUbisoftAuthWindow: () => Promise<{
+      ticket: string;
+      userId: string;
+      profileId: string;
+      username: string;
+    } | null>;
+    syncUbisoftLibrary: () => Promise<{
+      total: number;
+      added: number;
+      error?: string;
+    }>;
+    openEaAuthWindow: () => Promise<{
+      accessToken: string;
+      username: string;
+      pid: string;
+    } | null>;
+    syncEaLibrary: () => Promise<{
+      total: number;
+      added: number;
+      error?: string;
+    }>;
     importPlatformAchievements: (
       platform: "steam" | "epic" | "gog" | "xbox"
     ) => Promise<{

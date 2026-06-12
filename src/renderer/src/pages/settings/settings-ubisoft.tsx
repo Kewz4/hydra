@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Button } from "@renderer/components";
-import { useToast } from "@renderer/hooks";
+import { useAppSelector, useToast } from "@renderer/hooks";
+import { settingsContext } from "@renderer/context";
 import {
   AlertIcon,
   CheckCircleFillIcon,
   PlusIcon,
+  SyncIcon,
 } from "@primer/octicons-react";
 
 interface UbisoftGameDef {
@@ -15,12 +17,21 @@ interface UbisoftGameDef {
 }
 
 export function SettingsUbisoft() {
+  const userPreferences = useAppSelector(
+    (state) => state.userPreferences.value
+  );
+  const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
 
   const [clientInstalled, setClientInstalled] = useState<boolean | null>(null);
   const [detected, setDetected] = useState<UbisoftGameDef[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const isConnected = Boolean(userPreferences?.ubisoftTicket);
+  const username = userPreferences?.ubisoftUsername;
 
   useEffect(() => {
     window.electron
@@ -32,6 +43,57 @@ export function SettingsUbisoft() {
       })
       .catch(() => setClientInstalled(false));
   }, []);
+
+  const handleConnect = async () => {
+    setIsConnecting(true);
+    try {
+      const result = await window.electron.openUbisoftAuthWindow();
+      if (result) {
+        // Main process already persisted the credentials — update renderer state
+        await updateUserPreferences({
+          ubisoftTicket: result.ticket,
+          ubisoftUserId: result.userId,
+          ubisoftProfileId: result.profileId,
+          ubisoftUsername: result.username,
+        });
+        showSuccessToast("Ubisoft Connect", `Connected as ${result.username}`);
+        handleSync();
+      }
+    } catch {
+      showErrorToast("Ubisoft Connect", "Failed to connect account.");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    await updateUserPreferences({
+      ubisoftTicket: null,
+      ubisoftUserId: null,
+      ubisoftProfileId: null,
+      ubisoftUsername: null,
+    });
+    showSuccessToast("Ubisoft Connect", "Account disconnected.");
+  };
+
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      const result = await window.electron.syncUbisoftLibrary();
+      if (result.error) {
+        showErrorToast("Ubisoft Connect", result.error);
+      } else {
+        showSuccessToast(
+          "Ubisoft Connect",
+          `Library synced: ${result.added} game${result.added !== 1 ? "s" : ""} added (${result.total} owned).`
+        );
+      }
+    } catch {
+      showErrorToast("Ubisoft Connect", "Library sync failed.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const toggleGame = (installId: string) => {
     setSelected((prev) => {
@@ -63,16 +125,51 @@ export function SettingsUbisoft() {
     }
   };
 
-  if (clientInstalled === null) return null;
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       <p style={{ margin: 0, opacity: 0.8 }}>
-        Detect games installed through Ubisoft Connect and add them to your
-        library. Games launch through the Ubisoft Connect client.
+        Connect your Ubisoft account to import your owned games — no client
+        required. Games launch through Ubisoft Connect when it&apos;s
+        installed.
       </p>
 
-      {!clientInstalled && (
+      {!isConnected ? (
+        <div>
+          <Button type="button" onClick={handleConnect} disabled={isConnecting}>
+            {isConnecting ? "Connecting…" : "Connect Ubisoft account"}
+          </Button>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <span
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+          >
+            <CheckCircleFillIcon size={14} />
+            Connected{username ? ` as ${username}` : ""}
+          </span>
+          <Button
+            type="button"
+            onClick={handleSync}
+            disabled={isSyncing}
+            style={{ display: "flex", alignItems: "center", gap: "6px" }}
+          >
+            <SyncIcon size={14} />
+            {isSyncing ? "Syncing…" : "Sync library"}
+          </Button>
+          <Button type="button" theme="outline" onClick={handleDisconnect}>
+            Disconnect
+          </Button>
+        </div>
+      )}
+
+      {clientInstalled === false && (
         <div
           style={{
             display: "flex",
@@ -82,18 +179,18 @@ export function SettingsUbisoft() {
           }}
         >
           <AlertIcon size={16} />
-          <span>Ubisoft Connect is not installed on this machine.</span>
+          <span>
+            Ubisoft Connect is not installed — synced games can&apos;t be
+            launched until you install it.
+          </span>
         </div>
       )}
 
-      {clientInstalled && detected.length === 0 && (
-        <p style={{ margin: 0, fontSize: "0.875em", opacity: 0.6 }}>
-          No installed Ubisoft games detected.
-        </p>
-      )}
-
-      {clientInstalled && detected.length > 0 && (
+      {detected.length > 0 && (
         <>
+          <p style={{ margin: 0, fontSize: "0.875em", opacity: 0.6 }}>
+            Locally installed games detected:
+          </p>
           <div
             style={{
               display: "grid",

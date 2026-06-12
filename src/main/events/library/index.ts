@@ -75,6 +75,10 @@ import "./get-ubisoft-games";
 import "./add-ubisoft-games-to-library";
 import "./get-ea-games";
 import "./add-ea-games-to-library";
+import "./open-ubisoft-auth-window";
+import "./sync-ubisoft-library";
+import "./open-ea-auth-window";
+import "./sync-ea-library";
 import "./import-platform-achievements";
 
 import "./sync-gamepass-library";
