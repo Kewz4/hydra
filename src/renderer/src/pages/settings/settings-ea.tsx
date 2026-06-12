@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { Button } from "@renderer/components";
-import { useAppSelector, useToast } from "@renderer/hooks";
+import { useAppSelector, useCachedDetection, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
 import {
   AlertIcon,
@@ -15,6 +15,11 @@ interface EaGameDef {
   installDir: string | null;
 }
 
+interface EaDetection {
+  installed: boolean;
+  detected: EaGameDef[];
+}
+
 export function SettingsEa() {
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
@@ -22,8 +27,13 @@ export function SettingsEa() {
   const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
 
-  const [clientInstalled, setClientInstalled] = useState<boolean | null>(null);
-  const [detected, setDetected] = useState<EaGameDef[]>([]);
+  const { data } = useCachedDetection<EaDetection>("ea-games", () =>
+    window.electron.getEaGames()
+  );
+
+  const clientInstalled = data?.installed ?? null;
+  const detected = data?.detected ?? [];
+
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isAdding, setIsAdding] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -33,15 +43,12 @@ export function SettingsEa() {
   const username = userPreferences?.eaUsername;
 
   useEffect(() => {
-    window.electron
-      .getEaGames()
-      .then(({ installed, detected: det }) => {
-        setClientInstalled(installed);
-        setDetected(det);
-        setSelected(new Set(det.map((g) => g.title)));
-      })
-      .catch(() => setClientInstalled(false));
-  }, []);
+    if (data) {
+      setSelected((prev) =>
+        prev.size > 0 ? prev : new Set(data.detected.map((g) => g.title))
+      );
+    }
+  }, [data]);
 
   const handleConnect = async () => {
     setIsConnecting(true);
@@ -125,8 +132,8 @@ export function SettingsEa() {
   if (userPreferences === null) return null;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <p style={{ margin: 0, opacity: 0.8 }}>
+    <div className="settings-account">
+      <p className="settings-account__description">
         Connect your EA account to import your owned games — no client required.
         Games launch through the EA app when it&apos;s installed.
       </p>
@@ -138,14 +145,7 @@ export function SettingsEa() {
           </Button>
         </div>
       ) : (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="settings-account__row">
           <span style={{ display: "flex", alignItems: "center", gap: "6px" }}>
             <CheckCircleFillIcon size={14} />
             Connected{username ? ` as ${username}` : ""}
@@ -166,14 +166,7 @@ export function SettingsEa() {
       )}
 
       {clientInstalled === false && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            opacity: 0.7,
-          }}
-        >
+        <div className="settings-account__warning">
           <AlertIcon size={16} />
           <span>
             EA app / Origin is not installed — synced games can&apos;t be
@@ -184,16 +177,10 @@ export function SettingsEa() {
 
       {detected.length > 0 && (
         <>
-          <p style={{ margin: 0, fontSize: "0.875em", opacity: 0.6 }}>
+          <p className="settings-account__hint">
             Locally installed games detected:
           </p>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "8px",
-            }}
-          >
+          <div className="settings-account__game-grid">
             {detected.map((game) => {
               const isChecked = selected.has(game.title);
 
@@ -202,42 +189,13 @@ export function SettingsEa() {
                   key={game.title}
                   type="button"
                   onClick={() => toggleGame(game.title)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: `1px solid ${isChecked ? "var(--color-accent, #5e81f4)" : "rgba(255,255,255,0.1)"}`,
-                    background: isChecked
-                      ? "rgba(94,129,244,0.15)"
-                      : "rgba(255,255,255,0.03)",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    color: "inherit",
-                  }}
+                  className={`settings-account__game-tile${isChecked ? " settings-account__game-tile--selected" : ""}`}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: "0.875em",
-                        fontWeight: 500,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <div className="settings-account__game-title">
                       {game.title}
                     </div>
-                    <div
-                      style={{
-                        fontSize: "0.75em",
-                        opacity: 0.6,
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "3px",
-                      }}
-                    >
+                    <div className="settings-account__game-status">
                       <CheckCircleFillIcon size={10} />
                       Installed
                     </div>
