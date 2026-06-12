@@ -1,15 +1,10 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
 import { settingsContext } from "@renderer/context";
 import { GogAuthModal } from "./gog-auth-modal";
-import {
-  AlertIcon,
-  CheckCircleFillIcon,
-  DownloadIcon,
-  SyncIcon,
-} from "@primer/octicons-react";
+import { CheckCircleFillIcon, SyncIcon } from "@primer/octicons-react";
 import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
 export function SettingsGogAccount() {
@@ -35,10 +30,6 @@ export function SettingsGogAccount() {
     summary: string;
     results: LibrarySyncResult[];
   } | null>(null);
-  const [gogdlFound, setGogdlFound] = useState<boolean | null>(null);
-  const [isInstallingGogdl, setIsInstallingGogdl] = useState(false);
-  const [gogdlInstallProgress, setGogdlInstallProgress] = useState(0);
-  const gogdlProgressUnsub = useRef<(() => void) | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const fetchUserInfo = useCallback(async () => {
@@ -47,38 +38,35 @@ export function SettingsGogAccount() {
       return;
     }
     const info = await window.electron.getGogUserInfo().catch(() => null);
-    setUserInfo(info);
-  }, [userPreferences?.gogRefreshToken]);
+    if (info) {
+      setUserInfo(info);
+      // Keep the cached username fresh for instant rendering next time
+      if (info.username !== userPreferences?.gogUsername) {
+        updateUserPreferences({ gogUsername: info.username }).catch(() => {});
+      }
+    }
+  }, [
+    userPreferences?.gogRefreshToken,
+    userPreferences?.gogUsername,
+    updateUserPreferences,
+  ]);
 
   useEffect(() => {
     fetchUserInfo();
-  }, [fetchUserInfo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPreferences?.gogRefreshToken]);
 
+  // gogdl is required to download GOG games — make sure it's present in the
+  // background whenever a GOG account is connected, no user action needed
   useEffect(() => {
+    if (!userPreferences?.gogRefreshToken) return;
     window.electron
       .getGogdlStatus()
-      .then((s) => setGogdlFound(s.binaryFound))
-      .catch(() => setGogdlFound(false));
-  }, []);
-
-  const handleInstallGogdl = async () => {
-    setIsInstallingGogdl(true);
-    setGogdlInstallProgress(0);
-    gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(
-      setGogdlInstallProgress
-    );
-    try {
-      await window.electron.installGogdl();
-      setGogdlFound(true);
-      showSuccessToast("gogdl installed successfully");
-    } catch {
-      showErrorToast("Failed to install gogdl");
-    } finally {
-      gogdlProgressUnsub.current?.();
-      setIsInstallingGogdl(false);
-      setGogdlInstallProgress(0);
-    }
-  };
+      .then((s) => {
+        if (!s.binaryFound) window.electron.installGogdl().catch(() => {});
+      })
+      .catch(() => {});
+  }, [userPreferences?.gogRefreshToken]);
 
   const handleConnect = () => {
     setShowAuthModal(true);
@@ -92,31 +80,14 @@ export function SettingsGogAccount() {
       }
       setIsConnecting(true);
       try {
-        await updateUserPreferences({ gogRefreshToken: result.refresh_token });
+        await updateUserPreferences({
+          gogRefreshToken: result.refresh_token,
+          gogUsername: result.username,
+        });
         showSuccessToast(
           t("gog_account_linked", { username: result.username })
         );
         await fetchUserInfo();
-
-        // Auto-install gogdl if not present
-        const status = await window.electron
-          .getGogdlStatus()
-          .catch(() => ({ binaryFound: false }));
-        if (!status.binaryFound) {
-          setIsInstallingGogdl(true);
-          gogdlProgressUnsub.current = window.electron.onGogdlInstallProgress(
-            setGogdlInstallProgress
-          );
-          window.electron
-            .installGogdl()
-            .then(() => setGogdlFound(true))
-            .catch(() => {})
-            .finally(() => {
-              gogdlProgressUnsub.current?.();
-              setIsInstallingGogdl(false);
-              setGogdlInstallProgress(0);
-            });
-        }
       } catch {
         showErrorToast(t("gog_auth_failed"));
       } finally {
@@ -127,7 +98,7 @@ export function SettingsGogAccount() {
   );
 
   const handleDisconnect = async () => {
-    await updateUserPreferences({ gogRefreshToken: null });
+    await updateUserPreferences({ gogRefreshToken: null, gogUsername: null });
     setUserInfo(null);
     setSyncResult(null);
     showSuccessToast(t("gog_account_disconnected"));
@@ -164,7 +135,13 @@ export function SettingsGogAccount() {
     }
   };
 
-  if (userInfo) {
+  // Render connected state instantly from the cached username; the live
+  // lookup fills in the user ID when it resolves
+  const connected = Boolean(userPreferences?.gogRefreshToken);
+  const displayName =
+    userInfo?.username ?? userPreferences?.gogUsername ?? "GOG User";
+
+  if (connected) {
     return (
       <>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -183,62 +160,16 @@ export function SettingsGogAccount() {
                 style={{ display: "flex", alignItems: "center", gap: "6px" }}
               >
                 <CheckCircleFillIcon size={14} />
-                <strong>{userInfo.username}</strong>
+                <strong>{displayName}</strong>
               </div>
-              <small style={{ opacity: 0.6 }}>{userInfo.userId}</small>
+              {userInfo?.userId && (
+                <small style={{ opacity: 0.6 }}>{userInfo.userId}</small>
+              )}
             </div>
             <Button type="button" onClick={handleDisconnect} theme="outline">
               {t("disconnect")}
             </Button>
           </div>
-
-          {gogdlFound === false && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "10px 14px",
-                borderRadius: "8px",
-                background: "rgba(255,255,255,0.05)",
-              }}
-            >
-              <AlertIcon size={16} />
-              <span style={{ flex: 1, fontSize: "0.9rem" }}>
-                gogdl not found — required to download GOG games
-              </span>
-              <Button
-                type="button"
-                onClick={handleInstallGogdl}
-                disabled={isInstallingGogdl}
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-              >
-                <DownloadIcon size={14} />
-                {isInstallingGogdl
-                  ? gogdlInstallProgress > 0
-                    ? `Downloading ${gogdlInstallProgress}%`
-                    : "Downloading…"
-                  : "Install gogdl"}
-              </Button>
-            </div>
-          )}
-
-          {gogdlFound === true && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "6px 10px",
-                borderRadius: "6px",
-                background: "rgba(255,255,255,0.04)",
-                fontSize: "0.85rem",
-              }}
-            >
-              <CheckCircleFillIcon size={13} />
-              <span style={{ opacity: 0.7 }}>gogdl ready</span>
-            </div>
-          )}
 
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Button
@@ -276,12 +207,6 @@ export function SettingsGogAccount() {
         )}
       </>
     );
-  }
-
-  // Token exists but user info is still loading — don't flash the
-  // "connect" view while the lookup is in flight
-  if (userPreferences?.gogRefreshToken && !userInfo) {
-    return <p style={{ margin: 0, opacity: 0.5 }}>Loading…</p>;
   }
 
   return (

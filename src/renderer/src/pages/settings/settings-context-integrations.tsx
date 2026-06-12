@@ -117,6 +117,7 @@ export function SettingsContextIntegrations() {
     {
       id: "epic",
       title: t("epic_games"),
+      connected: Boolean(userPreferences.epicAccountName),
       content: <SettingsEpicAccount />,
     },
     {

@@ -176,8 +176,14 @@ export interface UserPreferences {
   autoRunGamemode?: boolean;
   steamId?: string | null;
   steamApiKey?: string | null;
+  // Cached profile info so the UI can render connected state instantly
+  // without waiting for network lookups
+  steamUsername?: string | null;
+  steamAvatarUrl?: string | null;
   legendaryBinaryPath?: string | null;
+  epicAccountName?: string | null;
   gogRefreshToken?: string | null;
+  gogUsername?: string | null;
   xboxAccessToken?: string | null;
   xboxUserHash?: string | null;
   xboxXstsToken?: string | null;

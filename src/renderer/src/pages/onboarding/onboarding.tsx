@@ -348,7 +348,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       const summary = await window.electron
         .getSteamPlayerSummary(detectedId, undefined)
         .catch(() => null);
-      await window.electron.updateUserPreferences({ steamId: detectedId });
+      await window.electron.updateUserPreferences({
+        steamId: detectedId,
+        steamUsername: summary?.personaname ?? null,
+        steamAvatarUrl: summary?.avatarfull ?? null,
+      });
       if (summary) setSteamProfile(summary);
       setSteamLinked(true);
     } catch (err: unknown) {
@@ -377,6 +381,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       await window.electron.updateUserPreferences({
         steamId,
         steamApiKey: steamApiKey.trim() || undefined,
+        steamUsername: summary?.personaname ?? null,
+        steamAvatarUrl: summary?.avatarfull ?? null,
       });
       if (summary) setSteamProfile(summary);
       setSteamLinked(true);
@@ -396,6 +402,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (result.success) {
         setEpicLinked(true);
         setEpicAccount(result.account ?? "Epic");
+        window.electron
+          .updateUserPreferences({ epicAccountName: result.account ?? "Epic" })
+          .catch(() => {});
         window.electron.syncEpicLibrary().catch(() => {});
       }
     },
@@ -411,6 +420,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (!result) return;
       await window.electron.updateUserPreferences({
         gogRefreshToken: result.refresh_token,
+        gogUsername: result.username ?? "GOG User",
       });
       setGogLinked(true);
       setGogUsername(result.username ?? "GOG User");

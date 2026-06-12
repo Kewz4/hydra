@@ -29,7 +29,6 @@ export function SettingsSteamAccount() {
     avatarfull: string;
   } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [summaryChecked, setSummaryChecked] = useState(false);
   const [isOpenIdPending, setIsOpenIdPending] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{
@@ -53,21 +52,31 @@ export function SettingsSteamAccount() {
     const savedSteamId = userPreferences?.steamId;
 
     if (savedSteamId) {
-      setSummaryChecked(false);
       window.electron
         .getSteamPlayerSummary(
           savedSteamId,
           userPreferences?.steamApiKey ?? undefined
         )
         .then((summary) => {
-          if (summary) setLinkedAccount(summary);
+          if (summary) {
+            setLinkedAccount(summary);
+            // Cache for instant rendering on the next visit
+            if (
+              summary.personaname !== userPreferences?.steamUsername ||
+              summary.avatarfull !== userPreferences?.steamAvatarUrl
+            ) {
+              updateUserPreferences({
+                steamUsername: summary.personaname,
+                steamAvatarUrl: summary.avatarfull,
+              }).catch(() => {});
+            }
+          }
         })
-        .catch(() => {})
-        .finally(() => setSummaryChecked(true));
+        .catch(() => {});
     } else {
       setLinkedAccount(null);
-      setSummaryChecked(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userPreferences?.steamId, userPreferences?.steamApiKey]);
 
   const handleSteamOpenIdLogin = async () => {
@@ -127,7 +136,12 @@ export function SettingsSteamAccount() {
   };
 
   const handleDisconnect = async () => {
-    await updateUserPreferences({ steamId: null, steamApiKey: null });
+    await updateUserPreferences({
+      steamId: null,
+      steamApiKey: null,
+      steamUsername: null,
+      steamAvatarUrl: null,
+    });
     setLinkedAccount(null);
     setSteamId("");
     setApiKey("");
@@ -167,13 +181,19 @@ export function SettingsSteamAccount() {
     }
   };
 
-  // A Steam ID is saved but the profile lookup hasn't resolved yet — don't
-  // flash the "connect" form in the meantime
-  if (userPreferences?.steamId && !linkedAccount && !summaryChecked) {
-    return <p style={{ margin: 0, opacity: 0.5 }}>Loading…</p>;
-  }
+  // Render connected state instantly from the cached profile; the live
+  // lookup refreshes it in the background
+  const displayAccount =
+    linkedAccount ??
+    (userPreferences?.steamId
+      ? {
+          steamid: userPreferences.steamId,
+          personaname: userPreferences.steamUsername ?? "Steam User",
+          avatarfull: userPreferences.steamAvatarUrl ?? "",
+        }
+      : null);
 
-  if (linkedAccount) {
+  if (displayAccount) {
     return (
       <>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -188,8 +208,8 @@ export function SettingsSteamAccount() {
             }}
           >
             <img
-              src={linkedAccount.avatarfull}
-              alt={linkedAccount.personaname}
+              src={displayAccount.avatarfull}
+              alt={displayAccount.personaname}
               style={{ width: 48, height: 48, borderRadius: "50%" }}
             />
             <div style={{ flex: 1 }}>
@@ -197,9 +217,9 @@ export function SettingsSteamAccount() {
                 style={{ display: "flex", alignItems: "center", gap: "6px" }}
               >
                 <CheckCircleFillIcon size={14} />
-                <strong>{linkedAccount.personaname}</strong>
+                <strong>{displayAccount.personaname}</strong>
               </div>
-              <small style={{ opacity: 0.6 }}>{linkedAccount.steamid}</small>
+              <small style={{ opacity: 0.6 }}>{displayAccount.steamid}</small>
             </div>
             <Button type="button" onClick={handleDisconnect} theme="outline">
               {t("disconnect")}
