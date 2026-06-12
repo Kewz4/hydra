@@ -29,7 +29,12 @@ const addRiotGamesToLibrary = async (
     const existing = await gamesSublevel.get(gameKey).catch(() => null);
     if (existing && !existing.isDeleted) continue;
 
-    const assets = await fetchBestAssets("riot", productId, def.title, {});
+    // For Riot games with a known Steam app ID, fetch assets directly from
+    // Steam via the Hydra API — the `riot` shop type is not recognised by the
+    // API and catalogue title-search returns wrong results (e.g. LoR → Minecraft Legends).
+    const assets = def.steamAppId
+      ? await fetchBestAssets("steam", def.steamAppId, def.title, {})
+      : await fetchBestAssets("riot", productId, def.title, {});
 
     const game = {
       title: def.title,

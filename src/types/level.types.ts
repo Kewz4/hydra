@@ -81,6 +81,7 @@ export interface Game {
     objectId: string;
     executablePath: string | null;
   }>;
+  xboxTitleId?: string | null;
 }
 
 export interface Download {
