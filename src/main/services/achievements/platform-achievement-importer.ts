@@ -16,7 +16,8 @@ import type {
 import {
   refreshGogToken,
   getGogUserInfo,
-  getGogGameClientId,
+  getGogGameCredentials,
+  getGogGameToken,
   getGogRemoteAchievements,
 } from "@main/services/gog-account";
 import { getLegendaryConfigPath } from "@main/services/legendary";
@@ -211,13 +212,21 @@ export const importGogAchievements =
     for (const [gameKey, game] of games) {
       result.gamesProcessed++;
       try {
-        const clientId = await getGogGameClientId(game.objectId);
-        if (!clientId) continue;
+        const credentials = await getGogGameCredentials(game.objectId);
+        if (!credentials) continue;
+
+        // gameplay.gog.com only accepts tokens issued for the game's own
+        // OAuth client — the generic embed token is rejected with 401/403
+        const gameToken = await getGogGameToken(
+          tokens.refresh_token,
+          credentials
+        );
+        if (!gameToken) continue;
 
         const remote = await getGogRemoteAchievements(
-          tokens.access_token,
+          gameToken,
           userInfo.userId,
-          clientId
+          credentials.clientId
         );
         if (remote.length === 0) continue;
 

@@ -8,9 +8,6 @@ export interface RiotGame {
   patchline: string;
   title: string;
   defaultInstallPaths: string[];
-  /** Steam app ID for this game, used to fetch accurate metadata when the
-   * Hydra API doesn't recognise the `riot` shop type. */
-  steamAppId: string | null;
 }
 
 export const RIOT_GAMES: RiotGame[] = [
@@ -19,28 +16,18 @@ export const RIOT_GAMES: RiotGame[] = [
     patchline: "live",
     title: "League of Legends",
     defaultInstallPaths: ["C:\\Riot Games\\League of Legends"],
-    steamAppId: "2300",
   },
   {
     productId: "valorant",
     patchline: "live",
     title: "VALORANT",
     defaultInstallPaths: ["C:\\Riot Games\\VALORANT\\live"],
-    steamAppId: null,
   },
   {
     productId: "bacon",
     patchline: "live",
     title: "Legends of Runeterra",
     defaultInstallPaths: ["C:\\Riot Games\\LoR\\live"],
-    steamAppId: null,
-  },
-  {
-    productId: "wildrift",
-    patchline: "live",
-    title: "League of Legends: Wild Rift",
-    defaultInstallPaths: ["C:\\Riot Games\\Wild Rift"],
-    steamAppId: null,
   },
 ];
 

@@ -10,7 +10,8 @@ import {
   refreshGogToken,
   getGogOwnedGameIds,
   getGogGameDetails,
-  getGogGameClientId,
+  getGogGameCredentials,
+  getGogGameToken,
   getGogGamePlaytimeMs,
   getGogUserInfo,
 } from "@main/services/gog-account";
@@ -74,14 +75,17 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
               existing.libraryOrigin = "sync";
               await gamesSublevel.put(gameKey, existing);
             }
-            const clientId = await getGogGameClientId(objectId).catch(
+            const credentials = await getGogGameCredentials(objectId).catch(
               () => null
             );
-            if (clientId) {
+            const gameToken = credentials
+              ? await getGogGameToken(tokens.refresh_token, credentials)
+              : null;
+            if (credentials && gameToken) {
               const gogPlaytimeMs = await getGogGamePlaytimeMs(
-                tokens.access_token,
+                gameToken,
                 userInfo.userId,
-                clientId
+                credentials.clientId
               );
               if (gogPlaytimeMs > (existing.playTimeInMilliseconds ?? 0)) {
                 await gamesSublevel.put(gameKey, {
@@ -143,14 +147,17 @@ const syncGogLibrary = async (_event: Electron.IpcMainInvokeEvent) => {
           // Fetch playtime from GOG for new games
           let gogPlaytimeMs = 0;
           if (userInfo) {
-            const clientId = await getGogGameClientId(objectId).catch(
+            const credentials = await getGogGameCredentials(objectId).catch(
               () => null
             );
-            if (clientId) {
+            const gameToken = credentials
+              ? await getGogGameToken(tokens.refresh_token, credentials)
+              : null;
+            if (credentials && gameToken) {
               gogPlaytimeMs = await getGogGamePlaytimeMs(
-                tokens.access_token,
+                gameToken,
                 userInfo.userId,
-                clientId
+                credentials.clientId
               );
             }
           }
