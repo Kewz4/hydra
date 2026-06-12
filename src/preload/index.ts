@@ -802,6 +802,8 @@ contextBridge.exposeInMainWorld("electron", {
 
   /* Profile */
   getMe: () => ipcRenderer.invoke("getMe"),
+  getProfileImages: (userId: string) =>
+    ipcRenderer.invoke("getProfileImages", userId),
   updateProfile: (updateProfile: UpdateProfileRequest) =>
     ipcRenderer.invoke("updateProfile", updateProfile),
   getProfileImageMetadata: (imagePath: string) =>

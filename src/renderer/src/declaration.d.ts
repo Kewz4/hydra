@@ -801,6 +801,10 @@ declare global {
 
     /* Profile */
     getMe: () => Promise<UserDetails | null>;
+    getProfileImages: (userId: string) => Promise<{
+      profileImageUrl: string | null;
+      backgroundImageUrl: string | null;
+    }>;
     updateProfile: (
       updateProfile: UpdateProfileRequest
     ) => Promise<UserProfile>;
