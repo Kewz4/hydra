@@ -272,7 +272,11 @@ export function GameDetailsContextProvider({
         if (assets) {
           if (abortController.signal.aborted) return;
           setShopDetails((prev) => {
-            if (!prev) return null;
+            if (!prev) {
+              // Game not in Hydra catalogue — create a minimal entry so hero/logo
+              // images from SteamGridDB are still available to the details page.
+              return { assets } as ShopDetailsWithAssets;
+            }
             return {
               ...prev,
               assets,

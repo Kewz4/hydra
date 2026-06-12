@@ -43,7 +43,9 @@ const openUbisoftAuthWindow = async (
 
     const checkUrl = async (url: string) => {
       if (handled) return;
-      if (!url.includes("connect.ubisoft.com")) return;
+      // Only trigger when the window actually navigates TO connect.ubisoft.com —
+      // not when the login URL merely contains it in a nextUrl query parameter.
+      if (!url.startsWith("https://connect.ubisoft.com")) return;
       handled = true;
 
       try {

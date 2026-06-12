@@ -356,7 +356,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       });
       if (summary) setSteamProfile(summary);
       setSteamLinked(true);
-      setTimeout(() => next(), 1200);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setSteamError(msg || "Steam login failed.");
@@ -408,7 +407,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           .updateUserPreferences({ epicAccountName: result.account ?? "Epic" })
           .catch(() => {});
         window.electron.syncEpicLibrary().catch(() => {});
-        setTimeout(() => next(), 1200);
       }
     },
     [next]
@@ -435,7 +433,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (!gogdlStatus.binaryFound)
         window.electron.installGogdl().catch(() => {});
       window.electron.syncGogLibrary().catch(() => {});
-      setTimeout(() => next(), 1200);
     },
     [next]
   );
@@ -449,7 +446,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (result?.success) {
         setXboxLinked(true);
         setXboxGamertag(result.gamertag ?? "Xbox User");
-        setTimeout(() => next(), 1200);
       }
     } catch {
       setXboxWindowOpen(false);
@@ -527,7 +523,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             `Synced ${syncResult.total} game${syncResult.total !== 1 ? "s" : ""} from your Ubisoft library.`
           );
         }
-        setTimeout(() => next(), 1200);
       }
     } catch {
       // ignore
@@ -551,7 +546,6 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             `Synced ${syncResult.total} game${syncResult.total !== 1 ? "s" : ""} from your EA library.`
           );
         }
-        setTimeout(() => next(), 1200);
       }
     } catch {
       // ignore

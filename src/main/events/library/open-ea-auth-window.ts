@@ -44,8 +44,10 @@ const openEaAuthWindow = async (
 
     const handleToken = async (url: string) => {
       if (handled) return;
-      // EA redirects to nucleus:rest#access_token=...
-      if (!url.includes("nucleus") && !url.includes("access_token")) return;
+      // EA redirects to nucleus:rest#access_token=... — only the actual redirect
+      // starts with "nucleus:" (the initial auth URL contains "nucleus" only as
+      // a query param value in redirect_uri, so startsWith is the right check).
+      if (!url.startsWith("nucleus:")) return;
       handled = true;
       win.close();
 
