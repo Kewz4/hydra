@@ -47,8 +47,7 @@ type StepId =
   | "ubisoft"
   | "ea"
   | "tools"
-  | "notifications"
-  | "startup"
+  | "preferences"
   | "done";
 
 const ALL_STEPS: StepId[] = [
@@ -65,8 +64,7 @@ const ALL_STEPS: StepId[] = [
   "ubisoft",
   "ea",
   "tools",
-  "notifications",
-  "startup",
+  "preferences",
   "done",
 ];
 
@@ -83,8 +81,7 @@ const NAV_STEPS: StepId[] = [
   "ubisoft",
   "ea",
   "tools",
-  "notifications",
-  "startup",
+  "preferences",
 ];
 
 const STEP_LABELS: Record<StepId, string> = {
@@ -101,8 +98,7 @@ const STEP_LABELS: Record<StepId, string> = {
   ubisoft: "Ubisoft Connect",
   ea: "EA app",
   tools: "Tools",
-  notifications: "Notifications",
-  startup: "Startup",
+  preferences: "Preferences",
   done: "Done",
 };
 
@@ -215,6 +211,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   } | null>(null);
   const [eaBusy, setEaBusy] = useState(false);
   const [eaResult, setEaResult] = useState("");
+  const [eaLinked, setEaLinked] = useState(false);
+  const [eaAccountName, setEaAccountName] = useState<string | null>(null);
+  const [eaConnecting, setEaConnecting] = useState(false);
+  const [eaSyncResult, setEaSyncResult] = useState<string>("");
 
   // Tools step state
   const [ludusaviResult, setLudusaviResult] = useState<string>("");
@@ -276,7 +276,8 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           return remaining[idx + 1] as StepId;
         return "tools";
       }
-      if (from === "tools") return "notifications";
+      if (from === "tools") return "preferences";
+      if (from === "preferences") return "done";
       // Default linear progression for other steps
       const idx = ALL_STEPS.indexOf(from);
       return ALL_STEPS[idx + 1] as StepId;
@@ -355,6 +356,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       });
       if (summary) setSteamProfile(summary);
       setSteamLinked(true);
+      setTimeout(() => next(), 1200);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setSteamError(msg || "Steam login failed.");
@@ -406,9 +408,10 @@ export function Onboarding({ onComplete }: OnboardingProps) {
           .updateUserPreferences({ epicAccountName: result.account ?? "Epic" })
           .catch(() => {});
         window.electron.syncEpicLibrary().catch(() => {});
+        setTimeout(() => next(), 1200);
       }
     },
-    []
+    [next]
   );
 
   const handleGogConnect = () => {
@@ -432,8 +435,9 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (!gogdlStatus.binaryFound)
         window.electron.installGogdl().catch(() => {});
       window.electron.syncGogLibrary().catch(() => {});
+      setTimeout(() => next(), 1200);
     },
-    []
+    [next]
   );
 
   const handleXboxConnect = async () => {
@@ -445,6 +449,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       if (result?.success) {
         setXboxLinked(true);
         setXboxGamertag(result.gamertag ?? "Xbox User");
+        setTimeout(() => next(), 1200);
       }
     } catch {
       setXboxWindowOpen(false);
@@ -475,12 +480,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   }, [currentStep, riotState, ubisoftState, eaState]);
 
   const handleAddRiotGames = async () => {
-    if (!riotState) return;
     setRiotBusy(true);
     try {
-      const result = await window.electron.addRiotGamesToLibrary(
-        riotState.detected.map((g) => g.productId)
-      );
+      const result = await window.electron.addRiotGamesToLibrary([
+        "league_of_legends",
+        "valorant",
+        "bacon",
+      ]);
       setRiotResult(
         `Added ${result.added} game${result.added !== 1 ? "s" : ""} to your library.`
       );
@@ -521,11 +527,36 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             `Synced ${syncResult.total} game${syncResult.total !== 1 ? "s" : ""} from your Ubisoft library.`
           );
         }
+        setTimeout(() => next(), 1200);
       }
     } catch {
       // ignore
     } finally {
       setUbisoftConnecting(false);
+    }
+  };
+
+  const handleEaConnect = async () => {
+    setEaConnecting(true);
+    try {
+      const result = await window.electron.openEaAuthWindow();
+      if (result) {
+        setEaLinked(true);
+        setEaAccountName(result.username);
+        const syncResult = await window.electron
+          .syncEaLibrary()
+          .catch(() => null);
+        if (syncResult && !syncResult.error) {
+          setEaSyncResult(
+            `Synced ${syncResult.total} game${syncResult.total !== 1 ? "s" : ""} from your EA library.`
+          );
+        }
+        setTimeout(() => next(), 1200);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setEaConnecting(false);
     }
   };
 
@@ -826,7 +857,13 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   "ubisoft",
                   "ea",
                 ] as StepId[]
-              ).map((s) => {
+              )
+                .filter(
+                  (s) =>
+                    stepIndex <= ALL_STEPS.indexOf("integrations-select") ||
+                    selectedIntegrations.has(s)
+                )
+                .map((s) => {
                 const PlatformIcon = {
                   steam: SteamLogo,
                   epic: EpicLogo,
@@ -881,7 +918,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
               <div className="onboarding-sidebar__section-label">
                 Preferences
               </div>
-              {(["notifications", "startup"] as StepId[]).map((s) => (
+              {(["preferences"] as StepId[]).map((s) => (
                 <div
                   key={s}
                   className={[
@@ -1463,25 +1500,28 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </div>
               </div>
               <p className="onboarding-step-description">
-                GameHub detects games installed through the Riot Client and adds
-                them to your library. They launch through the Riot Client.
+                Riot games are free to play — add League of Legends, VALORANT,
+                and Legends of Runeterra to your library. They launch through
+                the Riot Client.
               </p>
 
               {riotState === null ? (
                 <p style={{ opacity: 0.6 }}>Detecting Riot Client…</p>
-              ) : !riotState.installed ? (
-                <p style={{ opacity: 0.7 }}>
-                  Riot Client not detected on this machine. You can add Riot
-                  games later from Settings → Integrations.
-                </p>
-              ) : riotState.detected.length === 0 ? (
-                <p style={{ opacity: 0.7 }}>
-                  Riot Client found, but no installed games were detected.
-                </p>
               ) : (
-                <p style={{ opacity: 0.8 }}>
-                  Detected: {riotState.detected.map((g) => g.title).join(", ")}
-                </p>
+                <>
+                  {riotState.detected.length > 0 && (
+                    <p style={{ opacity: 0.8 }}>
+                      Installed:{" "}
+                      {riotState.detected.map((g) => g.title).join(", ")}
+                    </p>
+                  )}
+                  {!riotState.installed && (
+                    <p style={{ opacity: 0.6, fontSize: "0.82rem" }}>
+                      Riot Client not detected — games can&apos;t be launched
+                      until you install it.
+                    </p>
+                  )}
+                </>
               )}
 
               {riotResult && (
@@ -1499,19 +1539,15 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 >
                   {riotResult ? "Continue" : "Skip for now"}
                 </button>
-                {riotState?.installed &&
-                  riotState.detected.length > 0 &&
-                  !riotResult && (
-                    <Button
-                      type="button"
-                      onClick={handleAddRiotGames}
-                      disabled={riotBusy}
-                    >
-                      {riotBusy
-                        ? "Adding…"
-                        : `Add ${riotState.detected.length} game${riotState.detected.length !== 1 ? "s" : ""}`}
-                    </Button>
-                  )}
+                {!riotResult && (
+                  <Button
+                    type="button"
+                    onClick={handleAddRiotGames}
+                    disabled={riotBusy}
+                  >
+                    {riotBusy ? "Adding…" : "Add Riot games"}
+                  </Button>
+                )}
               </div>
             </>
           )}
@@ -1844,17 +1880,20 @@ export function Onboarding({ onComplete }: OnboardingProps) {
             </>
           )}
 
-          {/* ── Notifications ── */}
-          {currentStep === "notifications" && (
+          {/* ── Preferences ── */}
+          {currentStep === "preferences" && (
             <>
               <div className="onboarding-step-header">
                 <div className="onboarding-step-header__icon">
                   <BellIcon size={20} />
                 </div>
                 <div>
-                  <h2>Notifications</h2>
-                  <p>Choose which alerts GameHub should show</p>
+                  <h2>Preferences</h2>
+                  <p>Notifications and startup behavior</p>
                 </div>
+              </div>
+              <div className="onboarding-sidebar__section-label">
+                Notifications
               </div>
               <div className="onboarding-toggles">
                 <label
@@ -1886,25 +1925,11 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                   />
                 </label>
               </div>
-              <div className="onboarding-actions">
-                <Button type="button" onClick={next}>
-                  Continue
-                </Button>
-              </div>
-            </>
-          )}
-
-          {/* ── Startup ── */}
-          {currentStep === "startup" && (
-            <>
-              <div className="onboarding-step-header">
-                <div className="onboarding-step-header__icon">
-                  <GearIcon size={20} />
-                </div>
-                <div>
-                  <h2>Startup Behavior</h2>
-                  <p>How GameHub behaves when your computer starts</p>
-                </div>
+              <div
+                className="onboarding-sidebar__section-label"
+                style={{ marginTop: "16px" }}
+              >
+                Startup
               </div>
               <div className="onboarding-toggles">
                 <label
