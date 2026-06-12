@@ -1,29 +1,25 @@
-import { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, TextField } from "@renderer/components";
+import { Button } from "@renderer/components";
 import { useAppSelector, useToast } from "@renderer/hooks";
-import { settingsContext } from "@renderer/context";
 import { EpicAuthModal } from "./epic-auth-modal";
 import {
   AlertIcon,
   CheckCircleFillIcon,
-  DownloadIcon,
   PersonIcon,
   SyncIcon,
 } from "@primer/octicons-react";
 import { LibrarySyncModal, type LibrarySyncResult } from "./library-sync-modal";
 
-type Step = "idle" | "installing" | "signing_in" | "syncing";
+type Step = "idle" | "signing_in" | "syncing";
 
 export function SettingsEpicAccount() {
   const { t } = useTranslation("settings");
   const userPreferences = useAppSelector(
     (state) => state.userPreferences.value
   );
-  const { updateUserPreferences } = useContext(settingsContext);
   const { showSuccessToast, showErrorToast } = useToast();
 
-  const [legendaryPath, setLegendaryPath] = useState("");
   const [status, setStatus] = useState<{
     binaryFound: boolean;
     binaryPath: string | null;
@@ -31,7 +27,6 @@ export function SettingsEpicAccount() {
     authenticated: boolean;
   } | null>(null);
   const [step, setStep] = useState<Step>("idle");
-  const [installProgress, setInstallProgress] = useState(0);
   const [syncResult, setSyncResult] = useState<{
     total: number;
     added: number;
@@ -42,11 +37,6 @@ export function SettingsEpicAccount() {
     results: LibrarySyncResult[];
   } | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const unsubRef = useRef<(() => void) | null>(null);
-
-  useEffect(() => {
-    setLegendaryPath(userPreferences?.legendaryBinaryPath ?? "");
-  }, [userPreferences?.legendaryBinaryPath]);
 
   const refreshStatus = async (_path?: string | null) => {
     const s = await window.electron.getLegendaryStatus().catch(() => null);
@@ -57,36 +47,6 @@ export function SettingsEpicAccount() {
   useEffect(() => {
     refreshStatus(userPreferences?.legendaryBinaryPath);
   }, [userPreferences?.legendaryBinaryPath]);
-
-  // Subscribe to download progress
-  useEffect(() => {
-    const unsub =
-      window.electron.onLegendaryInstallProgress(setInstallProgress);
-    unsubRef.current = unsub;
-    return () => unsub();
-  }, []);
-
-  const handleSavePath = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await updateUserPreferences({ legendaryBinaryPath: legendaryPath || null });
-    showSuccessToast(t("changes_saved"));
-  };
-
-  const handleInstall = async () => {
-    setStep("installing");
-    setInstallProgress(0);
-    try {
-      const { path: installedPath } = await window.electron.installLegendary();
-      await updateUserPreferences({ legendaryBinaryPath: installedPath });
-      showSuccessToast(t("legendary_installed"));
-      await refreshStatus(installedPath);
-    } catch (err: any) {
-      showErrorToast(err?.message ?? t("legendary_install_failed"));
-    } finally {
-      setStep("idle");
-      setInstallProgress(0);
-    }
-  };
 
   const handleSignIn = () => {
     setShowAuthModal(true);
@@ -113,12 +73,10 @@ export function SettingsEpicAccount() {
   );
 
   const handleSignOut = async () => {
-    const newStatus = await window.electron.epicSignOut().catch(() => null);
-    if (newStatus) setStatus(newStatus);
-    else
-      setStatus((prev) =>
-        prev ? { ...prev, authenticated: false, account: null } : null
-      );
+    await window.electron.epicSignOut().catch(() => {});
+    setStatus((prev) =>
+      prev ? { ...prev, authenticated: false, account: null } : null
+    );
     showSuccessToast(t("epic_signed_out"));
   };
 
@@ -206,51 +164,8 @@ export function SettingsEpicAccount() {
           </div>
         )}
 
-        {/* Install legendary */}
-        {!binaryFound && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            <Button
-              type="button"
-              onClick={handleInstall}
-              disabled={isBusy}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                width: "fit-content",
-              }}
-            >
-              <DownloadIcon size={14} />
-              {step === "installing"
-                ? installProgress > 0
-                  ? t("downloading_pct", { pct: installProgress })
-                  : t("downloading")
-                : t("install_legendary")}
-            </Button>
-
-            {/* Manual path override */}
-            <form
-              onSubmit={handleSavePath}
-              style={{ display: "flex", flexDirection: "column", gap: "4px" }}
-            >
-              <TextField
-                label={t("legendary_binary_path")}
-                value={legendaryPath}
-                onChange={(e) => setLegendaryPath(e.target.value)}
-                placeholder={t("legendary_binary_placeholder")}
-                hint={t("legendary_binary_hint")}
-                rightContent={
-                  <Button type="submit" disabled={isBusy}>
-                    {t("save_changes")}
-                  </Button>
-                }
-              />
-            </form>
-          </div>
-        )}
-
         {/* Sign in */}
-        {binaryFound && !isAuthenticated && (
+        {status !== null && !isAuthenticated && (
           <Button
             type="button"
             onClick={handleSignIn}
