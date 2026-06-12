@@ -84,92 +84,88 @@ export function SettingsRiot() {
         >
           <AlertIcon size={16} />
           <span>
-            Riot Client not detected. Install a Riot game first, then come back
-            here.
+            Riot Client not detected — games can&apos;t be launched until you
+            install it.
           </span>
         </div>
       )}
 
-      {clientInstalled && (
-        <>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-              gap: "8px",
-            }}
-          >
-            {allGames.map((game) => {
-              const isDetected = detected.some(
-                (d) => d.productId === game.productId
-              );
-              const isChecked = selected.has(game.productId);
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+          gap: "8px",
+        }}
+      >
+        {allGames.map((game) => {
+          const isDetected = detected.some(
+            (d) => d.productId === game.productId
+          );
+          const isChecked = selected.has(game.productId);
 
-              return (
-                <button
-                  key={game.productId}
-                  type="button"
-                  onClick={() => toggleGame(game.productId)}
+          return (
+            <button
+              key={game.productId}
+              type="button"
+              onClick={() => toggleGame(game.productId)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                border: `1px solid ${isChecked ? "var(--color-accent, #5e81f4)" : "rgba(255,255,255,0.1)"}`,
+                background: isChecked
+                  ? "rgba(94,129,244,0.15)"
+                  : "rgba(255,255,255,0.03)",
+                cursor: "pointer",
+                textAlign: "left",
+                color: "inherit",
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: `1px solid ${isChecked ? "var(--color-accent, #5e81f4)" : "rgba(255,255,255,0.1)"}`,
-                    background: isChecked
-                      ? "rgba(94,129,244,0.15)"
-                      : "rgba(255,255,255,0.03)",
-                    cursor: "pointer",
-                    textAlign: "left",
-                    color: "inherit",
+                    fontSize: "0.875em",
+                    fontWeight: 500,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div
-                      style={{
-                        fontSize: "0.875em",
-                        fontWeight: 500,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {game.title}
-                    </div>
-                    {isDetected && (
-                      <div
-                        style={{
-                          fontSize: "0.75em",
-                          opacity: 0.6,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "3px",
-                        }}
-                      >
-                        <CheckCircleFillIcon size={10} />
-                        Installed
-                      </div>
-                    )}
+                  {game.title}
+                </div>
+                {isDetected && (
+                  <div
+                    style={{
+                      fontSize: "0.75em",
+                      opacity: 0.6,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "3px",
+                    }}
+                  >
+                    <CheckCircleFillIcon size={10} />
+                    Installed
                   </div>
-                </button>
-              );
-            })}
-          </div>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
 
-          <div>
-            <Button
-              type="button"
-              onClick={handleAddToLibrary}
-              disabled={selected.size === 0 || isAdding}
-              style={{ display: "flex", alignItems: "center", gap: "6px" }}
-            >
-              <PlusIcon size={14} />
-              {isAdding ? "Adding…" : `Add ${selected.size} to library`}
-            </Button>
-          </div>
-        </>
-      )}
+      <div>
+        <Button
+          type="button"
+          onClick={handleAddToLibrary}
+          disabled={selected.size === 0 || isAdding}
+          style={{ display: "flex", alignItems: "center", gap: "6px" }}
+        >
+          <PlusIcon size={14} />
+          {isAdding ? "Adding…" : `Add ${selected.size} to library`}
+        </Button>
+      </div>
     </div>
   );
 }
