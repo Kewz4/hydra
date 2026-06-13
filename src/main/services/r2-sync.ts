@@ -61,6 +61,13 @@ export class R2Sync {
           secretAccessKey: R2_SECRET_ACCESS_KEY,
         },
         forcePathStyle: true,
+        // aws-sdk v3 >= ~3.729 enables flexible checksums (CRC32 trailers) by
+        // default, which Cloudflare R2's S3 API rejects — uploads fail with a
+        // checksum/streaming-trailer error. Force checksums to WHEN_REQUIRED so
+        // the SDK only sends them where the API mandates it. Without this, every
+        // PutObject to R2 breaks.
+        requestChecksumCalculation: "WHEN_REQUIRED",
+        responseChecksumValidation: "WHEN_REQUIRED",
       });
     }
     return this._client;
@@ -270,31 +277,40 @@ export class R2Sync {
     kind: string,
     hydraUserId: string
   ): Promise<string | null> {
-    const exts = ["webp", "png", "jpg", "jpeg", "gif"];
-    for (const ext of exts) {
-      const key = `users/${hydraUserId}/images/${kind}.${ext}`;
-      try {
-        const res = await this.client.send(
-          new GetObjectCommand({ Bucket: R2_BUCKET, Key: key })
-        );
-        const dest = path.join(
-          this.imageCacheDir(),
-          `${hydraUserId}-${kind}.${ext}`
-        );
-        const body = res.Body as Readable;
-        await new Promise<void>((resolve, reject) => {
-          const out = fs.createWriteStream(dest);
-          body.pipe(out);
-          body.on("error", reject);
-          out.on("finish", resolve);
-          out.on("error", reject);
-        });
-        return `local:${dest.replace(/\\/g, "/")}`;
-      } catch {
-        // not this extension — try next
-      }
+    // One list call instead of probing each extension with 404-ing GETs: the
+    // image is stored as images/{kind}.{ext}, so match by basename === kind.
+    const prefix = `users/${hydraUserId}/images/`;
+    const list = await this.client
+      .send(new ListObjectsV2Command({ Bucket: R2_BUCKET, Prefix: prefix }))
+      .catch(() => null);
+
+    const match = (list?.Contents ?? []).find((o) => {
+      const name = o.Key?.slice(prefix.length) ?? "";
+      return name.slice(0, name.lastIndexOf(".")) === kind;
+    });
+    if (!match?.Key) return null;
+
+    try {
+      const res = await this.client.send(
+        new GetObjectCommand({ Bucket: R2_BUCKET, Key: match.Key })
+      );
+      const ext = match.Key.slice(match.Key.lastIndexOf(".") + 1) || "img";
+      const dest = path.join(
+        this.imageCacheDir(),
+        `${hydraUserId}-${kind}.${ext}`
+      );
+      const body = res.Body as Readable;
+      await new Promise<void>((resolve, reject) => {
+        const out = fs.createWriteStream(dest);
+        body.pipe(out);
+        body.on("error", reject);
+        out.on("finish", resolve);
+        out.on("error", reject);
+      });
+      return `local:${dest.replace(/\\/g, "/")}`;
+    } catch {
+      return null;
     }
-    return null;
   }
 
   // ── Preferences (settings backup) ────────────────────────────────────────
