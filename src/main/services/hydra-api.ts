@@ -90,13 +90,33 @@ export class HydraApi {
       { valueEncoding: "json" }
     );
 
-    await getUserData().then((userDetails) => {
+    await getUserData().then(async (userDetails) => {
       if (userDetails?.subscription) {
         this.userAuth.subscription = {
           expiresAt: userDetails.subscription.expiresAt
             ? new Date(userDetails.subscription.expiresAt)
             : null,
         };
+      }
+      // Anchor the cloud-storage namespace to the stable Hydra account id so
+      // R2 save/image folders survive reinstalls (a fresh random id would
+      // orphan every existing backup under a new folder).
+      if (userDetails?.id) {
+        const prefs = await db
+          .get<string, Record<string, unknown> | null>(
+            levelKeys.userPreferences,
+            { valueEncoding: "json" }
+          )
+          .catch(() => null);
+        if (prefs?.cloudSyncUserId !== userDetails.id) {
+          await db
+            .put(
+              levelKeys.userPreferences,
+              { ...(prefs ?? {}), cloudSyncUserId: userDetails.id },
+              { valueEncoding: "json" }
+            )
+            .catch(() => {});
+        }
       }
     });
 

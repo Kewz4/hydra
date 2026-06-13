@@ -7,8 +7,9 @@ import { logger } from "@main/services";
 import { WindowManager } from "@main/services/window-manager";
 import {
   EA_AUTH_PARTITION,
+  EA_LOGIN_URL,
+  EA_LOGIN_REDIRECT,
   EA_TOKEN_URL,
-  EA_TOKEN_URL_FALLBACK,
   parseEaAuthJson,
 } from "@main/services/ea-auth";
 
@@ -29,9 +30,7 @@ const persistEaAuth = async (
       valueEncoding: "json",
     })
     .catch(() => null);
-  const expiry = new Date(
-    Date.now() + expiresInSeconds * 1000
-  ).toISOString();
+  const expiry = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
   await db.put<string, UserPreferences>(
     levelKeys.userPreferences,
     {
@@ -63,13 +62,11 @@ const openEaAuthWindow = async (
       },
     });
 
-    // Load the EA login page — if there's no active session, EA shows a login
-    // form; if already authenticated, it immediately returns the token JSON.
-    // Avoid prompt=login as that forces a fresh auth and triggers stricter
-    // EA service-limitation checks for some account/region combinations.
-    win.loadURL(EA_TOKEN_URL);
+    // Step 1: interactive login. EA redirects to EA_LOGIN_REDIRECT on success.
+    win.loadURL(EA_LOGIN_URL);
 
     let handled = false;
+    let exchanging = false;
 
     const completeWithToken = async (accessToken: string, expiresIn: number) => {
       if (handled) return;
@@ -86,17 +83,12 @@ const openEaAuthWindow = async (
         );
         const pidData = infoRes.data?.pid ?? {};
         const username =
-          pidData.displayName ??
-          pidData.email ??
-          pidData.pidId ??
-          "EA Account";
+          pidData.displayName ?? pidData.email ?? pidData.pidId ?? "EA Account";
         const pid = String(pidData.pidId ?? "");
-
         await persistEaAuth(accessToken, expiresIn, username, pid);
         resolve({ accessToken, username, pid });
       } catch (err) {
         logger.error("EA auth: identity fetch failed", err);
-        // Token itself is valid — persist it anyway so syncs can run
         await persistEaAuth(accessToken, expiresIn, "EA Account", "").catch(
           () => {}
         );
@@ -104,12 +96,18 @@ const openEaAuthWindow = async (
       }
     };
 
-    let usedFallbackClient = false;
+    // Step 2: once logged in, the auth-window session holds the remid/sid
+    // cookies. Navigate to the token endpoint (prompt=none) which renders the
+    // access-token JSON as the page body, then parse it.
+    const runTokenExchange = () => {
+      if (handled || exchanging || win.isDestroyed()) return;
+      exchanging = true;
+      win.loadURL(EA_TOKEN_URL);
+    };
 
     const checkPageForToken = async () => {
       if (handled || win.isDestroyed()) return;
       const url = win.webContents.getURL();
-      // The token JSON is only ever served from the auth endpoint itself
       if (!url.startsWith("https://accounts.ea.com/connect/auth")) return;
 
       try {
@@ -124,23 +122,25 @@ const openEaAuthWindow = async (
             Number(data.expires_in ?? 3600)
           );
         } else if (data?.error) {
-          logger.error(`EA auth endpoint returned error: ${bodyText}`);
-          // If HXC_WEBCLIENT returns client error, retry with fallback client
-          if (
-            !usedFallbackClient &&
-            (data.error === "invalid_client" || data.error === "access_denied")
-          ) {
-            usedFallbackClient = true;
-            logger.info("EA auth: retrying with fallback client ORIGIN_JS_SDK");
-            win.loadURL(`${EA_TOKEN_URL_FALLBACK}&prompt=login`);
-          }
+          // prompt=none can fail if the session isn't ready yet; surface it but
+          // don't loop — the user can retry the window.
+          logger.error(`EA token exchange returned error: ${bodyText}`);
         }
       } catch {
-        // page not ready / not JSON — keep waiting
+        // page not JSON yet — ignore
       }
     };
 
-    // Fallback: some EA stacks do redirect to nucleus:rest#access_token=...
+    // Detect successful login (navigation to the redirect target) and kick off
+    // the silent token exchange.
+    const onNavigate = (url: string) => {
+      if (handled) return;
+      if (url.startsWith(EA_LOGIN_REDIRECT) || url.startsWith("https://www.ea.com")) {
+        runTokenExchange();
+      }
+    };
+
+    // Fallback: some EA stacks redirect straight to nucleus:rest#access_token=
     const handleNucleusRedirect = (url: string) => {
       if (handled || !url.startsWith("nucleus:")) return;
       const hashIdx = url.indexOf("#");
@@ -157,12 +157,16 @@ const openEaAuthWindow = async (
     };
 
     win.webContents.on("did-finish-load", () => void checkPageForToken());
-    win.webContents.on("will-navigate", (_e, url) =>
-      handleNucleusRedirect(url)
-    );
-    win.webContents.on("will-redirect", (_e, url) =>
-      handleNucleusRedirect(url)
-    );
+    win.webContents.on("did-navigate", (_e, url) => onNavigate(url));
+    win.webContents.on("did-redirect-navigation", (_e, url) => {
+      handleNucleusRedirect(url);
+      onNavigate(url);
+    });
+    win.webContents.on("will-navigate", (_e, url) => {
+      handleNucleusRedirect(url);
+      onNavigate(url);
+    });
+    win.webContents.on("will-redirect", (_e, url) => handleNucleusRedirect(url));
     win.on("closed", () => {
       if (!handled) resolve(null);
     });

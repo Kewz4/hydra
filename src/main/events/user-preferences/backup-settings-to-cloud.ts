@@ -1,8 +1,9 @@
 import { registerEvent } from "../register-event";
 import { db, levelKeys } from "@main/level";
 import { HydraApi } from "@main/services/hydra-api";
+import { R2Sync } from "@main/services/r2-sync";
 import { logger } from "@main/services";
-import type { UserPreferences, ExcludedGame } from "@types";
+import type { UserPreferences, ExcludedGame, UserProfile } from "@types";
 
 // Fields that are safe to sync — exclude machine-specific paths and auth tokens
 const SAFE_PREFS_KEYS: (keyof UserPreferences)[] = [
@@ -67,8 +68,13 @@ const backupSettingsToCloud = async (): Promise<{ ok: boolean }> => {
   };
 
   try {
-    await HydraApi.put("/profile/settings-backup", backup, { needsAuth: true });
-    logger.info("[SettingsSync] Backup pushed to cloud");
+    const me = await HydraApi.get<UserProfile>("/profile/me").catch(() => null);
+    if (!me?.id) {
+      logger.warn("[SettingsSync] Not signed in — skipping backup");
+      return { ok: false };
+    }
+    await R2Sync.uploadPreferences(me.id, JSON.stringify(backup));
+    logger.info("[SettingsSync] Backup pushed to R2");
     return { ok: true };
   } catch (err) {
     logger.warn("[SettingsSync] Cloud backup failed", err);

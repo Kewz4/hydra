@@ -48,13 +48,15 @@ const hasPlatformUriExe = (exe?: string | null): boolean => {
  *   2. explicit "sync" stamp OR a platform-URI exe     → "sync"   (owned wins)
  *   3. a GameHub download record                       → "catalog" (it's a repack)
  *   4. explicit "catalog" stamp                        → "catalog"
- *   5. anything else on an official-store shop         → "sync"
+ *   5. anything else                                   → "catalog" (unverified)
  *
- * Step 5 is the key correction: an unstamped game on a real store shop with no
- * repack download is overwhelmingly an owned title whose sync stamp was never
- * written — so we treat it as owned rather than dumping it into Retigga.
- * Catalogue adds always carry an explicit "catalog" stamp (set when the game is
- * added from the catalogue) or a download record, so they are caught by 3/4.
+ * Step 5 sends UNVERIFIED records to Retigga rather than a platform tab. This
+ * is safe for genuinely-owned games because every platform sync stamps BOTH
+ * libraryOrigin="sync" AND (for Steam) a steam://run/ URI exe, so owned titles
+ * are always caught by steps 1–2 before reaching here. Only records that have
+ * never been through a platform sync — e.g. Playnite imports of games you do
+ * NOT own on any store — fall through to step 5, which is exactly where they
+ * belong: Retigga, not Steam/Epic/GOG.
  */
 export function getGameOrigin(game: OriginSource): GameOrigin {
   // 1. Manually added games.
@@ -69,9 +71,11 @@ export function getGameOrigin(game: OriginSource): GameOrigin {
   // 3. A GameHub download record is the defining signal of a Retigga repack.
   if (game.download != null) return "catalog";
 
-  // 4. Explicitly added from the catalogue but not yet downloaded.
+  // 4. Explicitly added from the catalogue.
   if (game.libraryOrigin === "catalog") return "catalog";
 
-  // 5. Unstamped, no repack download, on an official-store shop → owned.
-  return "sync";
+  // 5. Unverified record with no proof of platform ownership → Retigga, never
+  //    a platform tab. A subsequent platform sync promotes genuinely-owned
+  //    titles to "sync" (stamp + URI exe), moving them to their store tab.
+  return "catalog";
 }

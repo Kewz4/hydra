@@ -1,17 +1,20 @@
 import { registerEvent } from "../register-event";
 import { db, levelKeys } from "@main/level";
 import { HydraApi } from "@main/services/hydra-api";
+import { R2Sync } from "@main/services/r2-sync";
 import { logger } from "@main/services";
 import { WindowManager } from "@main/services/window-manager";
-import type { UserPreferences } from "@types";
+import type { UserPreferences, UserProfile } from "@types";
 import type { SettingsBackup } from "./backup-settings-to-cloud";
 
 const restoreSettingsFromCloud = async (): Promise<{ restored: boolean; updatedAt?: string }> => {
   try {
-    const backup = await HydraApi.get<SettingsBackup>(
-      "/profile/settings-backup",
-      { needsAuth: true }
-    );
+    const me = await HydraApi.get<UserProfile>("/profile/me").catch(() => null);
+    if (!me?.id) return { restored: false };
+
+    const raw = await R2Sync.downloadPreferences(me.id);
+    if (!raw) return { restored: false };
+    const backup = JSON.parse(raw) as SettingsBackup;
 
     if (!backup?.preferences && !backup?.excludedGames?.length) {
       return { restored: false };
