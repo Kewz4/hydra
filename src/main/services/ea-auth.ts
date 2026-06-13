@@ -10,7 +10,17 @@ import { logger } from "./logger";
  */
 export const EA_AUTH_PARTITION = "persist:ea-auth";
 
+// Primary client: HXC_WEBCLIENT (EA App web companion — broader account support)
 export const EA_TOKEN_URL =
+  "https://accounts.ea.com/connect/auth" +
+  "?response_type=token" +
+  "&client_id=HXC_WEBCLIENT" +
+  "&redirect_uri=nucleus:rest" +
+  "&release_type=prod" +
+  "&locale=en_US";
+
+// Fallback client: original ORIGIN_JS_SDK
+export const EA_TOKEN_URL_FALLBACK =
   "https://accounts.ea.com/connect/auth" +
   "?response_type=token" +
   "&client_id=ORIGIN_JS_SDK" +

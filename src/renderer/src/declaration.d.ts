@@ -513,6 +513,11 @@ declare global {
     updateUserPreferences: (
       preferences: Partial<UserPreferences>
     ) => Promise<void>;
+    backupSettingsToCloud: () => Promise<{ ok: boolean }>;
+    restoreSettingsFromCloud: () => Promise<{
+      restored: boolean;
+      updatedAt?: string;
+    }>;
     onUserPreferencesUpdated: (
       cb: (preferences: UserPreferences | null) => void
     ) => () => Electron.IpcRenderer;

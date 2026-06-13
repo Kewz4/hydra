@@ -148,6 +148,9 @@ contextBridge.exposeInMainWorld("electron", {
   getUserPreferences: () => ipcRenderer.invoke("getUserPreferences"),
   updateUserPreferences: (preferences: Partial<UserPreferences>) =>
     ipcRenderer.invoke("updateUserPreferences", preferences),
+  backupSettingsToCloud: () => ipcRenderer.invoke("backupSettingsToCloud"),
+  restoreSettingsFromCloud: () =>
+    ipcRenderer.invoke("restoreSettingsFromCloud"),
   onUserPreferencesUpdated: (
     cb: (preferences: UserPreferences | null) => void
   ) => {

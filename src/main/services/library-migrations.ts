@@ -142,19 +142,20 @@ export const runLibraryMigrations = async (): Promise<void> => {
           // Real file on disk: store folder → owned, anywhere else → custom
           desired = classifyScannedOrigin(exe, game.libraryOrigin);
         } else {
-          desired = "catalog";
+          // No exe and no stamp on a platform shop — if there's a download
+          // record it was added from the catalogue; otherwise it was synced.
+          const dl = await downloadsSublevel.get(key).catch(() => null);
+          desired = dl ? "catalog" : "sync";
         }
       } else if (
         !originRepairDone &&
-        game.shop === "steam" &&
         game.libraryOrigin === "sync" &&
         exe &&
         !isUriExe &&
         classifyScannedOrigin(exe) !== "sync"
       ) {
-        // One-time repair of the old any-exe→"sync" stamp. Scoped to Steam
-        // (the affected platform) — owned games get exe steam://run/… and
-        // re-stamped "sync" by the next Steam library sync. Games with a
+        // One-time repair of the old any-exe→"sync" stamp for all shops.
+        // Platform syncs re-stamp "sync" on genuinely owned games. Games with a
         // GameHub download record are repacks → Retigga; the rest → custom.
         const download = await downloadsSublevel.get(key).catch(() => null);
         desired = download ? "catalog" : "custom";

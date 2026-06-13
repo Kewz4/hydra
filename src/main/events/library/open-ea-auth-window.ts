@@ -8,6 +8,7 @@ import { WindowManager } from "@main/services/window-manager";
 import {
   EA_AUTH_PARTITION,
   EA_TOKEN_URL,
+  EA_TOKEN_URL_FALLBACK,
   parseEaAuthJson,
 } from "@main/services/ea-auth";
 
@@ -62,10 +63,11 @@ const openEaAuthWindow = async (
       },
     });
 
-    // prompt=login forces the sign-in page; once the user authenticates, EA
-    // redirects back to the auth endpoint which answers with a JSON body
-    // containing the access token (nucleus:rest = "REST mode", no redirect).
-    win.loadURL(`${EA_TOKEN_URL}&prompt=login`);
+    // Load the EA login page — if there's no active session, EA shows a login
+    // form; if already authenticated, it immediately returns the token JSON.
+    // Avoid prompt=login as that forces a fresh auth and triggers stricter
+    // EA service-limitation checks for some account/region combinations.
+    win.loadURL(EA_TOKEN_URL);
 
     let handled = false;
 
@@ -102,6 +104,8 @@ const openEaAuthWindow = async (
       }
     };
 
+    let usedFallbackClient = false;
+
     const checkPageForToken = async () => {
       if (handled || win.isDestroyed()) return;
       const url = win.webContents.getURL();
@@ -121,6 +125,15 @@ const openEaAuthWindow = async (
           );
         } else if (data?.error) {
           logger.error(`EA auth endpoint returned error: ${bodyText}`);
+          // If HXC_WEBCLIENT returns client error, retry with fallback client
+          if (
+            !usedFallbackClient &&
+            (data.error === "invalid_client" || data.error === "access_denied")
+          ) {
+            usedFallbackClient = true;
+            logger.info("EA auth: retrying with fallback client ORIGIN_JS_SDK");
+            win.loadURL(`${EA_TOKEN_URL_FALLBACK}&prompt=login`);
+          }
         }
       } catch {
         // page not ready / not JSON — keep waiting

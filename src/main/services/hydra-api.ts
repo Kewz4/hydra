@@ -110,6 +110,11 @@ export class HydraApi {
 
       const { syncDownloadSourcesFromApi } = await import("./user");
       syncDownloadSourcesFromApi();
+
+      // Restore cloud-backed settings (exclusion list, preferences) silently
+      import("../events/user-preferences/restore-settings-from-cloud")
+        .then((m) => m.restoreSettingsFromCloudInternal())
+        .catch(() => {});
     }
   }
 
