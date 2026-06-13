@@ -12,7 +12,6 @@ import {
   compactGameTitle,
   normalizeGameTitle,
 } from "@main/helpers/normalize-game-title";
-import { classifyScannedOrigin } from "@main/helpers/classify-scanned-origin";
 import type { CatalogueSearchResult, Game } from "@types";
 
 const searchCatalogue = async (
@@ -135,30 +134,29 @@ export const runLibraryMigrations = async (): Promise<void> => {
       if (game.shop === "custom") {
         if (game.libraryOrigin !== "custom") desired = "custom";
       } else if (!game.libraryOrigin) {
+        // Only stamp high-confidence cases; leave genuinely ambiguous records
+        // unstamped so the renderer's ownership-first getGameOrigin decides at
+        // render time. This avoids locking in a wrong "catalog"/"custom" guess
+        // for an owned game whose sync stamp was simply never written.
         if (isUriExe) {
-          // Platform URI exes are only ever set by platform syncs — owned
+          // Platform URI exes are only ever produced by a platform launcher.
           desired = "sync";
-        } else if (exe) {
-          // Real file on disk: store folder → owned, anywhere else → custom
-          desired = classifyScannedOrigin(exe, game.libraryOrigin);
         } else {
-          // No exe and no stamp on a platform shop — if there's a download
-          // record it was added from the catalogue; otherwise it was synced.
           const dl = await downloadsSublevel.get(key).catch(() => null);
-          desired = dl ? "catalog" : "sync";
+          // A GameHub download record is hard proof of a repack.
+          if (dl) desired = "catalog";
+          // Otherwise: no stamp, no URI exe, no repack download — leave it
+          // unstamped; getGameOrigin treats platform-shop records as owned.
         }
-      } else if (
-        !originRepairDone &&
-        game.libraryOrigin === "sync" &&
-        exe &&
-        !isUriExe &&
-        classifyScannedOrigin(exe) !== "sync"
-      ) {
-        // One-time repair of the old any-exe→"sync" stamp for all shops.
-        // Platform syncs re-stamp "sync" on genuinely owned games. Games with a
-        // GameHub download record are repacks → Retigga; the rest → custom.
+      } else if (!originRepairDone && game.libraryOrigin === "sync") {
+        // One-time repair of the old any-exe→"sync" stamp. The reliable signal
+        // that a "sync"-stamped game is actually a GameHub repack (not a real
+        // platform-owned title) is the presence of a GameHub download record —
+        // NOT its install folder, since an owned game can be installed
+        // anywhere. Only those are demoted to the catalogue; everything else
+        // keeps "sync" so genuinely owned games never fall out of their tab.
         const download = await downloadsSublevel.get(key).catch(() => null);
-        desired = download ? "catalog" : "custom";
+        if (download) desired = "catalog";
       }
 
       const updates: Partial<typeof game> = {};
